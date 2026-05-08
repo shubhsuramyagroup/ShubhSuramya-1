@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { NavLink, Link } from "react-router-dom";
 import logo from "../../public/logo.png";
-import { TbMessageCircle } from "react-icons/tb";
+import logo1 from "../../public/logo1.png";
+import { FaWhatsapp } from "react-icons/fa";
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -19,8 +20,8 @@ export default function Navbar() {
 
   const navLinks = [
     { name: "HOME", path: "/" },
-    { name: "ABOUT US", path: "/about" },
     { name: "PROJECTS", path: "/projects" },
+    { name: "ABOUT US", path: "/about" },
     { name: "CONTACT US", path: "/contact" },
   ];
 
@@ -46,27 +47,24 @@ export default function Navbar() {
           }`}
         >
           <div className="flex items-center justify-between h-[72px] sm:h-[78px] px-4 sm:px-6 lg:px-8">
-            
             {/* LOGO */}
-            <Link
-              to="/"
-              className="flex items-center gap-2 sm:gap-3 flex-shrink-0"
-            >
-              <img
-                src={logo}
-                alt="logo"
-                className="w-10 h-10 sm:w-11 sm:h-11 object-contain"
-              />
+            <Link to="/" className="flex items-center pt-2 gap-2">
+              {/* FIRST LOGO */}
+              <div className="flex items-center justify-center">
+                <img
+                  src={logo}
+                  alt="logo"
+                  className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 object-contain"
+                />
+              </div>
 
-              <div className="leading-none">
-                <h2 className="font-semibold text-[16px] sm:text-[18px] tracking-tight">
-                  <span className="text-[#1E2A5A]">Shubh </span>
-                  <span className="text-[#E34A2F]">Suramya</span>
-                </h2>
-
-                <p className="hidden sm:block text-[10px] tracking-[0.28em] uppercase text-gray-400 mt-1">
-                  Real Estate
-                </p>
+              {/* SECOND LOGO */}
+              <div className="flex items-center justify-center">
+                <img
+                  src={logo1}
+                  alt="logo text"
+                  className="h-8 sm:h-10 md:h-11 w-auto object-contain"
+                />
               </div>
             </Link>
 
@@ -102,10 +100,9 @@ export default function Navbar() {
 
             {/* RIGHT SIDE */}
             <div className="flex items-center gap-3">
-              
               {/* CTA BUTTON */}
-              <button className="hidden sm:inline-flex items-center gap-2 rounded-full bg-[#1E2A5A] hover:bg-[#E34A2F] text-white px-5 lg:px-6 py-2.5 text-[13px] font-semibold transition-all duration-300 shadow-sm hover:shadow-lg hover:-translate-y-[1px]">
-                <TbMessageCircle className="text-[17px]" />
+              <button className="hidden sm:inline-flex items-center gap-2 rounded-full bg-[#1E2A5A] hover:bg-[#25D366] text-white px-5 lg:px-6 py-2.5 text-[13px] font-semibold transition-all duration-300 shadow-sm hover:shadow-lg hover:-translate-y-[1px]">
+                <FaWhatsapp className="text-[18px]" />
                 <span className="hidden md:block">Inquire Now</span>
               </button>
 
@@ -118,25 +115,19 @@ export default function Navbar() {
                 <div className="relative w-5 h-5">
                   <span
                     className={`absolute left-0 w-5 h-[2px] bg-[#1E2A5A] rounded-full transition-all duration-300 ${
-                      menuOpen
-                        ? "rotate-45 top-[9px]"
-                        : "top-[3px]"
+                      menuOpen ? "rotate-45 top-[9px]" : "top-[3px]"
                     }`}
                   />
 
                   <span
                     className={`absolute left-0 w-5 h-[2px] bg-[#1E2A5A] rounded-full transition-all duration-300 ${
-                      menuOpen
-                        ? "opacity-0"
-                        : "top-[9px]"
+                      menuOpen ? "opacity-0" : "top-[9px]"
                     }`}
                   />
 
                   <span
                     className={`absolute left-0 w-5 h-[2px] bg-[#1E2A5A] rounded-full transition-all duration-300 ${
-                      menuOpen
-                        ? "-rotate-45 top-[9px]"
-                        : "top-[15px]"
+                      menuOpen ? "-rotate-45 top-[9px]" : "top-[15px]"
                     }`}
                   />
                 </div>
@@ -154,7 +145,6 @@ export default function Navbar() {
           }`}
         >
           <div className="max-w-7xl mx-auto rounded-2xl bg-white border border-gray-100 shadow-[0_20px_60px_rgba(0,0,0,0.08)] overflow-hidden">
-            
             {/* MENU LINKS */}
             <div className="flex flex-col py-3">
               {navLinks.map((item, index) => (
@@ -196,8 +186,8 @@ export default function Navbar() {
 
             {/* MOBILE BUTTON */}
             <div className="p-5 sm:p-6 border-t border-gray-100 bg-[#FAFAFA]">
-              <button className="w-full flex items-center justify-center gap-2 rounded-full bg-[#1E2A5A] hover:bg-[#E34A2F] text-white py-3 text-[14px] font-semibold transition-all duration-300">
-                <TbMessageCircle className="text-[18px]" />
+              <button className="w-full flex items-center justify-center gap-2 rounded-full bg-[#1E2A5A] hover:bg-[#25D366] text-white py-3 text-[14px] font-semibold transition-all duration-300">
+                <FaWhatsapp className="text-[18px]" />
                 Inquire Now
               </button>
             </div>
