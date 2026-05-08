@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { TbBrandFacebook, TbBrandLinkedin, TbBrandX } from "react-icons/tb";
 import logo from "../../public/logo.png";
+import logo1 from "../../public/logo1.png";
 
 export default function Footer() {
   return (
@@ -24,14 +25,25 @@ export default function Footer() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 mb-16">
           {/* 1. BRAND */}
           <div className="flex flex-col gap-5">
-            <div className="flex items-center gap-1">
-              <img src={logo} alt="logo" className="w-9 h-9 object-contain" />
+            <Link to="/" className="flex items-center pt-2 gap-2">
+              {/* FIRST LOGO */}
+              <div className="flex items-center justify-center">
+                <img
+                  src={logo}
+                  alt="logo"
+                  className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 object-contain"
+                />
+              </div>
 
-              <h2 className="text-[#1E2A5A] font-bold text-lg">
-                <span className="text-[#1E2A5A]">Shubh </span>
-                <span className="text-[#E34A2F]">Suramya</span>
-              </h2>
-            </div>
+              {/* SECOND LOGO */}
+              <div className="flex items-center justify-center">
+                <img
+                  src={logo1}
+                  alt="logo text"
+                  className="h-8 sm:h-10 md:h-11 w-auto object-contain"
+                />
+              </div>
+            </Link>
 
             <p className="text-[#1E2A5A]/60 text-sm leading-relaxed max-w-xs">
               Accurate property information, vetted listings, and smart tools —

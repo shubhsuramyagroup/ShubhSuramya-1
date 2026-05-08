@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import heroimg from "../../public/about_img.jpg";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import { Link } from "react-router-dom";
 
 // ── Data ──────────────────────────────────────────────────────────
 
@@ -1955,12 +1956,13 @@ div {
               transition: "opacity 0.8s ease 0.3s, transform 0.8s ease 0.3s",
             }}
           >
-            <button
-              onMouseEnter={() => setBtnHovered(true)}
-              onMouseLeave={() => setBtnHovered(false)}
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
+            <Link href="/projects">
+              <button
+                onMouseEnter={() => setBtnHovered(true)}
+                onMouseLeave={() => setBtnHovered(false)}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
                 gap: "10px",
                 fontWeight: 600,
                 fontSize: "13px",
@@ -2005,6 +2007,7 @@ div {
                 </svg>
               </span>
             </button>
+            </Link>
           </div>
         </div>
       </section>
