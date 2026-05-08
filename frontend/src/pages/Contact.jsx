@@ -8,14 +8,15 @@ function useInView(threshold = 0.12) {
   const [inView, setInView] = useState(false);
   useEffect(() => {
     const obs = new IntersectionObserver(
-      ([e]) => { if (e.isIntersecting) setInView(true); },
-      { threshold }
+      ([e]) => {
+        if (e.isIntersecting) setInView(true);
+      },
+      { threshold },
     );
     if (ref.current) obs.observe(ref.current);
     return () => obs.disconnect();
   }, []);
   return [ref, inView];
-  
 }
 
 function useScrollProgress() {
@@ -37,15 +38,51 @@ function useScrollProgress() {
 function Shape({ type, color, style }) {
   if (type === "plus")
     return (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" style={style} className="absolute pointer-events-none select-none">
-        <line x1="12" y1="2" x2="12" y2="22" stroke={color} strokeWidth="3" strokeLinecap="round" />
-        <line x1="2" y1="12" x2="22" y2="12" stroke={color} strokeWidth="3" strokeLinecap="round" />
+      <svg
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        style={style}
+        className="absolute pointer-events-none select-none"
+      >
+        <line
+          x1="12"
+          y1="2"
+          x2="12"
+          y2="22"
+          stroke={color}
+          strokeWidth="3"
+          strokeLinecap="round"
+        />
+        <line
+          x1="2"
+          y1="12"
+          x2="22"
+          y2="12"
+          stroke={color}
+          strokeWidth="3"
+          strokeLinecap="round"
+        />
       </svg>
     );
   if (type === "arc")
     return (
-      <svg width="40" height="22" viewBox="0 0 40 22" fill="none" style={style} className="absolute pointer-events-none select-none">
-        <path d="M2 20 Q20 2 38 20" stroke={color} strokeWidth="3.5" strokeLinecap="round" fill="none" />
+      <svg
+        width="40"
+        height="22"
+        viewBox="0 0 40 22"
+        fill="none"
+        style={style}
+        className="absolute pointer-events-none select-none"
+      >
+        <path
+          d="M2 20 Q20 2 38 20"
+          stroke={color}
+          strokeWidth="3.5"
+          strokeLinecap="round"
+          fill="none"
+        />
       </svg>
     );
   return null;
@@ -81,7 +118,9 @@ function OfficeCard({ city, address, phone, mapUrl, delay }) {
         </div>
         <p className="text-gray-500 text-sm leading-relaxed">{address}</p>
         <p className="text-gray-500 text-sm">{phone}</p>
-        <p className="text-gray-400 text-xs mt-0.5 italic">Visit us for in-person project</p>
+        <p className="text-gray-400 text-xs mt-0.5 italic">
+          Visit us for in-person project
+        </p>
       </div>
     </div>
   );
@@ -90,10 +129,17 @@ function OfficeCard({ city, address, phone, mapUrl, delay }) {
 // ── Contact form ──────────────────────────────────────────────────
 function ContactForm() {
   const [formRef, inView] = useInView(0.1);
-  const [form, setForm] = useState({ name: "", email: "", phone: "", subject: "", message: "" });
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    subject: "",
+    message: "",
+  });
   const [submitted, setSubmitted] = useState(false);
 
-  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+  const handleChange = (e) =>
+    setForm({ ...form, [e.target.name]: e.target.value });
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -112,12 +158,19 @@ function ContactForm() {
       }}
       className="bg-white rounded-3xl shadow-xl border border-gray-100 p-8 sm:p-10"
     >
-      <h3 className="text-2xl font-semibold text-gray-900 mb-1">Send us a message</h3>
-      <p className="text-gray-400 text-sm mb-8">We'll get back to you within one business day.</p>
+      <h3 className="text-2xl font-semibold text-gray-900 mb-1">
+        Send us a message
+      </h3>
+      <p className="text-gray-400 text-sm mb-8">
+        We'll get back to you within one business day.
+      </p>
 
       {submitted && (
         <div className="mb-6 flex items-center gap-3 bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm font-semibold px-4 py-3 rounded-xl">
-          <svg viewBox="0 0 24 24" className="w-5 h-5 fill-emerald-600 flex-shrink-0">
+          <svg
+            viewBox="0 0 24 24"
+            className="w-5 h-5 fill-emerald-600 flex-shrink-0"
+          >
             <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
           </svg>
           Message sent! We'll be in touch soon.
@@ -127,7 +180,9 @@ function ContactForm() {
       <form onSubmit={handleSubmit} className="space-y-5">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           <div>
-            <label className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1.5 block">Full Name</label>
+            <label className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1.5 block">
+              Full Name
+            </label>
             <input
               type="text"
               name="name"
@@ -139,7 +194,9 @@ function ContactForm() {
             />
           </div>
           <div>
-            <label className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1.5 block">Email Address</label>
+            <label className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1.5 block">
+              Email Address
+            </label>
             <input
               type="email"
               name="email"
@@ -154,7 +211,9 @@ function ContactForm() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           <div>
-            <label className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1.5 block">Phone Number</label>
+            <label className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1.5 block">
+              Phone Number
+            </label>
             <input
               type="tel"
               name="phone"
@@ -165,7 +224,9 @@ function ContactForm() {
             />
           </div>
           <div>
-            <label className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1.5 block">Subject</label>
+            <label className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1.5 block">
+              Subject
+            </label>
             <select
               name="subject"
               value={form.subject}
@@ -173,7 +234,9 @@ function ContactForm() {
               required
               className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-900 focus:outline-none focus:border-[#E34A2F] focus:ring-2 focus:ring-[#E34A2F]/10 transition-all bg-gray-50 focus:bg-white appearance-none cursor-pointer"
             >
-              <option value="" disabled>Select a topic</option>
+              <option value="" disabled>
+                Select a topic
+              </option>
               <option>Site Visit Request</option>
               <option>Investment Enquiry</option>
               <option>Project Information</option>
@@ -184,7 +247,9 @@ function ContactForm() {
         </div>
 
         <div>
-          <label className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1.5 block">Message</label>
+          <label className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1.5 block">
+            Message
+          </label>
           <textarea
             name="message"
             value={form.message}
@@ -212,34 +277,33 @@ export default function Contact() {
   const [loaded, setLoaded] = useState(false);
   const [heroRef, heroInView] = useInView(0.1);
   const [officeRef, officeInView] = useInView(0.1);
-    const scrollProgress = useScrollProgress();
-    const [showScrollTop, setShowScrollTop] = useState(false);
-  
-    useEffect(() => {
-      const t = setTimeout(() => setLoaded(true), 50);
-      return () => clearTimeout(t);
-    }, []);
-  
+  const scrollProgress = useScrollProgress();
+  const [showScrollTop, setShowScrollTop] = useState(false);
+
+  useEffect(() => {
+    const t = setTimeout(() => setLoaded(true), 50);
+    return () => clearTimeout(t);
+  }, []);
+
   const scrollToTop = () => {
     window.scrollTo({
       top: 0,
       behavior: "smooth",
     });
   };
-  
+
   useEffect(() => {
     const onScroll = () => setShowScrollTop(window.scrollY > 400);
-  
+
     window.addEventListener("scroll", onScroll, { passive: true });
-  
+
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
-      useEffect(() => {
-        const onScroll = () => setShowScrollTop(window.scrollY > 400);
-        window.addEventListener("scroll", onScroll, { passive: true });
-        return () => window.removeEventListener("scroll", onScroll);
-      }, []);
-
+  useEffect(() => {
+    const onScroll = () => setShowScrollTop(window.scrollY > 400);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   useEffect(() => {
     const t = setTimeout(() => setLoaded(true), 60);
@@ -270,8 +334,6 @@ export default function Contact() {
   return (
     <>
       <Navbar />
-
-      
 
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=Manrope:wght@400;500;600;700;800;900&display=swap');
@@ -550,7 +612,14 @@ export default function Contact() {
           aria-label="Scroll to top"
         >
           <span className="scroll-top-arrow flex items-center justify-center text-white">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+            >
               <path d="M18 15l-6-6-6 6" />
             </svg>
           </span>
@@ -559,78 +628,82 @@ export default function Contact() {
 
       {/* ── HERO / CONNECT SECTION ── */}
       <section className="relative px-4 overflow-hidden w-full h-screen flex flex-col items-center justify-center">
+        {/* Background Image */}
+        <div
+          className="absolute inset-0 bg-cover bg-center"
+          style={{
+            backgroundImage:
+              "url('https://images.unsplash.com/photo-1600585154340-be6161a56a0c')",
+          }}
+        />
 
-  {/* Background Image */}
-  <div
-    className="absolute inset-0 bg-cover bg-center"
-    style={{
-      backgroundImage:
-        "url('https://images.unsplash.com/photo-1600585154340-be6161a56a0c')",
-    }}
-  />
+        {/* Black Gradient Overlay */}
+        <div className="absolute inset-0 bg-black/60" />
 
-  {/* Black Gradient Overlay */}
-  <div className="absolute inset-0 bg-black/60" />
+        {/* Content */}
+        <div
+          ref={heroRef}
+          className="relative z-10 max-w-2xl mx-auto text-center"
+          style={{
+            opacity: loaded ? 1 : 0,
+            transform: loaded ? "translateY(0)" : "translateY(30px)",
+            transition: "opacity 0.9s ease 0.1s, transform 0.9s ease 0.1s",
+          }}
+        >
+          {/* Breadcrumb */}
+          <nav className="flex items-center justify-center gap-2 text-xs font-light tracking-[0.22em] uppercase text-gray-300 mb-8">
+            <a href="/" className="hover:text-white transition-colors">
+              Home
+            </a>
+            <span className="text-gray-400 text-[10px]">›</span>
+            <span className="text-white">Contact</span>
+          </nav>
 
+          <h1 className="text-white font-Regular text-4xl sm:text-5xl md:text-6xl leading-tight mb-5">
+            Let's <span className="text-[#E34A2F]">Connect</span> With Us
+          </h1>
 
-  {/* Content */}
-  <div
-    ref={heroRef}
-    className="relative z-10 max-w-2xl mx-auto text-center"
-    style={{
-      opacity: loaded ? 1 : 0,
-      transform: loaded ? "translateY(0)" : "translateY(30px)",
-      transition: "opacity 0.9s ease 0.1s, transform 0.9s ease 0.1s",
-    }}
-  >
-    {/* Breadcrumb */}
-    <nav className="flex items-center justify-center gap-2 text-xs font-light tracking-[0.22em] uppercase text-gray-300 mb-8">
-      <a href="/" className="hover:text-white transition-colors">Home</a>
-      <span className="text-gray-400 text-[10px]">›</span>
-      <span className="text-white">Contact</span>
-    </nav>
+          <p className="text-gray-300 text-base leading-relaxed max-w-md mx-auto mb-10">
+            Let's talk about your project or dream home. Send us a message and
+            we will be in touch within one business day.
+          </p>
 
-    <h1 className="text-white font-Regular text-4xl sm:text-5xl md:text-6xl leading-tight mb-5">
-      Let's <span className="text-[#E34A2F]">Connect</span> With Us
-    </h1>
+          {/* Quick contact pills */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <a
+              href="tel:+918045678900"
+              className="flex items-center gap-3 bg-white/90 hover:bg-white border border-gray-200 rounded-full px-6 py-3 transition-all duration-200 hover:-translate-y-0.5 group"
+            >
+              <span className="w-8 h-8 rounded-full bg-[#E34A2F] flex items-center justify-center flex-shrink-0">
+                <svg viewBox="0 0 24 24" className="w-4 h-4 fill-white">
+                  <path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2a1 1 0 011.01-.24 11.5 11.5 0 003.6.58 1 1 0 011 1V20a1 1 0 01-1 1A17 17 0 013 4a1 1 0 011-1h3.5a1 1 0 011 1 11.5 11.5 0 00.58 3.6 1 1 0 01-.25 1.02l-2.2 2.17z" />
+                </svg>
+              </span>
+              <span className="text-gray-700 font-semibold text-sm">
+                +91 80 4567 8900
+              </span>
+            </a>
 
-    <p className="text-gray-300 text-base leading-relaxed max-w-md mx-auto mb-10">
-      Let's talk about your project or dream home. Send us a message and we will be in touch within one business day.
-    </p>
-
-    {/* Quick contact pills */}
-    <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-      <a
-        href="tel:+918045678900"
-        className="flex items-center gap-3 bg-white/90 hover:bg-white border border-gray-200 rounded-full px-6 py-3 transition-all duration-200 hover:-translate-y-0.5 group"
-      >
-        <span className="w-8 h-8 rounded-full bg-[#E34A2F] flex items-center justify-center flex-shrink-0">
-          <svg viewBox="0 0 24 24" className="w-4 h-4 fill-white">
-            <path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2a1 1 0 011.01-.24 11.5 11.5 0 003.6.58 1 1 0 011 1V20a1 1 0 01-1 1A17 17 0 013 4a1 1 0 011-1h3.5a1 1 0 011 1 11.5 11.5 0 00.58 3.6 1 1 0 01-.25 1.02l-2.2 2.17z" />
-          </svg>
-        </span>
-        <span className="text-gray-700 font-semibold text-sm">+91 80 4567 8900</span>
-      </a>
-
-      <a
-        href="mailto:hello@realestate.com"
-        className="flex items-center gap-3 bg-white/90 hover:bg-white border border-gray-200 rounded-full px-6 py-3 transition-all duration-200 hover:-translate-y-0.5 group"
-      >
-        <span className="w-8 h-8 rounded-full bg-[#E34A2F] flex items-center justify-center flex-shrink-0">
-          <svg viewBox="0 0 24 24" className="w-4 h-4 fill-white">
-            <path d="M20 4H4a2 2 0 00-2 2v12a2 2 0 002 2h16a2 2 0 002-2V6a2 2 0 00-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z" />
-          </svg>
-        </span>
-        <span className="text-gray-700 font-semibold text-sm">hello@realestate.com</span>
-      </a>
-    </div>
-  </div>
-</section>
+            <a
+              href="mailto:hello@realestate.com"
+              className="flex items-center gap-3 bg-white/90 hover:bg-white border border-gray-200 rounded-full px-6 py-3 transition-all duration-200 hover:-translate-y-0.5 group"
+            >
+              <span className="w-8 h-8 rounded-full bg-[#E34A2F] flex items-center justify-center flex-shrink-0">
+                <svg viewBox="0 0 24 24" className="w-4 h-4 fill-white">
+                  <path d="M20 4H4a2 2 0 00-2 2v12a2 2 0 002 2h16a2 2 0 002-2V6a2 2 0 00-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z" />
+                </svg>
+              </span>
+              <span className="text-gray-700 font-semibold text-sm">
+                hello@realestate.com
+              </span>
+            </a>
+          </div>
+        </div>
+      </section>
 
       {/* ── FORM + OFFICE SECTION ── */}
-      <section className="bg-[#F8F7F4] py-20 px-4">
-        <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
-
+      <section className="bg-[#F8F7F4] py-15 sm:py-20 px-2 sm:px-4 lg:px-8 xl:px-12">
+        <div className="w-full grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
           {/* Left — Contact form */}
           <ContactForm />
 
@@ -645,9 +718,13 @@ export default function Contact() {
                 transition: "opacity 0.7s ease, transform 0.7s ease",
               }}
             >
-              <span className="text-[#E34A2F] text-xs font-bold tracking-[0.3em] uppercase mb-3 block">Our Offices</span>
+              <span className="text-[#E34A2F] text-xs font-bold tracking-[0.3em] uppercase mb-3 block">
+                Our Offices
+              </span>
               <h2 className="text-gray-900 font-semibold text-3xl sm:text-4xl mb-8 leading-tight">
-                Some of our<br />office locations
+                Some of our
+                <br />
+                office locations
               </h2>
             </div>
 
@@ -663,7 +740,8 @@ export default function Contact() {
               style={{
                 opacity: officeInView ? 1 : 0,
                 transform: officeInView ? "translateY(0)" : "translateY(24px)",
-                transition: "opacity 0.75s ease 0.35s, transform 0.75s ease 0.35s",
+                transition:
+                  "opacity 0.75s ease 0.35s, transform 0.75s ease 0.35s",
               }}
               className="relative rounded-2xl overflow-hidden shadow-lg"
               style={{ height: "220px" }}
@@ -675,7 +753,9 @@ export default function Contact() {
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
               <div className="absolute bottom-4 left-5 text-white">
-                <p className="text-xs font-bold uppercase tracking-widest text-white/70">Headquarter</p>
+                <p className="text-xs font-bold uppercase tracking-widest text-white/70">
+                  Headquarter
+                </p>
                 <p className="text-sm font-semibold">Bengaluru, Karnataka</p>
               </div>
             </div>
@@ -684,10 +764,12 @@ export default function Contact() {
       </section>
 
       {/* ── MAP SECTION ── */}
-      <section className="bg-white py-20 px-4">
-        <div className="max-w-6xl mx-auto">
+      <section className="bg-white py-15 sm:py-20 px-2 sm:px-4 lg:px-8 xl:px-12">
+        <div className="w-full">
           <div className="text-center mb-12">
-            <span className="text-[#E34A2F] text-xs font-bold tracking-[0.3em] uppercase mb-3 block">Find Us</span>
+            <span className="text-[#E34A2F] text-xs font-bold tracking-[0.3em] uppercase mb-3 block">
+              Find Us
+            </span>
             <h2 className="text-gray-900 font-semibold text-3xl sm:text-4xl">
               Visit our offices on the map
             </h2>
@@ -700,7 +782,6 @@ export default function Contact() {
           <MapSection offices={offices} />
         </div>
       </section>
-
 
       <Footer />
     </>
@@ -739,7 +820,9 @@ function MapSection({ offices }) {
                 : "bg-gray-100 text-gray-600 hover:bg-gray-200"
             }`}
           >
-            <span className={`w-2 h-2 rounded-full ${active === i ? "bg-white" : "bg-[#E34A2F]"}`} />
+            <span
+              className={`w-2 h-2 rounded-full ${active === i ? "bg-white" : "bg-[#E34A2F]"}`}
+            />
             {o.city}
           </button>
         ))}
@@ -754,7 +837,9 @@ function MapSection({ offices }) {
             </svg>
           </div>
           <div>
-            <p className="text-gray-900 font-bold text-sm">{offices[active].city}</p>
+            <p className="text-gray-900 font-bold text-sm">
+              {offices[active].city}
+            </p>
             <p className="text-gray-500 text-xs">{offices[active].address}</p>
           </div>
         </div>
@@ -766,7 +851,15 @@ function MapSection({ offices }) {
             rel="noopener noreferrer"
             className="flex items-center gap-1.5 text-xs font-bold text-white bg-[#E34A2F] hover:bg-[#C13A20] px-4 py-2 rounded-full transition-colors"
           >
-            <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="white"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="w-3.5 h-3.5"
+            >
               <line x1="7" y1="17" x2="17" y2="7" />
               <polyline points="7 7 17 7 17 17" />
             </svg>
@@ -776,7 +869,10 @@ function MapSection({ offices }) {
       </div>
 
       {/* Google Maps embed */}
-      <div className="relative rounded-2xl overflow-hidden border border-gray-200 shadow-sm" style={{ height: "420px" }}>
+      <div
+        className="relative rounded-2xl overflow-hidden border border-gray-200 shadow-sm"
+        style={{ height: "420px" }}
+      >
         <iframe
           key={active}
           title={`Map of ${offices[active].city}`}

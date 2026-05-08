@@ -848,7 +848,7 @@ export default function Home() {
       </section>
 
       {/* ── ABOUT STRIP ── */}
-      <section className="relative bg-[#FDFAF6] py-20 sm:py-28 px-4 sm:px-8 lg:px-16 xl:px-24 overflow-hidden">
+      <section className="relative bg-[#FDFAF6] py-15 sm:py-20 px-4 sm:px-8 lg:px-16 xl:px-24 overflow-hidden">
         {/* Animated blob background */}
         <div
           className="blob-bg absolute -top-40 -right-40 w-[500px] h-[500px] pointer-events-none"
@@ -973,7 +973,7 @@ export default function Home() {
       </section>
 
       {/* ── STATS ── */}
-      <section className="w-full bg-[#FDFAF6] py-12 px-4 sm:px-8 lg:px-16 xl:px-24">
+      <section className="w-full bg-[#FDFAF6] py-10 px-4 sm:px-8 lg:px-16 xl:px-24">
         <div className="w-full">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {STATS.map((item, i) => (
@@ -1013,7 +1013,7 @@ export default function Home() {
       </section>
 
       {/* ── FEATURED PROJECTS ── */}
-      <section className="bg-[#FDFAF6] py-20 sm:py-28 px-4 sm:px-8 lg:px-16 xl:px-24 overflow-hidden">
+      <section className="bg-[#FDFAF6] py-15 sm:py-20 px-4 sm:px-8 lg:px-16 xl:px-24 overflow-hidden">
         <div className="w-full">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-5 mb-6">
             <div>
@@ -1210,7 +1210,7 @@ export default function Home() {
 
       {/* ── PROCESS ── */}
       <section
-        className="relative py-20 sm:py-28 px-4 sm:px-8 lg:px-16 xl:px-24 overflow-hidden"
+        className="relative py-15 sm:py-20 px-4 sm:px-8 lg:px-16 xl:px-24 overflow-hidden"
         style={{
           background:
             "linear-gradient(120deg, #fdf7f5 0%, #f5f5f5 60%, #f5f5f5 100%)",
@@ -1308,7 +1308,7 @@ export default function Home() {
       </section>
 
       {/* ── BLOGS ── */}
-      <section className="bg-[#FDFAF6] py-20 sm:py-28 px-4 sm:px-8 lg:px-16 xl:px-24">
+      <section className="bg-[#FDFAF6] py-15 sm:py-20 px-4 sm:px-8 lg:px-16 xl:px-24">
         <div className="w-full">
           <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-8">
             <FadeUp delay={0}>
@@ -1370,7 +1370,7 @@ export default function Home() {
       </section>
 
       {/* ── CTA BANNER ── */}
-      <section className="bg-[#FDFAF6] px-4 sm:px-8 lg:px-16 xl:px-24 py-10">
+      <section className="bg-[#FDFAF6] px-4 sm:px-8 lg:px-16 xl:px-24 py-5">
         <FadeInScale delay={0}>
           <div
             className="relative w-full rounded-[24px] sm:rounded-[28px] overflow-hidden"

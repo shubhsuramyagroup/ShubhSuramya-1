@@ -145,7 +145,6 @@ function useScrollProgress() {
   return progress;
 }
 
-
 // ── Hook ──────────────────────────────────────────────────────────
 function useInView(threshold = 0.15) {
   const ref = useRef(null);
@@ -222,8 +221,8 @@ function ProjectCard({ project, index, onSelect }) {
       className="relative w-full overflow-hidden cursor-pointer"
       style={{
         height: "560px",
-width: "100%",
-maxWidth: "100%",
+        width: "100%",
+        maxWidth: "100%",
         borderRadius: "20px",
         background: "#fff",
         border: "1px solid #e5e7eb",
@@ -550,10 +549,7 @@ function ExploreMapSection() {
       ref={ref}
       className="relative w-full overflow-hidden bg-[#111111]"
     >
-      {/* Responsive height */}
       <div className="relative h-[420px] sm:h-[520px] md:h-[620px] lg:h-[700px]">
-        
-        {/* Background SVG */}
         <svg
           className="absolute inset-0 w-full h-full"
           xmlns="http://www.w3.org/2000/svg"
@@ -561,7 +557,6 @@ function ExploreMapSection() {
           viewBox="0 0 1200 520"
         >
           <rect width="1200" height="520" fill="#111111" />
-
           <g stroke="#1e1e1e" strokeWidth="8" fill="none">
             <path d="M0 200 Q300 185 600 210 T1200 195" />
             <path d="M0 360 Q400 340 700 370 T1200 355" />
@@ -570,7 +565,6 @@ function ExploreMapSection() {
             <path d="M720 0 Q735 260 710 520" />
             <path d="M980 0 Q965 260 995 520" />
           </g>
-
           <g stroke="#181818" strokeWidth="3" fill="none">
             <path d="M0 100 Q300 90 650 108 T1200 95" />
             <path d="M0 290 Q350 275 700 295 T1200 280" />
@@ -580,7 +574,6 @@ function ExploreMapSection() {
             <path d="M855 0 Q840 260 870 520" />
             <path d="M1100 0 Q1085 260 1110 520" />
           </g>
-
           <g fill="#191919">
             {[
               [10,10,115,75],[175,15,85,60],[300,8,100,80],[455,12,125,70],[625,10,75,85],[745,15,105,65],[890,8,75,78],[1010,12,90,70],[1120,10,70,75],
@@ -595,7 +588,6 @@ function ExploreMapSection() {
           </g>
         </svg>
 
-        {/* Dark Overlay */}
         <div
           className="absolute inset-0"
           style={{
@@ -604,16 +596,14 @@ function ExploreMapSection() {
           }}
         />
 
-        {/* Hide pins on very small screens */}
         <div className="hidden sm:block">
           {nearbyListings.map((listing, i) => (
             <MapPin key={listing.id} listing={listing} index={i} />
           ))}
         </div>
 
-        {/* Content */}
         <div
-          className="absolute inset-0 z-10 flex flex-col items-center justify-center text-center px-5 sm:px-8 md:px-12"
+          className="absolute inset-0 z-10 flex flex-col items-center justify-center text-center px-4"
           style={{
             opacity: inView ? 1 : 0,
             transform: inView
@@ -626,17 +616,13 @@ function ExploreMapSection() {
           <h2 className="text-white font-Semibold leading-[1.1] text-[28px] sm:text-[42px] md:text-[56px] lg:text-[68px] max-w-[280px] sm:max-w-2xl md:max-w-4xl">
             Explore Nearby Homes
           </h2>
-
           <p className="text-white/60 text-[13px] sm:text-base md:text-lg leading-relaxed mt-4 mb-7 max-w-[260px] sm:max-w-lg">
             Browse available homes near you and explore listings in your
             favorite areas.
           </p>
-
           <button
             className="pointer-events-auto px-6 sm:px-8 md:px-10 py-3 sm:py-4 bg-white text-gray-900 font-bold text-sm sm:text-base rounded-full transition-all duration-300 hover:bg-gray-100 hover:-translate-y-1 active:scale-95"
-            style={{
-              boxShadow: "0 8px 32px rgba(0,0,0,0.35)",
-            }}
+            style={{ boxShadow: "0 8px 32px rgba(0,0,0,0.35)" }}
           >
             Get Started
           </button>
@@ -663,21 +649,13 @@ function Reveal({ children, delay = 0, direction = "up", className = "" }) {
 
   const translate =
     direction === "up"
-      ? vis
-        ? "translateY(0)"
-        : "translateY(40px)"
+      ? vis ? "translateY(0)" : "translateY(40px)"
       : direction === "down"
-        ? vis
-          ? "translateY(0)"
-          : "translateY(-40px)"
+        ? vis ? "translateY(0)" : "translateY(-40px)"
         : direction === "left"
-          ? vis
-            ? "translateX(0)"
-            : "translateX(-40px)"
+          ? vis ? "translateX(0)" : "translateX(-40px)"
           : direction === "right"
-            ? vis
-              ? "translateX(0)"
-              : "translateX(40px)"
+            ? vis ? "translateX(0)" : "translateX(40px)"
             : "none";
 
   return (
@@ -695,8 +673,6 @@ function Reveal({ children, delay = 0, direction = "up", className = "" }) {
   );
 }
 
-
-
 // ── Main Project List Page ────────────────────────────────────────
 export default function Project() {
   const [loaded, setLoaded] = useState(false);
@@ -712,25 +688,15 @@ export default function Project() {
     return () => clearTimeout(t);
   }, []);
 
-const scrollToTop = () => {
-  window.scrollTo({
-    top: 0,
-    behavior: "smooth",
-  });
-};
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
-useEffect(() => {
-  const onScroll = () => setShowScrollTop(window.scrollY > 400);
-
-  window.addEventListener("scroll", onScroll, { passive: true });
-
-  return () => window.removeEventListener("scroll", onScroll);
-}, []);
-    useEffect(() => {
-      const onScroll = () => setShowScrollTop(window.scrollY > 400);
-      window.addEventListener("scroll", onScroll, { passive: true });
-      return () => window.removeEventListener("scroll", onScroll);
-    }, []);
+  useEffect(() => {
+    const onScroll = () => setShowScrollTop(window.scrollY > 400);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   const filtered = projects.filter((p) => {
     const statusMatch = activeFilter === "All" || p.status === activeFilter;
@@ -740,98 +706,16 @@ useEffect(() => {
 
   return (
     <>
-      
-
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=Manrope:wght@400;500;600;700;800;900&display=swap');
-
         *, *::before, *::after { box-sizing: border-box; }
+        html, body, #root { overflow-x: hidden; width: 100%; }
+        section, div { min-width: 0; }
+        img, video { max-width: 100%; }
 
-        html,
-body,
-#root {
-  overflow-x: hidden;
-  width: 100%;
-}
-
-section,
-div {
-  min-width: 0;
-}
-
-img,
-video {
-  max-width: 100%;
-}
-
-        @keyframes scrollDrop {
-          0%   { transform:translateY(-100%); opacity:0; }
-          25%  { opacity:1; }
-          100% { transform:translateY(260%); opacity:0; }
-        }
-        @keyframes floatBadge {
-          0%,100% { transform:translateY(0); }
-          50%     { transform:translateY(-5px); }
-        }
-        @keyframes shimmer {
-          0%   { background-position: -200% center; }
-          100% { background-position:  200% center; }
-        }
         @keyframes pulseRing {
           0%   { transform: scale(1); opacity: 0.6; }
           100% { transform: scale(1.8); opacity: 0; }
-        }
-        @keyframes rotateOrbit {
-          from { transform: rotate(0deg) translateX(22px) rotate(0deg); }
-          to   { transform: rotate(360deg) translateX(22px) rotate(-360deg); }
-        }
-        @keyframes heroFadeIn {
-          from { opacity: 0; transform: translateY(40px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes lineDraw {
-          from { width: 0; }
-          to   { width: 48px; }
-        }
-        @keyframes fadeInBadge {
-          from { opacity: 0; transform: translateY(-10px) scale(0.95); }
-          to   { opacity: 1; transform: translateY(0) scale(1); }
-        }
-        @keyframes countUp {
-          from { opacity: 0; transform: translateY(16px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes floatCard {
-          0%, 100% { transform: translateY(0px) rotate(0deg); }
-          33%      { transform: translateY(-8px) rotate(0.5deg); }
-          66%      { transform: translateY(-4px) rotate(-0.5deg); }
-        }
-        @keyframes glowPulse {
-          0%, 100% { box-shadow: 0 0 20px rgba(227,74,47,0.2); }
-          50%       { box-shadow: 0 0 40px rgba(227,74,47,0.4), 0 0 80px rgba(227,74,47,0.1); }
-        }
-        @keyframes slideProgress {
-          from { transform: scaleX(0); }
-          to   { transform: scaleX(1); }
-        }
-        @keyframes morphBlob {
-          0%, 100% { border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; }
-          33%       { border-radius: 30% 60% 70% 40% / 50% 60% 30% 60%; }
-          66%       { border-radius: 50% 60% 30% 60% / 30% 60% 70% 50%; }
-        }
-        @keyframes textReveal {
-          from { clip-path: inset(0 100% 0 0); }
-          to   { clip-path: inset(0 0% 0 0); }
-        }
-        @keyframes spin3D {
-          from { transform: rotateY(0deg); }
-          to   { transform: rotateY(360deg); }
-        }
-        @keyframes scrollLineDrop {
-          0%   { transform: translateY(-100%); opacity: 0; }
-          20%  { opacity: 1; }
-          80%  { opacity: 1; }
-          100% { transform: translateY(200%); opacity: 0; }
         }
         @keyframes scrollTopReveal {
           from { opacity: 0; transform: translateY(16px) scale(0.85); }
@@ -841,68 +725,7 @@ video {
           0%, 100% { transform: translateY(0); }
           50%      { transform: translateY(-4px); }
         }
-        @keyframes float3D {
-          0%, 100% { transform: perspective(600px) rotateX(0deg) rotateY(0deg) translateZ(0); }
-          25%      { transform: perspective(600px) rotateX(2deg) rotateY(3deg) translateZ(8px); }
-          50%      { transform: perspective(600px) rotateX(-1deg) rotateY(-2deg) translateZ(4px); }
-          75%      { transform: perspective(600px) rotateX(1.5deg) rotateY(-3deg) translateZ(6px); }
-        }
-        @keyframes depthPulse {
-          0%, 100% { transform: perspective(800px) translateZ(0px); box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
-          50%      { transform: perspective(800px) translateZ(10px); box-shadow: 0 12px 40px rgba(227,74,47,0.15); }
-        }
-        @keyframes borderTrail {
-          0%   { clip-path: inset(0 100% 100% 0); }
-          25%  { clip-path: inset(0 0 100% 0); }
-          50%  { clip-path: inset(0 0 0 0); }
-          100% { clip-path: inset(0 0 0 0); }
-        }
-        @keyframes statsCountReveal {
-          from { opacity:0; transform: perspective(400px) rotateX(40deg) translateY(20px); }
-          to   { opacity:1; transform: perspective(400px) rotateX(0deg) translateY(0); }
-        }
-        @keyframes waveIn {
-          0%   { transform: scaleY(0) translateY(100%); opacity: 0; }
-          60%  { transform: scaleY(1.08) translateY(-3%); opacity: 1; }
-          100% { transform: scaleY(1) translateY(0); opacity: 1; }
-        }
-        @keyframes processArrowPulse {
-          0%,100% { opacity: 0.4; transform: translateX(0); }
-          50%     { opacity: 1;   transform: translateX(6px); }
-        }
-        @keyframes heroLineGrow {
-          from { width: 0; opacity: 0; }
-          to   { width: 48px; opacity: 1; }
-        }
-        @keyframes heroContentIn {
-          0%   { opacity: 0; transform: translateY(50px) scale(0.97); }
-          100% { opacity: 1; transform: translateY(0) scale(1); }
-        }
-        @keyframes badgePop {
-          0%   { opacity: 0; transform: scale(0.7) translateY(10px); }
-          70%  { transform: scale(1.05) translateY(-2px); }
-          100% { opacity: 1; transform: scale(1) translateY(0); }
-        }
-        @keyframes rotateSlowly {
-          from { transform: rotate(0deg); }
-          to   { transform: rotate(360deg); }
-        }
 
-        /* ── Hero entrance ── */
-        .hero-badge   { animation: badgePop 0.7s cubic-bezier(.34,1.56,.64,1) 0.4s both; }
-        .hero-h1      { animation: heroContentIn 0.9s cubic-bezier(.22,1,.36,1) 0.65s both; }
-        .hero-line    { animation: heroLineGrow 0.6s cubic-bezier(.22,1,.36,1) 1.1s both; }
-        .hero-p       { animation: heroContentIn 0.8s cubic-bezier(.22,1,.36,1) 1.2s both; }
-
-        /* ── Scroll line ── */
-        .scroll-line {
-          animation: scrollLineDrop 1.8s ease-in-out infinite;
-        }
-        .scroll-down-indicator {
-          animation: heroFadeIn 0.8s ease 1.8s both;
-        }
-
-        /* ── Scroll-to-top ── */
         .scroll-top-btn {
           animation: scrollTopReveal 0.4s cubic-bezier(.34,1.56,.64,1) both;
         }
@@ -910,81 +733,6 @@ video {
           animation: scrollTopBounce 0.6s ease infinite;
         }
 
-        /* ── Blog card ── */
-        .blog-card {
-          transition: transform 0.35s cubic-bezier(.22,1,.36,1);
-        }
-        .blog-card:hover {
-          transform: translateY(-6px);
-        }
-        .blog-img {
-          transition: transform 0.6s cubic-bezier(.22,1,.36,1);
-        }
-        .blog-card:hover .blog-img {
-          transform: scale(1.07);
-        }
-
-        /* ── Process card ── */
-        .process-card {
-          transition: transform 0.35s cubic-bezier(.22,1,.36,1), box-shadow 0.35s ease;
-        }
-        .process-card:hover {
-          transform: translateY(-8px) perspective(600px) rotateX(3deg);
-          box-shadow: 0 24px 48px rgba(0,0,0,0.1);
-        }
-
-        /* ── Hero scroll ── */
-        .hero-scroll-indicator {
-          animation: scrollDrop 2s ease-in-out infinite 2s;
-        }
-
-        /* ── Floating ── */
-        .floating-badge {
-          animation: floatBadge 3s ease-in-out infinite;
-        }
-
-        /* ── Blob ── */
-        .blob-bg {
-          animation: morphBlob 8s ease-in-out infinite;
-        }
-
-        /* ── 3D floating card ── */
-        .float-3d {
-          animation: float3D 6s ease-in-out infinite;
-        }
-
-        /* ── Stat card depth ── */
-        .stat-depth {
-          animation: depthPulse 4s ease-in-out infinite;
-        }
-
-        /* ── Process arrow ── */
-        .process-arrow {
-          animation: processArrowPulse 1.6s ease-in-out infinite;
-        }
-
-        /* ── Slowly rotating deco ring ── */
-        .ring-rotate {
-          animation: rotateSlowly 18s linear infinite;
-        }
-
-        /* ── Perspective container ── */
-        .perspective-container {
-          perspective: 1200px;
-          perspective-origin: center center;
-        }
-
-        /* ── Feature card interactive 3D ── */
-        .feature-card-3d {
-          transition: transform 0.25s cubic-bezier(.22,1,.36,1), box-shadow 0.25s ease, border-color 0.25s ease;
-        }
-
-        /* ── Stats 3D section reveal ── */
-        .stats-3d-reveal {
-          transform-style: preserve-3d;
-        }
-
-        /* ── Scroll progress bar ── */
         .scroll-progress-bar {
           position: fixed;
           top: 0;
@@ -995,30 +743,10 @@ video {
           transition: width 0.1s linear;
         }
 
-        /* ── Smooth scrolling ── */
         html { scroll-behavior: smooth; }
-
-        /* ── Custom scrollbar ── */
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: #FDFAF6; }
         ::-webkit-scrollbar-thumb { background: #E34A2F; border-radius: 3px; }
-
-        /* ── Project card image ── */
-        .project-card img {
-          transition: transform 0.6s cubic-bezier(.22,1,.36,1);
-        }
-
-        /* ── Responsive video section ── */
-        @media (max-width: 640px) {
-          .hero-content { padding-bottom: 80px !important; }
-        }
-
-        /* ── Mobile tap ── */
-        @media (hover: none) {
-          .feature-card:hover { transform: none; }
-          .stat-card:hover { transform: none; }
-          .process-card:hover { transform: none; }
-        }
       `}</style>
 
       {/* ── SCROLL PROGRESS BAR ── */}
@@ -1027,13 +755,11 @@ video {
         style={{ width: `${scrollProgress * 100}%` }}
       />
 
-      
-
       {/* ── SCROLL TO TOP BUTTON ── */}
       {showScrollTop && (
         <button
           onClick={scrollToTop}
-          className="scroll-top-btn fixed bottom-6 right-5 sm:bottom-8 sm:right-8 z-[9000] w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-[#E34A2F] flex items-center justify-center shadow-lg hover:bg-[#c73b22] transition-colors duration-200 cursor-pointer"
+          className="scroll-top-btn fixed bottom-6 right-4 z-[9000] w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-[#E34A2F] flex items-center justify-center shadow-lg hover:bg-[#c73b22] transition-colors duration-200 cursor-pointer"
           style={{ boxShadow: "0 4px 20px rgba(227,74,47,0.4)" }}
           aria-label="Scroll to top"
         >
@@ -1046,8 +772,8 @@ video {
       )}
 
       {/* ── HERO ── */}
-<section className="relative w-full h-screen overflow-x-hidden overflow-y-hidden bg-black flex flex-col items-center justify-center">
-  <Navbar />
+      <section className="relative w-full h-screen overflow-hidden bg-black flex flex-col items-center justify-center">
+        <Navbar />
         <div
           className={`absolute inset-0 bg-cover bg-top transition-transform duration-[14000ms] ease-out ${loaded ? "scale-100" : "scale-110"}`}
           style={{
@@ -1065,12 +791,7 @@ video {
             transition: "all 0.9s cubic-bezier(.22,1,.36,1) 0.3s",
           }}
         >
-          <a
-            href="/"
-            className="text-white/55 hover:text-white transition-colors"
-          >
-            Home
-          </a>
+          <a href="/" className="text-white/55 hover:text-white transition-colors">Home</a>
           <span className="text-white/35 text-[10px]">›</span>
           <span className="text-white/90">Projects</span>
         </nav>
@@ -1088,7 +809,7 @@ video {
         </h1>
 
         <p
-          className="relative z-10 text-white/60 text-base font-light mt-5 max-w-md text-center px-6"
+          className="relative z-10 text-white/60 text-base font-light mt-5 max-w-md text-center px-4"
           style={{
             opacity: loaded ? 1 : 0,
             transform: loaded ? "translateY(0)" : "translateY(20px)",
@@ -1113,18 +834,16 @@ video {
             transition: "opacity 1s ease 1.5s",
           }}
         >
-          <span className="text-white/40 text-[10px] tracking-[0.3em] uppercase">
-            Scroll
-          </span>
+          <span className="text-white/40 text-[10px] tracking-[0.3em] uppercase">Scroll</span>
           <div className="w-px h-8 bg-white/30 animate-pulse" />
         </div>
       </section>
 
       {/* ── STATS BAR ── */}
-      <section className="bg-gray-950 py-14">
+      <section className="bg-gray-950 py-10 sm:py-10 px-4 sm:px-8 lg:px-16 xl:px-24">
         <div
           ref={statsRef}
-          className="max-w-5xl mx-auto px-6 grid grid-cols-2 sm:grid-cols-4 gap-10"
+          className="w-full grid grid-cols-2 sm:grid-cols-4 gap-10"
         >
           {stats.map((s, i) => (
             <StatCard key={i} stat={s} index={i} />
@@ -1133,8 +852,8 @@ video {
       </section>
 
       {/* ── PROJECTS SECTION ── */}
-      <section className="bg-[#F8F7F4] py-24 px-4 overflow-hidden">
-        <div className="max-w-5xl mx-auto">
+      <section className="bg-[#F8F7F4] py-15 sm:py-20 px-4 sm:px-8 lg:px-16 xl:px-24 overflow-hidden">
+        <div className="w-full">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-14 gap-6">
             <Reveal direction="left">
               <div>
@@ -1208,9 +927,7 @@ video {
               ))
             ) : (
               <div className="text-center py-24 text-gray-400">
-                <p className="text-lg">
-                  No projects match the selected filters.
-                </p>
+                <p className="text-lg">No projects match the selected filters.</p>
               </div>
             )}
           </div>
@@ -1218,8 +935,8 @@ video {
       </section>
 
       {/* ── PROCESS SECTION ── */}
-      <section className="bg-white py-24 px-4">
-        <div className="max-w-5xl mx-auto">
+      <section className="bg-white py-15 sm:py-20 px-4 sm:px-8 lg:px-16 xl:px-24">
+        <div className="w-full">
           <Reveal direction="up">
             <div className="text-center mb-16">
               <span className="text-[#E34A2F] text-xs font-bold tracking-[0.3em] uppercase mb-3 block">
@@ -1267,16 +984,10 @@ video {
                   className="relative z-10 flex flex-col items-center text-center"
                 >
                   <div className="w-20 h-20 rounded-full bg-white border-2 border-gray-200 hover:border-[#E34A2F] flex items-center justify-center mb-5 shadow-sm transition-colors duration-300">
-                    <span className="text-2xl font-semibold text-[#E34A2F]">
-                      {item.step}
-                    </span>
+                    <span className="text-2xl font-semibold text-[#E34A2F]">{item.step}</span>
                   </div>
-                  <h3 className="text-gray-900 font-bold text-base mb-2">
-                    {item.title}
-                  </h3>
-                  <p className="text-gray-400 text-sm leading-relaxed">
-                    {item.desc}
-                  </p>
+                  <h3 className="text-gray-900 font-bold text-base mb-2">{item.title}</h3>
+                  <p className="text-gray-400 text-sm leading-relaxed">{item.desc}</p>
                 </div>
               );
             })}

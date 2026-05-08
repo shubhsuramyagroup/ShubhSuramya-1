@@ -20,7 +20,7 @@ export default function Footer() {
         }}
       />
 
-      <div className="relative z-10 max-w-6xl mx-auto px-6 sm:px-8 pt-16 pb-12">
+      <div className="relative z-10 w-full py-15 sm:py-20 px-2 sm:px-4 lg:px-8 xl:px-12">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 mb-16">
           {/* 1. BRAND */}
           <div className="flex flex-col gap-5">

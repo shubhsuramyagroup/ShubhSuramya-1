@@ -333,46 +333,6 @@ function useScrollProgress() {
   return progress;
 }
 
-// ── 3D Tilt Card wrapper ──────────────────────────────────────────
-
-function TiltCard({ children, className = "", style = {} }) {
-  const ref = useRef(null);
-  const [tilt, setTilt] = useState({ x: 0, y: 0 });
-  const [hovered, setHovered] = useState(false);
-
-  const handleMouseMove = (e) => {
-    if (!ref.current) return;
-    const rect = ref.current.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width - 0.5) * 18;
-    const y = ((e.clientY - rect.top) / rect.height - 0.5) * -18;
-    setTilt({ x, y });
-  };
-
-  return (
-    <div
-      ref={ref}
-      className={className}
-      style={{
-        ...style,
-        transform: hovered
-          ? `perspective(1000px) rotateX(${tilt.y}deg) rotateY(${tilt.x}deg) translateZ(10px)`
-          : "perspective(1000px) rotateX(0deg) rotateY(0deg) translateZ(0px)",
-        transition: hovered
-          ? "transform 0.1s ease"
-          : "transform 0.6s cubic-bezier(0.25,0.46,0.45,0.94)",
-        transformStyle: "preserve-3d",
-      }}
-      onMouseMove={handleMouseMove}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => {
-        setHovered(false);
-        setTilt({ x: 0, y: 0 });
-      }}
-    >
-      {children}
-    </div>
-  );
-}
 
 // ── TeamCard ──────────────────────────────────────────────────────
 
@@ -381,13 +341,7 @@ function TeamCard({ member, index }) {
   const [hovered, setHovered] = useState(false);
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
 
-  const handleMouseMove = (e) => {
-    if (!ref.current) return;
-    const rect = ref.current.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width - 0.5) * 14;
-    const y = ((e.clientY - rect.top) / rect.height - 0.5) * -14;
-    setTilt({ x, y });
-  };
+
 
   return (
     <div
@@ -399,21 +353,11 @@ function TeamCard({ member, index }) {
         borderRadius: "20px",
         background: "#fff",
         border: "1px solid #e5e7eb",
-        boxShadow: hovered
-          ? "0 28px 72px rgba(0,0,0,0.18)"
-          : "0 4px 24px rgba(0,0,0,0.07)",
-        opacity: inView ? 1 : 0,
-        transform: hovered
-          ? `perspective(1000px) rotateX(${tilt.y}deg) rotateY(${tilt.x}deg) translateY(-6px) translateZ(12px)`
-          : inView
-            ? "translateY(0)"
-            : "translateY(48px)",
         transition: hovered
           ? `box-shadow 0.4s ease, transform 0.12s ease`
           : `opacity 0.75s ease ${index * 0.12}s, transform 0.75s ease ${index * 0.12}s, box-shadow 0.4s ease`,
         transformStyle: "preserve-3d",
       }}
-      onMouseMove={handleMouseMove}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => {
         setHovered(false);
@@ -564,8 +508,7 @@ function AccentLine() {
 function HeroCard({ feature }) {
   const [hovered, setHovered] = useState(false);
   return (
-    <TiltCard
-      /* col-span-2 on desktop grid, full-width on mobile */
+    <div   /* col-span-2 on desktop grid, full-width on mobile */
       className="col-span-1 sm:col-span-2 rounded-[22px] overflow-hidden border border-stone-200 bg-white flex flex-col sm:flex-row"
       style={{
         boxShadow: hovered
@@ -612,14 +555,14 @@ function HeroCard({ feature }) {
           </div>
         </div>
       </div>
-    </TiltCard>
+    </div>
   );
 }
 
 function VirtualToursCard({ feature }) {
   const [hovered, setHovered] = useState(false);
   return (
-    <TiltCard
+    <div
       className="rounded-[22px] overflow-hidden border border-stone-200 bg-white flex flex-col"
       style={{
         boxShadow: hovered
@@ -657,14 +600,14 @@ function VirtualToursCard({ feature }) {
           </span>
         </div>
       </div>
-    </TiltCard>
+    </div>
   );
 }
 
 function BrochureCard({ feature }) {
   const [hovered, setHovered] = useState(false);
   return (
-    <TiltCard
+    <div
       className="rounded-[22px] overflow-hidden border border-stone-200 bg-white"
       style={{
         boxShadow: hovered
@@ -728,7 +671,7 @@ function BrochureCard({ feature }) {
           ))}
         </div>
       </div>
-    </TiltCard>
+    </div>
   );
 }
 
@@ -804,11 +747,6 @@ function ProjectCard({ project, index }) {
   return (
     <div
       ref={ref}
-      style={{
-        opacity: inView ? 1 : 0,
-        transform: inView ? "translateY(0)" : "translateY(48px)",
-        transition: `opacity 0.75s ease ${index * 0.1}s, transform 0.75s ease ${index * 0.1}s`,
-      }}
     >
       <div
         className="relative flex flex-col lg:flex-row overflow-hidden rounded-[20px] w-full"
@@ -818,13 +756,9 @@ function ProjectCard({ project, index }) {
           boxShadow: hovered
             ? "0 20px 60px rgba(228,87,46,0.08), 0 6px 24px rgba(31,42,68,0.08)"
             : "0 4px 24px rgba(31,42,68,0.05)",
-          transform: hovered
-            ? `perspective(1200px) rotateX(${tilt.y}deg) rotateY(${tilt.x}deg)`
-            : "perspective(1200px) rotateX(0) rotateY(0) translateY(0)",
           transition: hovered
             ? "border-color 0.3s, box-shadow 0.3s, transform 0.12s ease"
             : "all 0.45s cubic-bezier(0.25,0.46,0.45,0.94)",
-          transformStyle: "preserve-3d",
         }}
         onMouseMove={handleMouseMove}
         onMouseEnter={() => setHovered(true)}
@@ -893,10 +827,7 @@ function ProjectCard({ project, index }) {
         >
           <div
             className="absolute inset-y-0 left-0 w-10 lg:w-16 z-10 hidden lg:block"
-            style={{
-              background:
-                "linear-gradient(to right, rgba(255,255,255,1), rgba(255,255,255,0))",
-            }}
+            
           />
           <div className="relative z-20 px-3 sm:px-4 py-4 sm:py-5 w-full">
             <img
@@ -904,9 +835,7 @@ function ProjectCard({ project, index }) {
               alt={project.imageAlt}
               className="w-full object-cover rounded-[12px] sm:rounded-[16px]"
               style={{
-                maxHeight: "260px",
-                boxShadow:
-                  "0 24px 60px rgba(31,42,68,0.18), 0 0 0 1px rgba(255,255,255,0.4)",
+                maxHeight: "360px",
                 transform: hovered ? "scale(1.02)" : "scale(1)",
                 transition: "all 0.5s ease",
               }}
@@ -961,9 +890,6 @@ function TestimonialCard({ testimonial, index }) {
           boxShadow: hovered
             ? "0 24px 60px rgba(228,87,46,0.1), 0 4px 20px rgba(0,0,0,0.06)"
             : "0 4px 20px rgba(0,0,0,0.05)",
-          transform: hovered
-            ? `perspective(800px) rotateX(${tilt.y}deg) rotateY(${tilt.x}deg) translateZ(0px)`
-            : "perspective(800px) rotateX(0) rotateY(0) translateZ(0)",
           transition: hovered
             ? "box-shadow 0.3s, transform 0.12s"
             : "box-shadow 0.4s, transform 0.6s cubic-bezier(0.25,0.46,0.45,0.94)",
@@ -990,11 +916,6 @@ function TestimonialCard({ testimonial, index }) {
         </p>
 
         <div className="flex items-center gap-3 pt-4 border-t border-stone-100">
-          <img
-            src={testimonial.image}
-            alt={testimonial.name}
-            className="w-10 h-10 sm:w-11 sm:h-11 rounded-full object-cover flex-shrink-0 ring-2 ring-[#E34A2F]/20"
-          />
           <div className="min-w-0 flex-1">
             <p className="text-stone-800 font-semibold text-[13px] leading-tight">
               {testimonial.name}
@@ -1059,7 +980,7 @@ function TestimonialsSection() {
 
   return (
     <section className="bg-[#F8F7F4] py-14 sm:py-24 px-4 sm:px-6 overflow-x-hidden overflow-y-visible relative">
-      <div className="max-w-6xl mx-auto">
+      <div className="w-full">
         {/* Heading */}
         <div
           ref={headRef}
@@ -1622,8 +1543,8 @@ div {
       </section>
 
       {/* ── WHO WE ARE ── */}
-      <section className="bg-[#F8F7F4] py-14 sm:py-24 px-4 sm:px-6 overflow-hidden">
-        <div className="max-w-5xl mx-auto">
+      <section className="bg-[#F8F7F4] py-15 sm:py-20 px-4 sm:px-8 lg:px-16 xl:px-24 overflow-hidden">
+        <div className="w-full">
           <div className="flex flex-col lg:flex-row gap-10 lg:gap-16 items-center">
             <Reveal direction="left" className="flex-1 w-full">
               <div>
@@ -1715,8 +1636,8 @@ div {
       </section>
 
       {/* ── PLATFORM FEATURES ── */}
-      <section className="bg-[#F5F3EF] py-14 sm:py-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-5xl mx-auto text-center mb-8 sm:mb-14">
+      <section className="bg-[#F5F3EF] py-15 sm:py-20 px-4 sm:px-8 lg:px-16 xl:px-24">
+        <div className="w-full text-center mb-8 sm:mb-14">
           <span className="inline-block text-[10px] tracking-[0.28em] uppercase font-semibold text-[#C04A24] mb-4">
             Platform Features
           </span>
@@ -1743,7 +1664,7 @@ div {
           - Mobile (< sm): single column, all cards stack
           - sm+: 2-column grid, HeroCard spans both columns
         */}
-        <div className="max-w-5xl mx-auto grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-4">
           <HeroCard feature={hero} />
           <VirtualToursCard feature={card2} />
           <BrochureCard feature={card3} />
@@ -1762,10 +1683,10 @@ div {
               "radial-gradient(circle, rgba(228,87,46,0.08) 0%, transparent 72%)",
           }}
         />
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-8 lg:px-20 py-14 sm:py-24 lg:py-32">
+        <div className="relative w-full px-4 sm:px-8 lg:px-20 py-14 sm:py-24 lg:py-32">
           <div className="border-l border-[#E5E7EB] pl-4 sm:pl-8 lg:pl-16">
             <div
-              className="max-w-4xl mb-5 sm:mb-8 transition-all duration-1000"
+              className="w-full mb-5 sm:mb-8 transition-all duration-1000"
               style={{
                 opacity: inView ? 1 : 0,
                 transform: inView ? "translateY(0px)" : "translateY(40px)",
@@ -1832,8 +1753,8 @@ div {
       </section>
 
       {/* ── TIMELINE ── */}
-      <section className="bg-[#F8F7F4] py-14 sm:py-24 px-4 sm:px-6 overflow-hidden">
-        <div className="max-w-5xl mx-auto">
+      <section className="bg-[#F8F7F4] py-15 sm:py-20 px-4 sm:px-8 lg:px-16 xl:px-24 overflow-hidden">
+        <div className="w-full">
           <div className="flex flex-col lg:flex-row gap-10 lg:gap-16">
             <Reveal direction="left" className="lg:w-72 flex-shrink-0">
               <div className="lg:sticky lg:top-24">
@@ -1863,8 +1784,8 @@ div {
       </section>
 
       {/* ── TEAM ── */}
-      <section className="bg-white py-14 sm:py-24 px-4 sm:px-6">
-        <div className="max-w-5xl mx-auto">
+      <section className="bg-white py-15 sm:py-20 px-4 sm:px-8 lg:px-16 xl:px-24">
+        <div className="w-full">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 sm:mb-14 gap-5">
             <Reveal direction="left">
               <div>
@@ -1901,8 +1822,8 @@ div {
       <TestimonialsSection />
 
       {/* ── PROCESS ── */}
-      <section className="bg-[#F8F7F4] py-14 sm:py-24 px-4 sm:px-6 overflow-hidden">
-        <div className="max-w-5xl mx-auto">
+      <section className="bg-[#F8F7F4] py-15 sm:py-20 px-4 sm:px-8 lg:px-16 xl:px-24 overflow-hidden">
+        <div className="w-full">
           <Reveal direction="up">
             <div className="text-center mb-10 sm:mb-16">
               <span className="text-[#E34A2F] text-xs font-bold tracking-[0.3em] uppercase mb-3 block">
@@ -1972,7 +1893,7 @@ div {
       </section>
 
       {/* ── PROJECTS ── */}
-      <section className="relative overflow-hidden bg-[#F8F7F4] pb-14 sm:pb-20 pt-4 px-4 sm:px-6">
+      <section className="relative overflow-hidden bg-[#F8F7F4] py-15 sm:py-20 px-4 sm:px-8 lg:px-16 xl:px-24">
         <div
           className="absolute -top-10 right-0 w-[400px] h-[400px] pointer-events-none"
           style={{
@@ -1987,7 +1908,7 @@ div {
               "radial-gradient(circle, rgba(31,42,68,0.04) 0%, transparent 65%)",
           }}
         />
-        <div className="relative max-w-[980px] mx-auto">
+        <div className="relative w-full">
           <div
             ref={headingRef}
             className="text-center mb-8 sm:mb-14"
