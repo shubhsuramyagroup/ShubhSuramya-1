@@ -275,9 +275,14 @@ function AnimatedCounter({ target, suffix = "" }) {
 function ScrollIndicator() {
   return (
     <div className="scroll-down-indicator flex flex-col items-center gap-1.5">
-      <span className="text-white/50 text-[9px] tracking-[2px] uppercase">Scroll</span>
+      <span className="text-white/50 text-[9px] tracking-[2px] uppercase">
+        Scroll
+      </span>
       <div className="relative w-[1px] h-10 bg-white/20 overflow-hidden rounded-full">
-        <div className="scroll-line absolute top-0 left-0 w-full bg-white/70 rounded-full" style={{ height: "40%" }} />
+        <div
+          className="scroll-line absolute top-0 left-0 w-full bg-white/70 rounded-full"
+          style={{ height: "40%" }}
+        />
       </div>
     </div>
   );
@@ -745,7 +750,14 @@ export default function Home() {
           aria-label="Scroll to top"
         >
           <span className="scroll-top-arrow flex items-center justify-center text-white">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+            >
               <path d="M18 15l-6-6-6 6" />
             </svg>
           </span>
@@ -787,7 +799,11 @@ export default function Home() {
         />
         <div
           className="ring-rotate absolute top-[12%] right-[5%] w-64 h-64 sm:w-96 sm:h-96 rounded-full pointer-events-none"
-          style={{ border: "1px solid rgba(255,90,60,0.06)", animationDirection: "reverse", animationDuration: "28s" }}
+          style={{
+            border: "1px solid rgba(255,90,60,0.06)",
+            animationDirection: "reverse",
+            animationDuration: "28s",
+          }}
         />
 
         <Navbar />
@@ -846,6 +862,118 @@ export default function Home() {
           <ScrollIndicator />
         </div>
       </section>
+
+      <div className="absolute right-6 sm:right-7 top-1/2 -translate-y-1/2 z-30 flex flex-col gap-1.5">
+        {/* Upcoming */}
+        <Link
+          to="/projects"
+          className="group flex items-center justify-end gap-2.5"
+        >
+          <div className="text-right opacity-0 translate-x-2 transition-all duration-250 ease-out group-hover:opacity-100 group-hover:translate-x-0 pointer-events-none">
+            <span className="block text-[10px] tracking-[1.2px] uppercase text-white/85 font-medium">
+              Upcoming
+            </span>
+            <span className="block text-[9px] text-white/40 mt-0.5">
+              3 Projects
+            </span>
+          </div>
+          <div className="w-[42px] h-[42px] rounded-xl flex items-center justify-center border border-white/10 bg-white/5 backdrop-blur-xl transition-all duration-250 ease-out group-hover:border-[rgba(100,160,255,0.5)] group-hover:shadow-[0_0_16px_rgba(100,160,255,0.2)] group-hover:scale-105 relative overflow-hidden">
+            <div className="absolute inset-0 bg-[rgba(100,160,255,0.12)] opacity-0 transition-opacity duration-250 group-hover:opacity-100 rounded-xl" />
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="rgba(200,220,255,0.8)"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="relative z-10"
+            >
+              <circle cx="12" cy="12" r="10" />
+              <polyline points="12 6 12 12 16 14" />
+            </svg>
+          </div>
+        </Link>
+
+        {/* Divider */}
+        <div className="w-px h-5 bg-white/[0.07] self-center mx-auto" />
+
+        {/* Ongoing */}
+        <Link
+          to="/projects"
+          className="group flex items-center justify-end gap-2.5"
+        >
+          <div className="text-right opacity-0 translate-x-2 transition-all duration-250 ease-out group-hover:opacity-100 group-hover:translate-x-0 pointer-events-none">
+            <span className="block text-[10px] tracking-[1.2px] uppercase text-white/85 font-medium">
+              Ongoing
+            </span>
+            <span className="block text-[9px] text-white/40 mt-0.5">
+              5 Projects
+            </span>
+          </div>
+          <div className="w-[42px] h-[42px] rounded-xl flex items-center justify-center border border-white/10 bg-white/5 backdrop-blur-xl transition-all duration-250 ease-out group-hover:border-[rgba(255,90,60,0.5)] group-hover:shadow-[0_0_16px_rgba(255,90,60,0.2)] group-hover:scale-105 relative overflow-hidden">
+            <div className="absolute inset-0 bg-[rgba(255,90,60,0.12)] opacity-0 transition-opacity duration-250 group-hover:opacity-100 rounded-xl" />
+            {/* Pulse dot */}
+            <span className="absolute top-[7px] right-[7px] w-1.5 h-1.5 rounded-full bg-[#FF5A3C]">
+              <span
+                className="absolute inset-0 rounded-full bg-[#FF5A3C]"
+                style={{ animation: "pulseRing 1.6s ease-out infinite" }}
+              />
+            </span>
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="rgba(255,200,190,0.8)"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="relative z-10"
+            >
+              <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+              <path d="M3 3v5h5" />
+              <path d="M12 7v5l4 2" />
+            </svg>
+          </div>
+        </Link>
+
+        {/* Divider */}
+        <div className="w-px h-5 bg-white/[0.07] self-center mx-auto" />
+
+        {/* Completed */}
+        <Link
+          to="/projects"
+          className="group flex items-center justify-end gap-2.5"
+        >
+          <div className="text-right opacity-0 translate-x-2 transition-all duration-250 ease-out group-hover:opacity-100 group-hover:translate-x-0 pointer-events-none">
+            <span className="block text-[10px] tracking-[1.2px] uppercase text-white/85 font-medium">
+              Completed
+            </span>
+            <span className="block text-[9px] text-white/40 mt-0.5">
+              12 Projects
+            </span>
+          </div>
+          <div className="w-[42px] h-[42px] rounded-xl flex items-center justify-center border border-white/10 bg-white/5 backdrop-blur-xl transition-all duration-250 ease-out group-hover:border-[rgba(80,200,140,0.5)] group-hover:shadow-[0_0_16px_rgba(80,200,140,0.2)] group-hover:scale-105 relative overflow-hidden">
+            <div className="absolute inset-0 bg-[rgba(80,200,140,0.12)] opacity-0 transition-opacity duration-250 group-hover:opacity-100 rounded-xl" />
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="rgba(170,240,200,0.8)"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="relative z-10"
+            >
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+              <polyline points="22 4 12 14.01 9 11.01" />
+            </svg>
+          </div>
+        </Link>
+      </div>
 
       {/* ── ABOUT STRIP ── */}
       <section className="relative bg-[#FDFAF6] py-15 sm:py-20 px-4 sm:px-8 lg:px-16 xl:px-24 overflow-hidden">
@@ -933,12 +1061,16 @@ export default function Home() {
                       className="feature-card feature-card-3d rounded-2xl p-4 sm:p-5 border cursor-default bg-white"
                       style={{ borderColor: "rgba(30,42,90,.08)" }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.borderColor = "rgba(227,74,47,.25)";
-                        e.currentTarget.style.boxShadow = "0 8px 32px rgba(227,74,47,.08)";
-                        e.currentTarget.style.transform = "perspective(600px) translateZ(8px)";
+                        e.currentTarget.style.borderColor =
+                          "rgba(227,74,47,.25)";
+                        e.currentTarget.style.boxShadow =
+                          "0 8px 32px rgba(227,74,47,.08)";
+                        e.currentTarget.style.transform =
+                          "perspective(600px) translateZ(8px)";
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.borderColor = "rgba(30,42,90,.08)";
+                        e.currentTarget.style.borderColor =
+                          "rgba(30,42,90,.08)";
                         e.currentTarget.style.boxShadow = "";
                         e.currentTarget.style.transform = "";
                       }}
@@ -946,7 +1078,8 @@ export default function Home() {
                       <div
                         className="w-9 h-9 rounded-xl bg-[#FFF0EC] flex items-center justify-center mb-3 text-[#E34A2F] transition-transform duration-300 group-hover:scale-110"
                         style={{
-                          transition: "transform 0.3s cubic-bezier(.22,1,.36,1)",
+                          transition:
+                            "transform 0.3s cubic-bezier(.22,1,.36,1)",
                         }}
                       >
                         {card.icon}

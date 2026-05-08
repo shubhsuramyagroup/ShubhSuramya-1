@@ -161,6 +161,8 @@ export default function ProjectDetailPage({
   location = "Sanand, Gujarat",
   type = "Residential",
   status = "Under Construction",
+  price = "₹ 2.5 Cr ",
+  brochureUrl = "#",
 }) {
   const [loaded, setLoaded] = useState(false);
   const videoRef = useRef(null);
@@ -513,12 +515,11 @@ export default function ProjectDetailPage({
     },
   ];
 
-  const MAP_EMBED =
-    "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d14694.5!2d72.6525!3d22.9984!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x395e87b1b9e4b1f1%3A0x4c0be1e6b8f7b3b5!2sVastral%2C+Ahmedabad%2C+Gujarat!5e0!3m2!1sen!2sin!4v1700000000000!5m2!1sen!2sin";
+const MAP_EMBED =
+  "https://www.google.com/maps?q=Titanium+City+Center+Ahmedabad&output=embed";
 
   /* 3D tilt refs for cards */
   const tiltAboutImg = useTilt();
-  const tiltMapCard = useTilt();
 
   return (
     <>
@@ -1012,11 +1013,11 @@ body {
       <div className="section-divider mx-4 sm:mx-0" />
 
       {/* ── About Section ── */}
-      <section className="w-full py-15 sm:py-20 px-2 sm:px-4 lg:px-8 xl:px-12 bg-[#F8F7F4] ">
+      <section className="w-full py-15 sm:py-20 px-2 sm:px-4 lg:px-8 xl:px-12 bg-[#F8F7F4]">
         <div className="mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 sm:gap-12 items-stretch">
-          {/* Left: Image with 3D tilt */}
+          {/* Left: Image */}
           <Reveal direction="left" delay={100}>
-            <div ref={tiltAboutImg} className="tilt-card flex flex-col h-full">
+            <div ref={tiltAboutImg} className="flex flex-col h-full">
               <div className="rounded-2xl overflow-hidden flex-1 min-h-[240px] sm:min-h-[320px]">
                 <img
                   src={image}
@@ -1029,20 +1030,24 @@ body {
 
           {/* Right: Content */}
           <div className="flex flex-col justify-between h-full gap-6 md:gap-0">
+            {/* TOP CONTENT */}
             <Reveal direction="right" delay={200}>
               <div className="flex flex-col gap-4 sm:gap-5">
                 <span className="inline-flex w-fit items-center bg-[#FFE9E2] text-[#E4572E] rounded-full px-3 sm:px-4 py-1 sm:py-1.5 text-[10px] sm:text-[11px] tracking-widest">
                   About {projectName}
                 </span>
+
                 <h2 className="text-[clamp(22px,3.5vw,42px)] text-[#1F2A44] leading-tight">
                   {title}
                 </h2>
+
                 <p className="text-[13px] sm:text-[14px] leading-relaxed text-[#5F6B7A]">
                   {description}
                 </p>
               </div>
             </Reveal>
 
+            {/* INFO */}
             <Reveal direction="up" delay={400}>
               <div className="flex flex-wrap gap-5 sm:gap-7 pt-5 sm:pt-6 border-t border-[#E3E6EA] mt-4 sm:mt-6">
                 {[
@@ -1053,16 +1058,72 @@ body {
                   <div
                     key={item.label}
                     className="group"
-                    style={{ transition: `all 0.3s ease ${i * 80}ms` }}
+                    style={{
+                      transition: `all 0.3s ease ${i * 80}ms`,
+                    }}
                   >
                     <p className="text-[10px] tracking-[0.28em] uppercase text-[#A0A8B5] mb-1">
                       {item.label}
                     </p>
+
                     <p className="text-[14px] sm:text-[15px] text-[#1F2A44] group-hover:text-[#E4572E] transition-colors">
                       {item.value}
                     </p>
                   </div>
                 ))}
+              </div>
+            </Reveal>
+
+            {/* PRICE + BUTTON */}
+            <Reveal direction="up" delay={520}>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-5 sm:pt-6 border-t border-[#E3E6EA] mt-2">
+                {/* PRICE */}
+                <div className="flex flex-col gap-0.5">
+                  <p className="text-[10px] tracking-[0.28em] uppercase text-[#A0A8B5]">
+                    Starting Price
+                  </p>
+
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="text-[clamp(22px,2.8vw,32px)] font-semibold text-[#1F2A44] leading-tight tracking-tight">
+                      {price}
+                    </span>
+
+                    <span className="text-[12px] text-[#A0A8B5] font-normal">
+                      onwards
+                    </span>
+                  </div>
+                </div>
+
+                {/* DOWNLOAD BUTTON */}
+                <a
+                  href={brochureUrl}
+                  download
+                  className="group inline-flex items-center gap-2.5 px-5 py-3 rounded-xl border border-[#E3E6EA] bg-white hover:bg-[#E4572E] hover:border-[#E4572E] transition-all duration-300 cursor-pointer self-start sm:self-auto"
+                >
+                  {/* ICON */}
+                  <span className="flex items-center justify-center w-7 h-7 rounded-lg bg-[#FFE9E2] group-hover:bg-white/20 transition-colors duration-300">
+                    <svg
+                      width="15"
+                      height="15"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="text-[#E4572E] group-hover:text-white transition-all duration-300 group-hover:translate-y-0.5"
+                    >
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                      <polyline points="7 10 12 15 17 10" />
+                      <line x1="12" y1="15" x2="12" y2="3" />
+                    </svg>
+                  </span>
+
+                  {/* TEXT */}
+                  <span className="text-[12px] tracking-[0.18em] uppercase font-medium text-[#1F2A44] group-hover:text-white transition-colors duration-300">
+                    Download Brochure
+                  </span>
+                </a>
               </div>
             </Reveal>
           </div>
@@ -1489,9 +1550,7 @@ body {
           </Reveal>
 
           {/* Map with 3D tilt */}
-          <Reveal direction="right" delay={300}>
             <div
-              ref={tiltMapCard}
               className="tilt-card bg-white rounded-2xl overflow-hidden relative min-h-[260px] sm:min-h-[320px]"
             >
               <iframe
@@ -1506,7 +1565,6 @@ body {
                 📍 Vastral, Ahmedabad
               </div>
             </div>
-          </Reveal>
         </div>
       </section>
 

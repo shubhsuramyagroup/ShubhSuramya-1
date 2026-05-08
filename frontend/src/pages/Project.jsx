@@ -14,12 +14,13 @@ const projects = [
     description:
       "Exclusive sea-facing villas designed with modern architecture, private pools, and premium lifestyle amenities.",
     longDescription:
-      "Azure Sky Villas is a landmark development nestled along the pristine coastline of Alibaug. Each villa is an architectural masterpiece — crafted with Italian marble, floor-to-ceiling glass, and bespoke interior design. Residents enjoy panoramic sea views, private infinity pools, and a curated lifestyle of unparalleled luxury. The community is gated, smart-enabled, and surrounded by lush tropical landscaping.",
+      "Azure Sky Villas is a landmark development nestled along the pristine coastline of Alibaug. Each villa is an architectural masterpiece crafted with Italian marble, floor-to-ceiling glass, and bespoke interior design.",
     location: "Alibaug, Mumbai",
     area: "4,500 sq.ft",
     units: "48 Villas",
     timing: "3 weeks",
     price: "₹4.2 Cr onwards",
+    priceValue: 42000000,
     features: [
       ["3D Walkthrough", "Explore villas with immersive 3D experience"],
       ["Private Pools", "Luxury villas with private infinity pools"],
@@ -29,6 +30,7 @@ const projects = [
     image:
       "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&q=80",
   },
+
   {
     id: 2,
     title: "Urban Heights Residency",
@@ -37,12 +39,13 @@ const projects = [
     description:
       "High-rise residential towers offering smart living spaces with skyline views and modern amenities.",
     longDescription:
-      "Urban Heights Residency redefines city living in the heart of Gachibowli. Rising 42 floors above the skyline, each apartment is a sanctuary of light and space. Floor-to-ceiling windows frame dramatic views, while smart home systems bring intuitive control. A world-class clubhouse, sky lounge, and rooftop pool complete the experience — this is urban living elevated.",
+      "Urban Heights Residency redefines city living in the heart of Gachibowli with luxury apartments and skyline experiences.",
     location: "Gachibowli, Hyderabad",
     area: "2,200 sq.ft",
     units: "320 Units",
     timing: "5 weeks",
     price: "₹1.8 Cr onwards",
+    priceValue: 18000000,
     features: [
       ["Sky Lounge", "Rooftop lounge with panoramic city views"],
       ["Clubhouse", "Modern clubhouse with gym & indoor games"],
@@ -52,6 +55,7 @@ const projects = [
     image:
       "https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=1200&q=80",
   },
+
   {
     id: 3,
     title: "Golden Palm Estates",
@@ -60,12 +64,13 @@ const projects = [
     description:
       "A serene gated community offering spacious homes surrounded by greenery and world-class infrastructure.",
     longDescription:
-      "Golden Palm Estates is a completed masterpiece in the heart of Surat — a gated community where modern design meets natural serenity. Each home is built with premium materials, spacious layouts, and abundant natural light. Wide tree-lined avenues, a resort-style amenity block, and 24/7 security make this one of Gujarat's most sought-after residential addresses.",
+      "Golden Palm Estates combines modern architecture with natural serenity and premium community living.",
     location: "Surat, Gujarat",
     area: "3,000 sq.ft",
     units: "150 Homes",
     timing: "Completed",
     price: "₹2.5 Cr onwards",
+    priceValue: 25000000,
     features: [
       ["Gated Community", "Secure and peaceful residential environment"],
       ["Modern Layout", "Spacious floor plans with natural ventilation"],
@@ -74,6 +79,131 @@ const projects = [
     ],
     image:
       "https://images.unsplash.com/photo-1605276374104-dee2a0ed3cd6?w=1200&q=80",
+  },
+
+  {
+    id: 4,
+    title: "Emerald Bay Towers",
+    status: "Upcoming",
+    category: "Luxury Apartments",
+    description:
+      "Ultra-modern waterfront apartments with premium interiors and panoramic ocean views.",
+    longDescription:
+      "Emerald Bay Towers offers a world-class luxury lifestyle with designer residences, rooftop infinity pools, and smart living experiences.",
+    location: "Marine Drive, Mumbai",
+    area: "2,800 sq.ft",
+    units: "210 Apartments",
+    timing: "8 weeks",
+    price: "₹3.6 Cr onwards",
+    priceValue: 36000000,
+    features: [
+      ["Infinity Pool", "Luxury rooftop infinity swimming pool"],
+      ["Ocean View", "Panoramic waterfront apartments"],
+      ["Smart Access", "Digital smart-lock access systems"],
+      ["Fitness Center", "Fully equipped premium fitness studio"],
+    ],
+    image:
+      "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=1200&q=80",
+  },
+
+  {
+    id: 5,
+    title: "Silver Oak Residency",
+    status: "Ongoing",
+    category: "Family Homes",
+    description:
+      "Elegant family residences designed for comfort, greenery, and community living.",
+    longDescription:
+      "Silver Oak Residency blends peaceful surroundings with luxurious family-friendly infrastructure and contemporary architecture.",
+    location: "Ahmedabad, Gujarat",
+    area: "2,400 sq.ft",
+    units: "180 Homes",
+    timing: "4 weeks",
+    price: "₹1.2 Cr onwards",
+    priceValue: 12000000,
+    features: [
+      ["Kids Zone", "Dedicated play zones for children"],
+      ["Green Parks", "Large landscaped gardens and parks"],
+      ["Jogging Track", "Dedicated walking and jogging paths"],
+      ["Community Hall", "Multipurpose community spaces"],
+    ],
+    image:
+      "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=1200&q=80",
+  },
+
+  {
+    id: 6,
+    title: "Royal Crest Villas",
+    status: "Completed",
+    category: "Luxury Villas",
+    description:
+      "Premium private villas with elegant architecture and luxurious lifestyle amenities.",
+    longDescription:
+      "Royal Crest Villas delivers a private luxury experience with spacious interiors, private gardens, and resort-inspired living.",
+    location: "Lonavala, Maharashtra",
+    area: "5,200 sq.ft",
+    units: "32 Villas",
+    timing: "Completed",
+    price: "₹5.8 Cr onwards",
+    priceValue: 58000000,
+    features: [
+      ["Private Garden", "Beautiful landscaped private gardens"],
+      ["Luxury Interiors", "Imported designer interiors"],
+      ["Resort Living", "Resort-inspired community experience"],
+      ["Security", "Premium gated security systems"],
+    ],
+    image:
+      "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=1200&q=80",
+  },
+
+  {
+    id: 7,
+    title: "Skyline Business Hub",
+    status: "Upcoming",
+    category: "Commercial",
+    description:
+      "Modern commercial office spaces with futuristic infrastructure and premium facilities.",
+    longDescription:
+      "Skyline Business Hub is designed for modern enterprises with smart office spaces, coworking zones, and premium business facilities.",
+    location: "BKC, Mumbai",
+    area: "1,800 sq.ft",
+    units: "400 Offices",
+    timing: "6 weeks",
+    price: "₹95 L onwards",
+    priceValue: 9500000,
+    features: [
+      ["Coworking", "Premium coworking and meeting zones"],
+      ["Business Lounge", "Executive business lounges"],
+      ["Parking", "Multi-level dedicated parking"],
+      ["High-Speed Elevators", "Fast smart elevator systems"],
+    ],
+    image:
+      "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1200&q=80",
+  },
+
+  {
+    id: 8,
+    title: "Nature Nest Retreat",
+    status: "Ongoing",
+    category: "Farm Houses",
+    description:
+      "Luxury farmhouse community surrounded by nature, lakes, and peaceful landscapes.",
+    longDescription:
+      "Nature Nest Retreat offers luxurious countryside living with private farmhouses and wellness-inspired amenities.",
+    location: "Udaipur, Rajasthan",
+    area: "6,000 sq.ft",
+    units: "24 Farmhouses",
+    timing: "7 weeks",
+    price: "₹3.1 Cr onwards",
+    priceValue: 31000000,
+    features: [
+      ["Lake View", "Private lake-facing properties"],
+      ["Organic Farms", "Eco-friendly organic farming zones"],
+      ["Clubhouse", "Luxury countryside clubhouse"],
+      ["Wellness Spa", "Nature-inspired wellness spa"],
+    ],
+    image:
+      "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=1200&q=80",
   },
 ];
 
@@ -122,12 +252,19 @@ const nearbyListings = [
   { id: 9, price: "₹51,200", top: "83%", left: "76%", hasThumb: false },
 ];
 
-const filters = ["All", "Upcoming", "Ongoing", "Completed"];
+const filters = ["All", "Ongoing", "Upcoming", "Completed"];
 const typeFilters = [
   "All Types",
-  "Luxury Villas",
   "Apartments",
   "Premium Homes",
+  "Luxury Villas",
+];
+const priceFilters = [
+  "All",
+  "Under ₹50L",
+  "₹50L - ₹1Cr",
+  "₹1Cr - ₹2Cr",
+  "Above ₹2Cr",
 ];
 
 function useScrollProgress() {
@@ -216,216 +353,270 @@ function ProjectCard({ project, index, onSelect }) {
 
   return (
     <Link to="/project-details">
-    <div
-      ref={ref}
-      className="relative w-full overflow-hidden cursor-pointer"
-      style={{
-        height: "560px",
-        width: "100%",
-        maxWidth: "100%",
-        borderRadius: "20px",
-        background: "#fff",
-        border: "1px solid #e5e7eb",
-        boxShadow: hovered
-          ? "0 24px 64px rgba(0,0,0,0.14)"
-          : "0 4px 24px rgba(0,0,0,0.07)",
-        opacity: inView ? 1 : 0,
-        transform: inView ? "translateY(0)" : "translateY(48px)",
-        transition: `opacity 0.75s ease ${index * 0.12}s, transform 0.75s ease ${index * 0.12}s, box-shadow 0.4s ease`,
-      }}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      onClick={() => onSelect(project)}
-    >
-      <img
-        src={project.image}
-        alt={project.title}
-        className="absolute inset-0 w-full h-full object-cover"
-        style={{
-          transform: hovered ? "scale(1.02)" : "scale(1)",
-          transition: "transform 0.7s cubic-bezier(0.25,0.46,0.45,0.94)",
-        }}
-      />
-
       <div
-        className="absolute inset-0"
+        ref={ref}
+        className="relative w-full overflow-hidden cursor-pointer"
         style={{
-          background:
-            "linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, transparent 30%)",
+          height: "560px",
+          width: "100%",
+          maxWidth: "100%",
+          borderRadius: "20px",
+          background: "#fff",
+          border: "1px solid #e5e7eb",
+          boxShadow: hovered
+            ? "0 24px 64px rgba(0,0,0,0.14)"
+            : "0 4px 24px rgba(0,0,0,0.07)",
+          opacity: inView ? 1 : 0,
+          transform: hovered
+            ? "translateY(-6px)"
+            : inView
+            ? "translateY(0)"
+            : "translateY(48px)",
+          transition:
+            "opacity 0.75s ease, transform 0.35s ease, box-shadow 0.35s ease",
         }}
-      />
-
-      <div
-        className="absolute inset-0"
-        style={{
-          background: hovered
-            ? "linear-gradient(to top, rgba(8,8,8,0.97) 0%, rgba(8,8,8,0.85) 42%, rgba(8,8,8,0.25) 72%, transparent 100%)"
-            : "linear-gradient(to top, rgba(8,8,8,0.72) 0%, rgba(8,8,8,0.12) 38%, transparent 60%)",
-          transition: "background 0.55s ease",
-        }}
-      />
-
-      <div className="absolute top-5 left-5 z-10">
-        <StatusBadge status={project.status} />
-      </div>
-
-      <div className="absolute top-5 right-5 z-10">
-        <span
-          className="text-[10px] font-semibold tracking-[0.16em] uppercase"
-          style={{
-            color: "rgba(255,255,255,0.75)",
-            background: "rgba(0,0,0,0.32)",
-            backdropFilter: "blur(8px)",
-            border: "0.5px solid rgba(255,255,255,0.2)",
-            padding: "5px 12px",
-            borderRadius: "999px",
-          }}
-        >
-          {project.category}
-        </span>
-      </div>
-
-      <div
-        className="absolute inset-x-0 bottom-0 z-10 px-7 pb-7 pt-4"
-        style={{
-          transform: hovered ? "translateY(0)" : "translateY(4px)",
-          transition: "transform 0.45s ease",
-        }}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        onClick={() => onSelect(project)}
       >
-        <div
+        {/* IMAGE */}
+        <img
+          src={project.image}
+          alt={project.title}
+          className="absolute inset-0 w-full h-full object-cover"
           style={{
-            maxHeight: hovered ? "230px" : "0px",
-            opacity: hovered ? 1 : 0,
-            overflow: "hidden",
-            transition: "max-height 0.55s ease, opacity 0.4s ease 0.1s",
+            transform: hovered ? "scale(1.03)" : "scale(1)",
+            transition: "transform 0.7s cubic-bezier(0.25,0.46,0.45,0.94)",
+          }}
+        />
+
+        {/* TOP OVERLAY */}
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              "linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, transparent 30%)",
+          }}
+        />
+
+        {/* BOTTOM OVERLAY */}
+        <div
+          className="absolute inset-0"
+          style={{
+            background: hovered
+              ? "linear-gradient(to top, rgba(8,8,8,0.97) 0%, rgba(8,8,8,0.85) 42%, rgba(8,8,8,0.25) 72%, transparent 100%)"
+              : "linear-gradient(to top, rgba(8,8,8,0.75) 0%, rgba(8,8,8,0.15) 38%, transparent 60%)",
+            transition: "background 0.55s ease",
+          }}
+        />
+
+        {/* STATUS */}
+        <div className="absolute top-5 left-5 z-10">
+          <StatusBadge status={project.status} />
+        </div>
+
+        {/* CATEGORY */}
+        <div className="absolute top-5 right-5 z-10">
+          <span
+            className="text-[10px] font-semibold tracking-[0.16em] uppercase"
+            style={{
+              color: "rgba(255,255,255,0.75)",
+              background: "rgba(0,0,0,0.32)",
+              backdropFilter: "blur(8px)",
+              border: "0.5px solid rgba(255,255,255,0.2)",
+              padding: "5px 12px",
+              borderRadius: "999px",
+            }}
+          >
+            {project.category}
+          </span>
+        </div>
+
+        {/* CONTENT */}
+        <div
+          className="absolute inset-x-0 bottom-0 z-10 px-6 sm:px-7 pb-6 sm:pb-7 pt-4"
+          style={{
+            transform: hovered ? "translateY(0)" : "translateY(4px)",
+            transition: "transform 0.45s ease",
           }}
         >
-          <div className="flex flex-col gap-2.5 mb-5">
-            {project.features.map(([title, desc]) => (
-              <div key={title} className="flex items-center gap-3">
-                <CheckIcon />
-                <span
-                  className="text-white font-medium text-sm flex-shrink-0"
-                  style={{ minWidth: "108px" }}
+          {/* HOVER CONTENT */}
+          <div
+            style={{
+              maxHeight: hovered ? "240px" : "0px",
+              opacity: hovered ? 1 : 0,
+              overflow: "hidden",
+              transition: "max-height 0.55s ease, opacity 0.4s ease 0.1s",
+            }}
+          >
+            {/* FEATURES */}
+            <div className="flex flex-col gap-2.5 mb-5">
+              {project.features.map(([title, desc]) => (
+                <div key={title} className="flex items-center gap-3">
+                  <CheckIcon />
+
+                  <span
+                    className="text-white font-medium text-sm flex-shrink-0"
+                    style={{ minWidth: "108px" }}
+                  >
+                    {title}
+                  </span>
+
+                  <span
+                    className="text-sm"
+                    style={{ color: "rgba(255,255,255,0.48)" }}
+                  >
+                    {desc}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            {/* STATS */}
+            <div className="flex items-center gap-5 mb-5 flex-wrap">
+              {/* AREA */}
+              <div>
+                <p
+                  className="text-[10px] uppercase tracking-[0.18em] mb-0.5"
+                  style={{ color: "rgba(255,255,255,0.38)" }}
                 >
-                  {title}
+                  Area
+                </p>
+
+                <p
+                  className="font-semibold text-white"
+                  style={{ fontSize: "15px", lineHeight: 1 }}
+                >
+                  {project.area}
+                </p>
+              </div>
+
+              <div
+                style={{
+                  width: "0.5px",
+                  height: "28px",
+                  background: "rgba(255,255,255,0.15)",
+                }}
+              />
+
+              {/* UNITS */}
+              <div>
+                <p
+                  className="text-[10px] uppercase tracking-[0.18em] mb-0.5"
+                  style={{ color: "rgba(255,255,255,0.38)" }}
+                >
+                  Units
+                </p>
+
+                <p
+                  className="font-semibold text-white"
+                  style={{ fontSize: "15px", lineHeight: 1 }}
+                >
+                  {project.units}
+                </p>
+              </div>
+
+              <div
+                style={{
+                  width: "0.5px",
+                  height: "28px",
+                  background: "rgba(255,255,255,0.15)",
+                }}
+              />
+
+              {/* TIMING */}
+              <div>
+                <p
+                  className="text-[10px] uppercase tracking-[0.18em] mb-0.5"
+                  style={{ color: "rgba(255,255,255,0.38)" }}
+                >
+                  Timing
+                </p>
+
+                <p
+                  className="font-semibold text-white"
+                  style={{ fontSize: "15px", lineHeight: 1 }}
+                >
+                  {project.timing}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* TITLE */}
+          <h3
+            className="text-white font-bold leading-snug mb-3"
+            style={{ fontSize: "clamp(20px, 2vw, 24px)" }}
+          >
+            {project.title}
+          </h3>
+
+          {/* PRICE + LOCATION + BUTTON */}
+          <div className="flex items-end justify-between gap-4 flex-wrap">
+            {/* LEFT */}
+            <div className="flex flex-col gap-3 min-w-0">
+              {/* PRICE */}
+              <div>
+                <span
+                  className="text-[10px] uppercase tracking-[0.18em] mb-1 block"
+                  style={{ color: "rgba(255,255,255,0.38)" }}
+                >
+                  Starting Price
                 </span>
-                <span
-                  className="text-sm"
-                  style={{ color: "rgba(255,255,255,0.48)" }}
+
+                <h4
+                  className="font-bold text-white"
+                  style={{
+                    fontSize: "clamp(18px,2vw,24px)",
+                    lineHeight: 1,
+                  }}
                 >
-                  {desc}
+                  {project.price}
+                </h4>
+              </div>
+
+              {/* LOCATION */}
+              <div className="flex items-center gap-2 min-w-0">
+                <span
+                  className="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center"
+                  style={{ background: "#E34A2F" }}
+                >
+                  <svg viewBox="0 0 24 24" className="w-3 h-3 fill-white">
+                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z" />
+                  </svg>
+                </span>
+
+                <span
+                  className="text-sm truncate"
+                  style={{ color: "rgba(255,255,255,0.65)" }}
+                >
+                  {project.location}
                 </span>
               </div>
-            ))}
-          </div>
-
-          <div className="flex items-center gap-5 mb-5">
-            <div>
-              <p
-                className="text-[10px] uppercase tracking-[0.18em] mb-0.5"
-                style={{ color: "rgba(255,255,255,0.38)" }}
-              >
-                Area
-              </p>
-              <p
-                className="font-semibold text-white"
-                style={{ fontSize: "15px", lineHeight: 1 }}
-              >
-                {project.area}
-              </p>
             </div>
-            <div
-              style={{
-                width: "0.5px",
-                height: "28px",
-                background: "rgba(255,255,255,0.15)",
-              }}
-            />
-            <div>
-              <p
-                className="text-[10px] uppercase tracking-[0.18em] mb-0.5"
-                style={{ color: "rgba(255,255,255,0.38)" }}
+
+            {/* BUTTON */}
+            <Link to="/project-details">
+              <button
+                className="flex-shrink-0 flex items-center gap-1.5 text-xs font-semibold tracking-wider uppercase"
+                style={{
+                  padding: "10px 18px",
+                  borderRadius: "999px",
+                  background: hovered ? "#E34A2F" : "rgba(255,255,255,0.14)",
+                  color: "white",
+                  border: hovered
+                    ? "1px solid #E34A2F"
+                    : "1px solid rgba(255,255,255,0.28)",
+                  transition: "all 0.35s ease",
+                  whiteSpace: "nowrap",
+                }}
               >
-                Units
-              </p>
-              <p
-                className="font-semibold text-white"
-                style={{ fontSize: "15px", lineHeight: 1 }}
-              >
-                {project.units}
-              </p>
-            </div>
-            <div
-              style={{
-                width: "0.5px",
-                height: "28px",
-                background: "rgba(255,255,255,0.15)",
-              }}
-            />
-            <div>
-              <p
-                className="text-[10px] uppercase tracking-[0.18em] mb-0.5"
-                style={{ color: "rgba(255,255,255,0.38)" }}
-              >
-                Timing
-              </p>
-              <p
-                className="font-semibold text-white"
-                style={{ fontSize: "15px", lineHeight: 1 }}
-              >
-                {project.timing}
-              </p>
-            </div>
+                View Details
+              </button>
+            </Link>
           </div>
-        </div>
-
-        <h3
-          className="text-white font-bold leading-snug mb-2.5"
-          style={{ fontSize: "clamp(18px, 2vw, 22px)" }}
-        >
-          {project.title}
-        </h3>
-
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2 min-w-0">
-            <span
-              className="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center"
-              style={{ background: "#E34A2F" }}
-            >
-              <svg viewBox="0 0 24 24" className="w-3 h-3 fill-white">
-                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z" />
-              </svg>
-            </span>
-            <span
-              className="text-sm truncate"
-              style={{ color: "rgba(255,255,255,0.6)" }}
-            >
-              {project.location}
-            </span>
-          </div>
-
-          <Link to="/project-details">
-            <button
-              className="flex-shrink-0 flex items-center gap-1.5 text-xs font-semibold tracking-wider uppercase"
-              style={{
-                padding: "8px 18px",
-                borderRadius: "999px",
-                background: hovered ? "#E34A2F" : "rgba(255,255,255,0.14)",
-                color: "white",
-                border: hovered
-                  ? "1px solid #E34A2F"
-                  : "1px solid rgba(255,255,255,0.28)",
-                transition: "all 0.35s ease",
-                whiteSpace: "nowrap",
-              }}
-            >
-              View Details
-            </button>
-          </Link>
         </div>
       </div>
-    </div>
     </Link>
   );
 }
@@ -545,10 +736,7 @@ function ExploreMapSection() {
   const [ref, inView] = useInView(0.1);
 
   return (
-    <section
-      ref={ref}
-      className="relative w-full overflow-hidden bg-[#111111]"
-    >
+    <section ref={ref} className="relative w-full overflow-hidden bg-[#111111]">
       <div className="relative h-[420px] sm:h-[520px] md:h-[620px] lg:h-[700px]">
         <svg
           className="absolute inset-0 w-full h-full"
@@ -576,12 +764,60 @@ function ExploreMapSection() {
           </g>
           <g fill="#191919">
             {[
-              [10,10,115,75],[175,15,85,60],[300,8,100,80],[455,12,125,70],[625,10,75,85],[745,15,105,65],[890,8,75,78],[1010,12,90,70],[1120,10,70,75],
-              [10,115,105,55],[175,110,80,60],[300,118,95,50],[455,112,115,58],[625,115,80,55],[745,108,100,60],[890,112,80,55],[1010,115,85,52],[1120,110,70,58],
-              [10,220,110,60],[175,215,90,65],[300,222,100,55],[455,218,120,62],[625,220,75,58],[745,215,105,62],[890,222,80,55],[1010,220,90,58],[1120,215,70,62],
-              [10,305,105,30],[175,300,80,35],[300,308,100,28],[455,303,115,32],[625,305,80,30],[745,300,100,35],[890,305,80,30],[1010,302,85,33],[1120,300,70,35],
-              [10,375,110,65],[175,370,90,70],[300,378,100,60],[455,372,120,68],[625,375,75,65],[745,370,105,68],[890,378,80,62],[1010,374,90,66],[1120,370,70,68],
-              [10,460,105,55],[175,455,80,60],[300,462,100,52],[455,458,115,56],[625,460,80,54],[745,455,100,60],[890,460,80,54],[1010,458,85,56],[1120,455,70,60],
+              [10, 10, 115, 75],
+              [175, 15, 85, 60],
+              [300, 8, 100, 80],
+              [455, 12, 125, 70],
+              [625, 10, 75, 85],
+              [745, 15, 105, 65],
+              [890, 8, 75, 78],
+              [1010, 12, 90, 70],
+              [1120, 10, 70, 75],
+              [10, 115, 105, 55],
+              [175, 110, 80, 60],
+              [300, 118, 95, 50],
+              [455, 112, 115, 58],
+              [625, 115, 80, 55],
+              [745, 108, 100, 60],
+              [890, 112, 80, 55],
+              [1010, 115, 85, 52],
+              [1120, 110, 70, 58],
+              [10, 220, 110, 60],
+              [175, 215, 90, 65],
+              [300, 222, 100, 55],
+              [455, 218, 120, 62],
+              [625, 220, 75, 58],
+              [745, 215, 105, 62],
+              [890, 222, 80, 55],
+              [1010, 220, 90, 58],
+              [1120, 215, 70, 62],
+              [10, 305, 105, 30],
+              [175, 300, 80, 35],
+              [300, 308, 100, 28],
+              [455, 303, 115, 32],
+              [625, 305, 80, 30],
+              [745, 300, 100, 35],
+              [890, 305, 80, 30],
+              [1010, 302, 85, 33],
+              [1120, 300, 70, 35],
+              [10, 375, 110, 65],
+              [175, 370, 90, 70],
+              [300, 378, 100, 60],
+              [455, 372, 120, 68],
+              [625, 375, 75, 65],
+              [745, 370, 105, 68],
+              [890, 378, 80, 62],
+              [1010, 374, 90, 66],
+              [1120, 370, 70, 68],
+              [10, 460, 105, 55],
+              [175, 455, 80, 60],
+              [300, 462, 100, 52],
+              [455, 458, 115, 56],
+              [625, 460, 80, 54],
+              [745, 455, 100, 60],
+              [890, 460, 80, 54],
+              [1010, 458, 85, 56],
+              [1120, 455, 70, 60],
             ].map(([x, y, w, h], i) => (
               <rect key={i} x={x} y={y} width={w} height={h} rx="3" />
             ))}
@@ -649,13 +885,21 @@ function Reveal({ children, delay = 0, direction = "up", className = "" }) {
 
   const translate =
     direction === "up"
-      ? vis ? "translateY(0)" : "translateY(40px)"
+      ? vis
+        ? "translateY(0)"
+        : "translateY(40px)"
       : direction === "down"
-        ? vis ? "translateY(0)" : "translateY(-40px)"
+        ? vis
+          ? "translateY(0)"
+          : "translateY(-40px)"
         : direction === "left"
-          ? vis ? "translateX(0)" : "translateX(-40px)"
+          ? vis
+            ? "translateX(0)"
+            : "translateX(-40px)"
           : direction === "right"
-            ? vis ? "translateX(0)" : "translateX(40px)"
+            ? vis
+              ? "translateX(0)"
+              : "translateX(40px)"
             : "none";
 
   return (
@@ -678,6 +922,7 @@ export default function Project() {
   const [loaded, setLoaded] = useState(false);
   const [activeFilter, setActiveFilter] = useState("All");
   const [activeType, setActiveType] = useState("All Types");
+  const [activePrice, setActivePrice] = useState("All");
   const [selectedProject, setSelectedProject] = useState(null);
   const [statsRef] = useInView(0.2);
   const scrollProgress = useScrollProgress();
@@ -698,11 +943,31 @@ export default function Project() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const filtered = projects.filter((p) => {
-    const statusMatch = activeFilter === "All" || p.status === activeFilter;
-    const typeMatch = activeType === "All Types" || p.category === activeType;
-    return statusMatch && typeMatch;
-  });
+const filtered = projects.filter((p) => {
+  const statusMatch =
+    activeFilter === "All" || p.status === activeFilter;
+
+  const typeMatch =
+    activeType === "All Types" || p.category === activeType;
+
+  let priceMatch = true;
+
+  if (activePrice === "Under ₹50L") {
+    priceMatch = p.priceValue < 5000000;
+  } else if (activePrice === "₹50L - ₹1Cr") {
+    priceMatch =
+      p.priceValue >= 5000000 &&
+      p.priceValue <= 10000000;
+  } else if (activePrice === "₹1Cr - ₹2Cr") {
+    priceMatch =
+      p.priceValue > 10000000 &&
+      p.priceValue <= 20000000;
+  } else if (activePrice === "Above ₹2Cr") {
+    priceMatch = p.priceValue > 20000000;
+  }
+
+  return statusMatch && typeMatch && priceMatch;
+});
 
   return (
     <>
@@ -764,7 +1029,14 @@ export default function Project() {
           aria-label="Scroll to top"
         >
           <span className="scroll-top-arrow flex items-center justify-center text-white">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+            >
               <path d="M18 15l-6-6-6 6" />
             </svg>
           </span>
@@ -791,7 +1063,12 @@ export default function Project() {
             transition: "all 0.9s cubic-bezier(.22,1,.36,1) 0.3s",
           }}
         >
-          <a href="/" className="text-white/55 hover:text-white transition-colors">Home</a>
+          <a
+            href="/"
+            className="text-white/55 hover:text-white transition-colors"
+          >
+            Home
+          </a>
           <span className="text-white/35 text-[10px]">›</span>
           <span className="text-white/90">Projects</span>
         </nav>
@@ -834,7 +1111,9 @@ export default function Project() {
             transition: "opacity 1s ease 1.5s",
           }}
         >
-          <span className="text-white/40 text-[10px] tracking-[0.3em] uppercase">Scroll</span>
+          <span className="text-white/40 text-[10px] tracking-[0.3em] uppercase">
+            Scroll
+          </span>
           <div className="w-px h-8 bg-white/30 animate-pulse" />
         </div>
       </section>
@@ -876,35 +1155,64 @@ export default function Project() {
           </div>
 
           <Reveal direction="up" delay={0.05}>
-            <div className="flex flex-col sm:flex-row gap-4 mb-12">
-              <div className="flex flex-wrap gap-2">
-                {filters.map((f) => (
-                  <button
-                    key={f}
-                    onClick={() => setActiveFilter(f)}
-                    className={`text-sm font-medium px-4 py-2 rounded-full transition-all duration-200 ${
-                      activeFilter === f
-                        ? "bg-[#E34A2F] text-white shadow-sm"
-                        : "bg-white text-gray-600 border border-gray-200 hover:border-gray-400"
-                    }`}
-                  >
-                    {f}
-                  </button>
-                ))}
+            <div className="flex flex-col gap-4 mb-12">
+              {/* TOP FILTERS */}
+              <div className="flex flex-col lg:flex-row lg:items-center gap-4">
+                {/* CATEGORY FILTER */}
+                <div className="flex flex-wrap gap-2">
+                  {filters.map((f) => (
+                    <button
+                      key={f}
+                      onClick={() => setActiveFilter(f)}
+                      className={`text-sm font-medium px-4 py-2 rounded-full transition-all duration-200 ${
+                        activeFilter === f
+                          ? "bg-[#E34A2F] text-white shadow-sm"
+                          : "bg-white text-gray-600 border border-gray-200 hover:border-gray-400"
+                      }`}
+                    >
+                      {f}
+                    </button>
+                  ))}
+                </div>
+
+                {/* DIVIDER */}
+                <div className="hidden lg:block w-px h-10 bg-gray-200" />
+
+                {/* TYPE FILTER */}
+                <div className="flex flex-wrap gap-2">
+                  {typeFilters.map((f) => (
+                    <button
+                      key={f}
+                      onClick={() => setActiveType(f)}
+                      className={`text-sm font-medium px-4 py-2 rounded-full transition-all duration-200 ${
+                        activeType === f
+                          ? "bg-gray-900 text-white shadow-sm"
+                          : "bg-white text-gray-600 border border-gray-200 hover:border-gray-400"
+                      }`}
+                    >
+                      {f}
+                    </button>
+                  ))}
+                </div>
               </div>
-              <div className="hidden sm:block w-px bg-gray-200 self-stretch" />
-              <div className="flex flex-wrap gap-2">
-                {typeFilters.map((f) => (
+
+              {/* PRICE FILTER */}
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="text-sm font-medium text-gray-500">
+                  Price Range:
+                </span>
+
+                {priceFilters.map((price) => (
                   <button
-                    key={f}
-                    onClick={() => setActiveType(f)}
+                    key={price}
+                    onClick={() => setActivePrice(price)}
                     className={`text-sm font-medium px-4 py-2 rounded-full transition-all duration-200 ${
-                      activeType === f
-                        ? "bg-gray-900 text-white shadow-sm"
+                      activePrice === price
+                        ? "bg-[#1a2332] text-white shadow-sm"
                         : "bg-white text-gray-600 border border-gray-200 hover:border-gray-400"
                     }`}
                   >
-                    {f}
+                    {price}
                   </button>
                 ))}
               </div>
@@ -927,7 +1235,9 @@ export default function Project() {
               ))
             ) : (
               <div className="text-center py-24 text-gray-400">
-                <p className="text-lg">No projects match the selected filters.</p>
+                <p className="text-lg">
+                  No projects match the selected filters.
+                </p>
               </div>
             )}
           </div>
@@ -984,10 +1294,16 @@ export default function Project() {
                   className="relative z-10 flex flex-col items-center text-center"
                 >
                   <div className="w-20 h-20 rounded-full bg-white border-2 border-gray-200 hover:border-[#E34A2F] flex items-center justify-center mb-5 shadow-sm transition-colors duration-300">
-                    <span className="text-2xl font-semibold text-[#E34A2F]">{item.step}</span>
+                    <span className="text-2xl font-semibold text-[#E34A2F]">
+                      {item.step}
+                    </span>
                   </div>
-                  <h3 className="text-gray-900 font-bold text-base mb-2">{item.title}</h3>
-                  <p className="text-gray-400 text-sm leading-relaxed">{item.desc}</p>
+                  <h3 className="text-gray-900 font-bold text-base mb-2">
+                    {item.title}
+                  </h3>
+                  <p className="text-gray-400 text-sm leading-relaxed">
+                    {item.desc}
+                  </p>
                 </div>
               );
             })}
