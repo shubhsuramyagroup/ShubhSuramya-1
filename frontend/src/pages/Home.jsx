@@ -740,7 +740,7 @@ export default function Home() {
       {showScrollTop && (
         <button
           onClick={scrollToTop}
-          className="scroll-top-btn fixed bottom-6 right-5 sm:bottom-8 sm:right-8 z-[9000] w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-[#E34A2F] flex items-center justify-center shadow-lg hover:bg-[#c73b22] transition-colors duration-200 cursor-pointer"
+          className="scroll-top-btn fixed bottom-6 right-4 sm:bottom-8 sm:right-6 lg:right-8 z-[9000] w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-[#E34A2F] flex items-center justify-center shadow-lg hover:bg-[#c73b22] transition-colors duration-200 cursor-pointer"
           style={{ boxShadow: "0 4px 20px rgba(227,74,47,0.4)" }}
           aria-label="Scroll to top"
         >
@@ -794,7 +794,7 @@ export default function Home() {
 
         {/* Hero content with parallax */}
         <div
-          className="hero-content relative z-20 h-full flex flex-col items-start justify-end text-left px-6 sm:px-8 pb-8 sm:pb-10 max-w-xl"
+          className="hero-content relative z-20 h-full flex flex-col items-start justify-end text-left px-4 sm:px-8 lg:px-16 pb-8 sm:pb-10 max-w-xl"
           style={{ transform: `translateY(${heroOffset * 0.15}px)` }}
         >
           <div className="hero-badge inline-flex items-center gap-2 rounded-full px-4 py-1.5 border border-white/20 bg-white/10 backdrop-blur-md mb-4">
@@ -848,7 +848,7 @@ export default function Home() {
       </section>
 
       {/* ── ABOUT STRIP ── */}
-      <section className="relative bg-[#FDFAF6] py-20 sm:py-28 px-5 sm:px-8 overflow-hidden">
+      <section className="relative bg-[#FDFAF6] py-20 sm:py-28 px-4 sm:px-8 lg:px-16 xl:px-24 overflow-hidden">
         {/* Animated blob background */}
         <div
           className="blob-bg absolute -top-40 -right-40 w-[500px] h-[500px] pointer-events-none"
@@ -876,7 +876,7 @@ export default function Home() {
           }}
         />
 
-        <div className="relative max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-20 items-center">
+        <div className="relative w-full grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-20 items-center">
           <SlideInLeft delay={0}>
             <div>
               <p className="text-[#E34A2F] text-[10.5px] font-bold tracking-[2.5px] uppercase mb-3">
@@ -973,8 +973,8 @@ export default function Home() {
       </section>
 
       {/* ── STATS ── */}
-      <section className="w-full bg-[#FDFAF6] py-12 px-5 sm:px-8">
-        <div className="max-w-7xl mx-auto">
+      <section className="w-full bg-[#FDFAF6] py-12 px-4 sm:px-8 lg:px-16 xl:px-24">
+        <div className="w-full">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {STATS.map((item, i) => (
               <FlipInUp key={i} delay={i * 130}>
@@ -1013,8 +1013,8 @@ export default function Home() {
       </section>
 
       {/* ── FEATURED PROJECTS ── */}
-      <section className="bg-[#FDFAF6] py-20 sm:py-28 px-5 sm:px-8 overflow-hidden">
-        <div className="max-w-6xl mx-auto">
+      <section className="bg-[#FDFAF6] py-20 sm:py-28 px-4 sm:px-8 lg:px-16 xl:px-24 overflow-hidden">
+        <div className="w-full">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-5 mb-6">
             <div>
               <FadeUp delay={0}>
@@ -1210,7 +1210,7 @@ export default function Home() {
 
       {/* ── PROCESS ── */}
       <section
-        className="relative py-20 sm:py-28 px-5 sm:px-8 overflow-hidden"
+        className="relative py-20 sm:py-28 px-4 sm:px-8 lg:px-16 xl:px-24 overflow-hidden"
         style={{
           background:
             "linear-gradient(120deg, #fdf7f5 0%, #f5f5f5 60%, #f5f5f5 100%)",
@@ -1240,7 +1240,7 @@ export default function Home() {
           }}
         />
 
-        <div className="relative max-w-6xl mx-auto">
+        <div className="relative w-full">
           {/* Top content */}
           <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-14 gap-6">
             <SlideInLeft delay={0}>
@@ -1308,8 +1308,8 @@ export default function Home() {
       </section>
 
       {/* ── BLOGS ── */}
-      <section className="bg-[#FDFAF6] py-20 sm:py-28 px-5 sm:px-8">
-        <div className="max-w-6xl mx-auto">
+      <section className="bg-[#FDFAF6] py-20 sm:py-28 px-4 sm:px-8 lg:px-16 xl:px-24">
+        <div className="w-full">
           <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-8">
             <FadeUp delay={0}>
               <div>
@@ -1370,10 +1370,10 @@ export default function Home() {
       </section>
 
       {/* ── CTA BANNER ── */}
-      <section className="bg-[#FDFAF6] px-5 sm:px-8 py-10">
+      <section className="bg-[#FDFAF6] px-4 sm:px-8 lg:px-16 xl:px-24 py-10">
         <FadeInScale delay={0}>
           <div
-            className="relative max-w-6xl mx-auto rounded-[24px] sm:rounded-[28px] overflow-hidden"
+            className="relative w-full rounded-[24px] sm:rounded-[28px] overflow-hidden"
             style={{ minHeight: 420 }}
           >
             {/* Background Image with parallax */}
@@ -1411,7 +1411,7 @@ export default function Home() {
             </div>
 
             {/* Content */}
-            <div className="relative z-10 flex flex-col items-center justify-center text-center h-full min-h-[420px] px-6 py-16">
+            <div className="relative z-10 flex flex-col items-center justify-center text-center h-full min-h-[420px] px-4 py-16">
               <FadeUp delay={0}>
                 <div className="inline-flex items-center gap-2 rounded-full px-4 py-1.5 border border-white/20 bg-white/10 backdrop-blur-md mb-6">
                   <span className="w-1.5 h-1.5 rounded-full bg-[#FF5A3C]" />
