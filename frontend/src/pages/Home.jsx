@@ -863,117 +863,97 @@ export default function Home() {
         </div>
       </section>
 
-      <div className="absolute right-6 sm:right-7 top-1/2 -translate-y-1/2 z-30 flex flex-col gap-1.5">
-        {/* Upcoming */}
-        <Link
-          to="/projects"
-          className="group flex items-center justify-end gap-2.5"
-        >
-          <div className="text-right opacity-0 translate-x-2 transition-all duration-250 ease-out group-hover:opacity-100 group-hover:translate-x-0 pointer-events-none">
-            <span className="block text-[10px] tracking-[1.2px] uppercase text-white/85 font-medium">
-              Upcoming
-            </span>
-            <span className="block text-[9px] text-white/40 mt-0.5">
-              3 Projects
-            </span>
-          </div>
-          <div className="w-[42px] h-[42px] rounded-xl flex items-center justify-center border border-white/10 bg-white/5 backdrop-blur-xl transition-all duration-250 ease-out group-hover:border-[rgba(100,160,255,0.5)] group-hover:shadow-[0_0_16px_rgba(100,160,255,0.2)] group-hover:scale-105 relative overflow-hidden">
-            <div className="absolute inset-0 bg-[rgba(100,160,255,0.12)] opacity-0 transition-opacity duration-250 group-hover:opacity-100 rounded-xl" />
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="rgba(200,220,255,0.8)"
-              strokeWidth="1.6"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="relative z-10"
-            >
-              <circle cx="12" cy="12" r="10" />
-              <polyline points="12 6 12 12 16 14" />
-            </svg>
-          </div>
-        </Link>
+      {/* ── SIDEBAR ICONS — only on hero ── */}
+<div className="absolute right-3 sm:right-5 lg:right-7 top-1/2 -translate-y-1/2 z-30 flex flex-col gap-2 items-end">
 
-        {/* Divider */}
-        <div className="w-px h-5 bg-white/[0.07] self-center mx-auto" />
+  {/* UPCOMING — House */}
+  <Link to="/project-details" className="group flex items-center justify-end gap-2 sm:gap-3">
+    <div className="hidden sm:block text-right opacity-0 translate-x-2.5 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 ease-out pointer-events-none">
+      <span className="block text-[11px] sm:text-[11.5px] tracking-[1.1px] uppercase text-white/90 font-semibold leading-tight">
+        Upcoming
+      </span>
+      <span className="block text-[9px] sm:text-[10px] text-white/40 mt-0.5">
+        3 Projects
+      </span>
+    </div>
+    <div className="w-[40px] h-[40px] sm:w-[46px] sm:h-[46px] lg:w-[50px] lg:h-[50px] rounded-xl sm:rounded-[14px] flex items-center justify-center border border-white/10 sm:border-[1.5px] bg-white/[0.06] backdrop-blur-xl transition-all duration-300 group-hover:border-[rgba(100,160,255,0.65)] group-hover:bg-[rgba(100,160,255,0.12)] group-hover:shadow-[0_0_18px_rgba(100,160,255,0.28)] group-hover:scale-110 relative overflow-hidden flex-shrink-0">
+      <svg className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7 relative z-10 transition-transform duration-300 group-hover:scale-110" viewBox="0 0 32 32" fill="none">
+        <polygon points="16,4 3,16 6,16 6,28 26,28 26,16 29,16" fill="#64A0FF" />
+        <rect x="12" y="20" width="8" height="8" rx="4" fill="#2a6fcf" />
+        <rect x="20" y="7" width="3" height="5" fill="#64A0FF" />
+      </svg>
+    </div>
+  </Link>
 
-        {/* Ongoing */}
-        <Link
-          to="/projects"
-          className="group flex items-center justify-end gap-2.5"
-        >
-          <div className="text-right opacity-0 translate-x-2 transition-all duration-250 ease-out group-hover:opacity-100 group-hover:translate-x-0 pointer-events-none">
-            <span className="block text-[10px] tracking-[1.2px] uppercase text-white/85 font-medium">
-              Ongoing
-            </span>
-            <span className="block text-[9px] text-white/40 mt-0.5">
-              5 Projects
-            </span>
-          </div>
-          <div className="w-[42px] h-[42px] rounded-xl flex items-center justify-center border border-white/10 bg-white/5 backdrop-blur-xl transition-all duration-250 ease-out group-hover:border-[rgba(255,90,60,0.5)] group-hover:shadow-[0_0_16px_rgba(255,90,60,0.2)] group-hover:scale-105 relative overflow-hidden">
-            <div className="absolute inset-0 bg-[rgba(255,90,60,0.12)] opacity-0 transition-opacity duration-250 group-hover:opacity-100 rounded-xl" />
-            {/* Pulse dot */}
-            <span className="absolute top-[7px] right-[7px] w-1.5 h-1.5 rounded-full bg-[#FF5A3C]">
-              <span
-                className="absolute inset-0 rounded-full bg-[#FF5A3C]"
-                style={{ animation: "pulseRing 1.6s ease-out infinite" }}
-              />
-            </span>
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="rgba(255,200,190,0.8)"
-              strokeWidth="1.6"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="relative z-10"
-            >
-              <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
-              <path d="M3 3v5h5" />
-              <path d="M12 7v5l4 2" />
-            </svg>
-          </div>
-        </Link>
+  <div className="w-px h-3 sm:h-4 bg-white/[0.07] self-end mr-[19px] sm:mr-[22px] lg:mr-[24px]" />
 
-        {/* Divider */}
-        <div className="w-px h-5 bg-white/[0.07] self-center mx-auto" />
+  {/* ONGOING — Apartment building */}
+  <Link to="/project-details" className="group flex items-center justify-end gap-2 sm:gap-3">
+    <div className="hidden sm:block text-right opacity-0 translate-x-2.5 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 ease-out pointer-events-none">
+      <span className="block text-[11px] sm:text-[11.5px] tracking-[1.1px] uppercase text-white/90 font-semibold leading-tight">
+        Ongoing
+      </span>
+      <span className="block text-[9px] sm:text-[10px] text-white/40 mt-0.5">
+        5 Projects
+      </span>
+    </div>
+    <div className="w-[40px] h-[40px] sm:w-[46px] sm:h-[46px] lg:w-[50px] lg:h-[50px] rounded-xl sm:rounded-[14px] flex items-center justify-center border border-white/10 sm:border-[1.5px] bg-white/[0.06] backdrop-blur-xl transition-all duration-300 group-hover:border-[rgba(255,160,60,0.65)] group-hover:bg-[rgba(255,160,60,0.12)] group-hover:shadow-[0_0_18px_rgba(255,160,60,0.28)] group-hover:scale-110 relative overflow-hidden flex-shrink-0">
+      <span className="absolute top-[7px] right-[7px] w-[6px] h-[6px] sm:w-[7px] sm:h-[7px] rounded-full bg-[#FF9A3C] z-20">
+        <span className="absolute inset-0 rounded-full bg-[#FF9A3C]" style={{ animation: "pulseRing 1.6s ease-out infinite" }} />
+      </span>
+      <svg className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7 relative z-10 transition-transform duration-300 group-hover:scale-110" viewBox="0 0 32 32" fill="none">
+        <rect x="8" y="4" width="16" height="24" rx="1" fill="#FFA03C" />
+        <rect x="10" y="7" width="3" height="2.5" rx="0.4" fill="#ff7a00" />
+        <rect x="14.5" y="7" width="3" height="2.5" rx="0.4" fill="#ff7a00" />
+        <rect x="19" y="7" width="3" height="2.5" rx="0.4" fill="#ff7a00" />
+        <rect x="10" y="11.5" width="3" height="2.5" rx="0.4" fill="#ff7a00" />
+        <rect x="14.5" y="11.5" width="3" height="2.5" rx="0.4" fill="#ff7a00" />
+        <rect x="19" y="11.5" width="3" height="2.5" rx="0.4" fill="#ff7a00" />
+        <rect x="10" y="16" width="3" height="2.5" rx="0.4" fill="#ff7a00" />
+        <rect x="14.5" y="16" width="3" height="2.5" rx="0.4" fill="#ff7a00" />
+        <rect x="19" y="16" width="3" height="2.5" rx="0.4" fill="#ff7a00" />
+        <rect x="13" y="22" width="6" height="6" rx="0.5" fill="#ff7a00" />
+        <rect x="6" y="2" width="20" height="3" rx="1" fill="#ffb347" />
+      </svg>
+    </div>
+  </Link>
 
-        {/* Completed */}
-        <Link
-          to="/projects"
-          className="group flex items-center justify-end gap-2.5"
-        >
-          <div className="text-right opacity-0 translate-x-2 transition-all duration-250 ease-out group-hover:opacity-100 group-hover:translate-x-0 pointer-events-none">
-            <span className="block text-[10px] tracking-[1.2px] uppercase text-white/85 font-medium">
-              Completed
-            </span>
-            <span className="block text-[9px] text-white/40 mt-0.5">
-              12 Projects
-            </span>
-          </div>
-          <div className="w-[42px] h-[42px] rounded-xl flex items-center justify-center border border-white/10 bg-white/5 backdrop-blur-xl transition-all duration-250 ease-out group-hover:border-[rgba(80,200,140,0.5)] group-hover:shadow-[0_0_16px_rgba(80,200,140,0.2)] group-hover:scale-105 relative overflow-hidden">
-            <div className="absolute inset-0 bg-[rgba(80,200,140,0.12)] opacity-0 transition-opacity duration-250 group-hover:opacity-100 rounded-xl" />
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="rgba(170,240,200,0.8)"
-              strokeWidth="1.6"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="relative z-10"
-            >
-              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-              <polyline points="22 4 12 14.01 9 11.01" />
-            </svg>
-          </div>
-        </Link>
-      </div>
+  <div className="w-px h-3 sm:h-4 bg-white/[0.07] self-end mr-[19px] sm:mr-[22px] lg:mr-[24px]" />
+
+  {/* COMPLETED — Office tower */}
+  <Link to="/project-details" className="group flex items-center justify-end gap-2 sm:gap-3">
+    <div className="hidden sm:block text-right opacity-0 translate-x-2.5 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 ease-out pointer-events-none">
+      <span className="block text-[11px] sm:text-[11.5px] tracking-[1.1px] uppercase text-white/90 font-semibold leading-tight">
+        Completed
+      </span>
+      <span className="block text-[9px] sm:text-[10px] text-white/40 mt-0.5">
+        12 Projects
+      </span>
+    </div>
+    <div className="w-[40px] h-[40px] sm:w-[46px] sm:h-[46px] lg:w-[50px] lg:h-[50px] rounded-xl sm:rounded-[14px] flex items-center justify-center border border-white/10 sm:border-[1.5px] bg-white/[0.06] backdrop-blur-xl transition-all duration-300 group-hover:border-[rgba(52,211,153,0.65)] group-hover:bg-[rgba(52,211,153,0.12)] group-hover:shadow-[0_0_18px_rgba(52,211,153,0.28)] group-hover:scale-110 relative overflow-hidden flex-shrink-0">
+      <svg className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7 relative z-10 transition-transform duration-300 group-hover:scale-110" viewBox="0 0 32 32" fill="none">
+        <rect x="3" y="12" width="6" height="18" rx="0.5" fill="#34D399" />
+        <rect x="4.5" y="14" width="3" height="2" rx="0.3" fill="#1fa874" />
+        <rect x="4.5" y="18" width="3" height="2" rx="0.3" fill="#1fa874" />
+        <rect x="4.5" y="22" width="3" height="2" rx="0.3" fill="#1fa874" />
+        <rect x="23" y="12" width="6" height="18" rx="0.5" fill="#34D399" />
+        <rect x="24.5" y="14" width="3" height="2" rx="0.3" fill="#1fa874" />
+        <rect x="24.5" y="18" width="3" height="2" rx="0.3" fill="#1fa874" />
+        <rect x="24.5" y="22" width="3" height="2" rx="0.3" fill="#1fa874" />
+        <rect x="9" y="4" width="14" height="26" rx="0.5" fill="#2ebc88" />
+        <rect x="10.5" y="6" width="11" height="2.5" rx="0.4" fill="#1fa874" />
+        <rect x="10.5" y="10" width="11" height="2.5" rx="0.4" fill="#1fa874" />
+        <rect x="10.5" y="14" width="11" height="2.5" rx="0.4" fill="#1fa874" />
+        <rect x="10.5" y="18" width="11" height="2.5" rx="0.4" fill="#1fa874" />
+        <rect x="12" y="24" width="4" height="6" rx="0.4" fill="#1a9e70" />
+        <rect x="17" y="24" width="4" height="6" rx="0.4" fill="#1a9e70" />
+        <rect x="7" y="29" width="18" height="2" rx="0.5" fill="#1fa874" />
+        <rect x="14.5" y="1" width="3" height="4" rx="0.5" fill="#2ebc88" />
+      </svg>
+    </div>
+  </Link>
+
+</div>
 
       {/* ── ABOUT STRIP ── */}
       <section className="relative bg-[#FDFAF6] py-15 sm:py-20 px-4 sm:px-8 lg:px-16 xl:px-24 overflow-hidden">
