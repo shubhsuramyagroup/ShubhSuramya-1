@@ -48,22 +48,22 @@ export default function Navbar() {
         >
           <div className="flex items-center justify-between h-[72px] sm:h-[78px] px-4 sm:px-6 lg:px-8">
             {/* LOGO */}
-            <Link to="/" className="flex items-center pt-2 gap-2">
+            <Link to="/" className="flex items-center pt-2 gap-2 flex-shrink-0">
               {/* FIRST LOGO */}
-              <div className="flex items-center justify-center">
+              <div className="flex items-center justify-center flex-shrink-0">
                 <img
                   src={logo}
                   alt="logo"
-                  className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 object-contain"
+                  className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 object-contain flex-shrink-0"
                 />
               </div>
 
               {/* SECOND LOGO */}
-              <div className="flex items-center justify-center">
+              <div className="flex items-center justify-center flex-shrink-0">
                 <img
                   src={logo1}
                   alt="logo text"
-                 className="h-8 w-12 sm:h-10 sm:w-14 md:h-11 md:w-16 lg:h-12 lg:w-20 object-contain"
+                 className="h-8 w-12 sm:h-10 sm:w-14 md:h-11 md:w-16 lg:h-12 lg:w-20 object-contain flex-shrink-0"
                 />
               </div>
             </Link>

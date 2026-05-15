@@ -1151,13 +1151,7 @@ body {
   position: relative;
 }
 
-img,
-video,
-iframe {
-  max-width: 100%;
-  height: auto;
-  display: block;
-}
+/* Removed global resets that were affecting Navbar logo size */
 
 section,
 div {
