@@ -5,6 +5,10 @@ import Project from "./pages/Project";
 import Contact from "./pages/Contact";
 import ProjectDetailPage from "./pages/ProjectDetailPage";
 import ScrollToTop from "./components/ScrollToTop";
+
+import AdminLogin from "./admin/pages/AdminLogin";
+import Dashboard from "./admin/pages/Dashboard";
+import ProtectedRoute from "./admin/components/ProtectedRoute";
 import "./App.css";
 
 function App() {
@@ -17,6 +21,18 @@ function App() {
         <Route path="/projects" element={<Project />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/project-details" element={<ProjectDetailPage />} />
+        <Route
+          path="/admin"
+          element={<AdminLogin />}
+        />
+        <Route
+          path="/admin/dashboard"
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
     </BrowserRouter>
   );
