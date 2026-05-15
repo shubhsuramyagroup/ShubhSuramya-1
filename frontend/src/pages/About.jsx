@@ -334,15 +334,12 @@ function useScrollProgress() {
   return progress;
 }
 
-
 // ── TeamCard ──────────────────────────────────────────────────────
 
 function TeamCard({ member, index }) {
   const [ref, inView] = useInView();
   const [hovered, setHovered] = useState(false);
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
-
-
 
   return (
     <div
@@ -509,7 +506,7 @@ function AccentLine() {
 function HeroCard({ feature }) {
   const [hovered, setHovered] = useState(false);
   return (
-    <div   /* col-span-2 on desktop grid, full-width on mobile */
+    <div /* col-span-2 on desktop grid, full-width on mobile */
       className="col-span-1 sm:col-span-2 rounded-[22px] overflow-hidden border border-stone-200 bg-white flex flex-col sm:flex-row"
       style={{
         boxShadow: hovered
@@ -746,9 +743,7 @@ function ProjectCard({ project, index }) {
   };
 
   return (
-    <div
-      ref={ref}
-    >
+    <div ref={ref}>
       <div
         className="relative flex flex-col lg:flex-row overflow-hidden rounded-[20px] w-full"
         style={{
@@ -802,23 +797,25 @@ function ProjectCard({ project, index }) {
               {project.description}
             </p>
           </div>
-          <button
-            className="group inline-flex items-center gap-2 text-[10px] font-semibold tracking-[0.22em] uppercase transition-colors duration-300 w-fit"
-            style={{ color: hovered ? "#E4572E" : "#1F2A44" }}
-          >
-            Explore Project
-            <svg
-              viewBox="0 0 16 16"
-              className="w-3.5 h-3.5 transition-transform duration-300 group-hover:translate-x-1"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+          <Link to="/projects">
+            <button
+              className="group inline-flex items-center gap-2 text-[10px] font-semibold tracking-[0.22em] uppercase transition-colors duration-300 w-fit cursor-pointer"
+              style={{ color: hovered ? "#E4572E" : "#1F2A44" }}
             >
-              <path d="M3 8h10M9 4l4 4-4 4" />
-            </svg>
-          </button>
+              Explore Project
+              <svg
+                viewBox="0 0 16 16"
+                className="w-3.5 h-3.5 transition-transform duration-300 group-hover:translate-x-1"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M3 8h10M9 4l4 4-4 4" />
+              </svg>
+            </button>
+          </Link>
         </div>
 
         {/* Image panel */}
@@ -826,10 +823,7 @@ function ProjectCard({ project, index }) {
           className="flex-1 relative overflow-hidden flex items-end justify-end"
           style={{ minHeight: "200px" }}
         >
-          <div
-            className="absolute inset-y-0 left-0 w-10 lg:w-16 z-10 hidden lg:block"
-            
-          />
+          <div className="absolute inset-y-0 left-0 w-10 lg:w-16 z-10 hidden lg:block" />
           <div className="relative z-20 px-3 sm:px-4 py-4 sm:py-5 w-full">
             <img
               src={project.image}
@@ -1036,9 +1030,9 @@ function TestimonialsSection() {
             >
               {testimonials.map((t) => (
                 <div
-  key={t.id}
-  className="w-full min-w-full max-w-full flex-shrink-0 px-1 overflow-hidden"
->
+                  key={t.id}
+                  className="w-full min-w-full max-w-full flex-shrink-0 px-1 overflow-hidden"
+                >
                   <TestimonialCard testimonial={t} index={0} />
                 </div>
               ))}
@@ -1141,8 +1135,6 @@ export default function About() {
 
   return (
     <>
-      
-
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=Manrope:wght@400;500;600;700;800;900&display=swap');
 
@@ -1956,57 +1948,58 @@ div {
               transition: "opacity 0.8s ease 0.3s, transform 0.8s ease 0.3s",
             }}
           >
-            <Link href="/projects">
+            <Link to="/projects" style={{ textDecoration: "none" }}>
               <button
+                type="button"
                 onMouseEnter={() => setBtnHovered(true)}
                 onMouseLeave={() => setBtnHovered(false)}
                 style={{
                   display: "inline-flex",
                   alignItems: "center",
-                gap: "10px",
-                fontWeight: 600,
-                fontSize: "13px",
-                letterSpacing: "0.04em",
-                padding: "13px 26px",
-                borderRadius: "999px",
-                border: "none",
-                cursor: "pointer",
-                background: btnHovered ? "#E4572E" : "#1F2A44",
-                color: "white",
-                boxShadow: btnHovered
-                  ? "0 12px 40px rgba(228,87,46,0.3)"
-                  : "0 8px 28px rgba(31,42,68,0.18)",
-                transform: btnHovered ? "translateY(-2px)" : "translateY(0)",
-                transition: "all 0.35s cubic-bezier(0.25,0.46,0.45,0.94)",
-              }}
-            >
-              Explore More Projects
-              <span
-                style={{
-                  width: "26px",
-                  height: "26px",
-                  borderRadius: "50%",
-                  background: "rgba(255,255,255,0.15)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  transform: btnHovered ? "translateX(3px)" : "translateX(0)",
-                  transition: "transform 0.3s ease",
+                  gap: "10px",
+                  fontWeight: 600,
+                  fontSize: "13px",
+                  letterSpacing: "0.04em",
+                  padding: "13px 26px",
+                  borderRadius: "999px",
+                  border: "none",
+                  cursor: "pointer",
+                  background: btnHovered ? "#E4572E" : "#1F2A44",
+                  color: "white",
+                  boxShadow: btnHovered
+                    ? "0 12px 40px rgba(228,87,46,0.3)"
+                    : "0 8px 28px rgba(31,42,68,0.18)",
+                  transform: btnHovered ? "translateY(-2px)" : "translateY(0)",
+                  transition: "all 0.35s cubic-bezier(0.25,0.46,0.45,0.94)",
                 }}
               >
-                <svg
-                  viewBox="0 0 16 16"
-                  style={{ width: "13px", height: "13px" }}
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
+                Explore More Projects
+                <span
+                  style={{
+                    width: "26px",
+                    height: "26px",
+                    borderRadius: "50%",
+                    background: "rgba(255,255,255,0.15)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    transform: btnHovered ? "translateX(3px)" : "translateX(0)",
+                    transition: "transform 0.3s ease",
+                  }}
                 >
-                  <path d="M3 8h10M9 4l4 4-4 4" />
-                </svg>
-              </span>
-            </button>
+                  <svg
+                    viewBox="0 0 16 16"
+                    style={{ width: "13px", height: "13px" }}
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M3 8h10M9 4l4 4-4 4" />
+                  </svg>
+                </span>
+              </button>
             </Link>
           </div>
         </div>
