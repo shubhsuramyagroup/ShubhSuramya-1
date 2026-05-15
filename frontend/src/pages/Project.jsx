@@ -4,6 +4,7 @@ import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import { getProjects } from "../services/projectService"; // ← same service as Dashboard
 
 // ─── Custom useInView hook (used everywhere EXCEPT ExploreMapSection) ─────────
 function useInView(threshold = 0.15) {
@@ -148,178 +149,72 @@ function ProjectPin({ project, index }) {
   );
 }
 
-// ── Project Card Data ─────────────────────────────────────────────
-const projects = [
-  {
-    id: 1,
-    title: "Azure Sky Villas",
-    status: "Upcoming",
-    category: "Luxury Villas",
-    description: "Exclusive sea-facing villas designed with modern architecture, private pools, and premium lifestyle amenities.",
-    longDescription: "Azure Sky Villas is a landmark development nestled along the pristine coastline of Alibaug. Each villa is an architectural masterpiece crafted with Italian marble, floor-to-ceiling glass, and bespoke interior design.",
-    location: "Alibaug, Mumbai",
-    area: "4,500 sq.ft",
-    units: "48 Villas",
-    timing: "3 weeks",
-    price: "₹4.2 Cr onwards",
-    priceValue: 42000000,
-    features: [
-      ["3D Walkthrough", "Explore villas with immersive 3D experience"],
-      ["Private Pools", "Luxury villas with private infinity pools"],
-      ["Smart Homes", "Fully automated lighting and security systems"],
-      ["Premium Interiors", "Italian marble and designer finishes"],
-    ],
-    image: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&q=80",
-  },
-  {
-    id: 2,
-    title: "Urban Heights Residency",
-    status: "Ongoing",
-    category: "Apartments",
-    description: "High-rise residential towers offering smart living spaces with skyline views and modern amenities.",
-    longDescription: "Urban Heights Residency redefines city living in the heart of Gachibowli with luxury apartments and skyline experiences.",
-    location: "Gachibowli, Hyderabad",
-    area: "2,200 sq.ft",
-    units: "320 Units",
-    timing: "5 weeks",
-    price: "₹1.8 Cr onwards",
-    priceValue: 18000000,
-    features: [
-      ["Sky Lounge", "Rooftop lounge with panoramic city views"],
-      ["Clubhouse", "Modern clubhouse with gym & indoor games"],
-      ["Security", "24/7 gated security with CCTV monitoring"],
-      ["Green Spaces", "Landscaped gardens and jogging tracks"],
-    ],
-    image: "https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=1200&q=80",
-  },
-  {
-    id: 3,
-    title: "Golden Palm Estates",
-    status: "Completed",
-    category: "Premium Homes",
-    description: "A serene gated community offering spacious homes surrounded by greenery and world-class infrastructure.",
-    longDescription: "Golden Palm Estates combines modern architecture with natural serenity and premium community living.",
-    location: "Surat, Gujarat",
-    area: "3,000 sq.ft",
-    units: "150 Homes",
-    timing: "Completed",
-    price: "₹2.5 Cr onwards",
-    priceValue: 25000000,
-    features: [
-      ["Gated Community", "Secure and peaceful residential environment"],
-      ["Modern Layout", "Spacious floor plans with natural ventilation"],
-      ["Amenities", "Swimming pool, gym, and kids play area"],
-      ["Parking", "Dedicated covered parking for each unit"],
-    ],
-    image: "https://images.unsplash.com/photo-1605276374104-dee2a0ed3cd6?w=1200&q=80",
-  },
-  {
-    id: 4,
-    title: "Emerald Bay Towers",
-    status: "Upcoming",
-    category: "Luxury Apartments",
-    description: "Ultra-modern waterfront apartments with premium interiors and panoramic ocean views.",
-    longDescription: "Emerald Bay Towers offers a world-class luxury lifestyle with designer residences, rooftop infinity pools, and smart living experiences.",
-    location: "Marine Drive, Mumbai",
-    area: "2,800 sq.ft",
-    units: "210 Apartments",
-    timing: "8 weeks",
-    price: "₹3.6 Cr onwards",
-    priceValue: 36000000,
-    features: [
-      ["Infinity Pool", "Luxury rooftop infinity swimming pool"],
-      ["Ocean View", "Panoramic waterfront apartments"],
-      ["Smart Access", "Digital smart-lock access systems"],
-      ["Fitness Center", "Fully equipped premium fitness studio"],
-    ],
-    image: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=1200&q=80",
-  },
-  {
-    id: 5,
-    title: "Silver Oak Residency",
-    status: "Ongoing",
-    category: "Family Homes",
-    description: "Elegant family residences designed for comfort, greenery, and community living.",
-    longDescription: "Silver Oak Residency blends peaceful surroundings with luxurious family-friendly infrastructure and contemporary architecture.",
-    location: "Ahmedabad, Gujarat",
-    area: "2,400 sq.ft",
-    units: "180 Homes",
-    timing: "4 weeks",
-    price: "₹1.2 Cr onwards",
-    priceValue: 12000000,
-    features: [
-      ["Kids Zone", "Dedicated play zones for children"],
-      ["Green Parks", "Large landscaped gardens and parks"],
-      ["Jogging Track", "Dedicated walking and jogging paths"],
-      ["Community Hall", "Multipurpose community spaces"],
-    ],
-    image: "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=1200&q=80",
-  },
-  {
-    id: 6,
-    title: "Royal Crest Villas",
-    status: "Completed",
-    category: "Luxury Villas",
-    description: "Premium private villas with elegant architecture and luxurious lifestyle amenities.",
-    longDescription: "Royal Crest Villas delivers a private luxury experience with spacious interiors, private gardens, and resort-inspired living.",
-    location: "Lonavala, Maharashtra",
-    area: "5,200 sq.ft",
-    units: "32 Villas",
-    timing: "Completed",
-    price: "₹5.8 Cr onwards",
-    priceValue: 58000000,
-    features: [
-      ["Private Garden", "Beautiful landscaped private gardens"],
-      ["Luxury Interiors", "Imported designer interiors"],
-      ["Resort Living", "Resort-inspired community experience"],
-      ["Security", "Premium gated security systems"],
-    ],
-    image: "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=1200&q=80",
-  },
-  {
-    id: 7,
-    title: "Skyline Business Hub",
-    status: "Upcoming",
-    category: "Commercial",
-    description: "Modern commercial office spaces with futuristic infrastructure and premium facilities.",
-    longDescription: "Skyline Business Hub is designed for modern enterprises with smart office spaces, coworking zones, and premium business facilities.",
-    location: "BKC, Mumbai",
-    area: "1,800 sq.ft",
-    units: "400 Offices",
-    timing: "6 weeks",
-    price: "₹95 L onwards",
-    priceValue: 9500000,
-    features: [
-      ["Coworking", "Premium coworking and meeting zones"],
-      ["Business Lounge", "Executive business lounges"],
-      ["Parking", "Multi-level dedicated parking"],
-      ["High-Speed Elevators", "Fast smart elevator systems"],
-    ],
-    image: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1200&q=80",
-  },
-  {
-    id: 8,
-    title: "Nature Nest Retreat",
-    status: "Ongoing",
-    category: "Farm Houses",
-    description: "Luxury farmhouse community surrounded by nature, lakes, and peaceful landscapes.",
-    longDescription: "Nature Nest Retreat offers luxurious countryside living with private farmhouses and wellness-inspired amenities.",
-    location: "Udaipur, Rajasthan",
-    area: "6,000 sq.ft",
-    units: "24 Farmhouses",
-    timing: "7 weeks",
-    price: "₹3.1 Cr onwards",
-    priceValue: 31000000,
-    features: [
-      ["Lake View", "Private lake-facing properties"],
-      ["Organic Farms", "Eco-friendly organic farming zones"],
-      ["Clubhouse", "Luxury countryside clubhouse"],
-      ["Wellness Spa", "Nature-inspired wellness spa"],
-    ],
-    image: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=1200&q=80",
-  },
-];
+// ─── Helper: map a raw Firebase project → card-compatible shape ───────────────
+/**
+ * Dashboard fields used:
+ *   project.title          → card title
+ *   project.status         → "Upcoming" | "Ongoing" | "Completed"
+ *   project.type           → used as category label
+ *   project.description    → short description shown on card
+ *   project.location       → location string
+ *   project.area           → carpet/plot area  (e.g. "2,400 sq.ft")
+ *   project.units          → number of units   (e.g. "180 Homes")
+ *   project.timing         → delivery timing   (e.g. "4 weeks" / "Completed")
+ *   project.startingPrice  → price string      (e.g. "₹1.2 Cr onwards")
+ *   project.mainImage      → hero image URL
+ *   project.priceValue     → numeric price for range filter (optional)
+ *   project.features       → array of [title, desc] pairs (optional)
+ *   project.longDescription→ extended description (optional)
+ */
+function mapProjectToCard(p) {
+  // Derive a numeric price value for range filtering
+  // Accept either a pre-stored priceValue or try to parse startingPrice
+  let priceValue = p.priceValue ?? 0;
+  if (!priceValue && p.startingPrice) {
+    // Extract first number from strings like "₹1.2 Cr onwards" or "₹95 L onwards"
+    const match = p.startingPrice.replace(/,/g, "").match(/([\d.]+)\s*(Cr|L|cr|l)?/i);
+    if (match) {
+      const num = parseFloat(match[1]);
+      const unit = (match[2] || "").toLowerCase();
+      priceValue = unit === "cr" ? num * 10000000 : unit === "l" ? num * 100000 : num;
+    }
+  }
 
+  // Normalise status capitalisation
+  const rawStatus = (p.status || "").trim();
+  const statusMap = { upcoming: "Upcoming", ongoing: "Ongoing", completed: "Completed" };
+  const status = statusMap[rawStatus.toLowerCase()] ?? rawStatus;
+
+  // Features: use stored array or build a minimal fallback from available fields
+  const features =
+    Array.isArray(p.features) && p.features.length > 0
+      ? p.features
+      : [
+          p.area    ? ["Area",     p.area]     : null,
+          p.units   ? ["Units",    p.units]    : null,
+          p.possessionTiming  ? ["Timing",   p.possessionTiming]   : null,
+          p.type    ? ["Category", p.type]     : null,
+        ].filter(Boolean);
+
+  return {
+    id:              p.id,
+    title:           p.title           ?? "Untitled Project",
+    status,
+    category:        p.type            ?? "Project",
+    description:     p.description     ?? "",
+    longDescription: p.longDescription ?? p.description ?? "",
+    location:        p.location        ?? "",
+    area:            p.area            ?? "—",
+    units:           p.units           ?? "—",
+    timing:          p.possessionTiming          ?? (status === "Completed" ? "Completed" : "—"),
+    price:           p.startingPrice   ?? "Contact us",
+    priceValue,
+    features,
+    image:           p.mainImage       ?? "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&q=80",
+  };
+}
+
+// ── Static data that doesn't come from Firebase ───────────────────
 const stats = [
   { value: "15+", label: "Years of Excellence" },
   { value: "120+", label: "Projects Delivered" },
@@ -327,20 +222,7 @@ const stats = [
   { value: "12", label: "Cities Across India" },
 ];
 
-const nearbyListings = [
-  { id: 1, price: "₹1,20,450", top: "14%", left: "58%", image: "https://housing.com/news/wp-content/uploads/2023/03/exterior-design-shutterstock_1932966368-1200x700-compressed.jpg", hasThumb: true, thumbSide: "bottom" },
-  { id: 2, price: "₹4,27,000", top: "10%", left: "8%", hasThumb: false },
-  { id: 3, price: "₹5,90,750", top: "22%", left: "20%", hasThumb: false },
-  { id: 4, price: "₹1,22,941", top: "52%", left: "5%", image: "https://www.citybuildersanddevelopers.com/wp-content/uploads/2024/09/01-1.jpg", hasThumb: true, thumbSide: "right" },
-  { id: 5, price: "₹3,65,000", top: "40%", left: "83%", hasThumb: false },
-  { id: 6, price: "₹3,12,500", top: "72%", left: "28%", hasThumb: false },
-  { id: 7, price: "₹4,27,100", top: "82%", left: "14%", hasThumb: false },
-  { id: 8, price: "₹1,75,456", top: "66%", left: "58%", image: heroimg, hasThumb: true, thumbSide: "top" },
-  { id: 9, price: "₹51,200", top: "83%", left: "76%", hasThumb: false },
-];
-
 const filters = ["All", "Ongoing", "Upcoming", "Completed"];
-const typeFilters = ["All Types", "Apartments", "Premium Homes", "Luxury Villas"];
 const priceFilters = ["All", "Under ₹50L", "₹50L - ₹1Cr", "₹1Cr - ₹2Cr", "Above ₹2Cr"];
 
 function useScrollProgress() {
@@ -364,7 +246,7 @@ function StatusBadge({ status }) {
     Ongoing:   { bg: "#DBEAFE", color: "#1E40AF", dot: "#3B82F6" },
     Completed: { bg: "#D1FAE5", color: "#065F46", dot: "#10B981" },
   };
-  const s = map[status];
+  const s = map[status] ?? { bg: "#F3F4F6", color: "#374151", dot: "#9CA3AF" };
   return (
     <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-full" style={{ background: s.bg, color: s.color }}>
       <span className="w-1.5 h-1.5 rounded-full" style={{ background: s.dot }} />
@@ -390,7 +272,7 @@ function ProjectCard({ project, index, onSelect }) {
   const [hovered, setHovered] = useState(false);
 
   return (
-    <Link to="/project-details">
+    <Link to={`/project-details/${project.id}`}>
       <div
         ref={ref}
         className="relative w-full overflow-hidden cursor-pointer"
@@ -464,7 +346,7 @@ function ProjectCard({ project, index, onSelect }) {
                 <span className="text-sm truncate" style={{ color: "rgba(255,255,255,0.65)" }}>{project.location}</span>
               </div>
             </div>
-            <Link to="/project-details">
+            <Link to={`/project-details/${project.id}`}>
               <button
                 className="flex-shrink-0 flex items-center gap-1.5 text-xs font-semibold tracking-wider uppercase"
                 style={{ padding: "10px 18px", borderRadius: "999px", background: hovered ? "#E34A2F" : "rgba(255,255,255,0.14)", color: "white", border: hovered ? "1px solid #E34A2F" : "1px solid rgba(255,255,255,0.28)", transition: "all 0.35s ease", whiteSpace: "nowrap" }}
@@ -486,47 +368,6 @@ function StatCard({ stat, index }) {
     <div ref={ref} style={{ opacity: inView ? 1 : 0, transform: inView ? "translateY(0)" : "translateY(32px)", transition: `opacity 0.6s ease ${index * 0.1}s, transform 0.6s ease ${index * 0.1}s` }} className="text-center">
       <div className="text-5xl font-regular text-[#E34A2F] mb-2 tracking-tight">{stat.value}</div>
       <div className="text-sm text-gray-500 font-medium uppercase tracking-widest">{stat.label}</div>
-    </div>
-  );
-}
-
-// ── MapPin (nearby listings) ──────────────────────────────────────
-function MapPin({ listing }) {
-  const [hovered, setHovered] = useState(false);
-  return (
-    <div className="absolute" style={{ top: listing.top, left: listing.left, zIndex: hovered ? 30 : 10 }} onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}>
-      {listing.hasThumb && (
-        <div
-          className="absolute bg-white rounded-xl overflow-hidden"
-          style={{
-            width: "115px", boxShadow: "0 8px 32px rgba(0,0,0,0.28)",
-            ...(listing.thumbSide === "bottom"
-              ? { bottom: "100%", marginBottom: "8px", left: "50%", transform: hovered ? "translateX(-50%) scale(1.05)" : "translateX(-50%) scale(1)" }
-              : listing.thumbSide === "right"
-              ? { left: "100%", marginLeft: "8px", top: "50%", transform: hovered ? "translateY(-50%) scale(1.05)" : "translateY(-50%) scale(1)" }
-              : { top: "100%", marginTop: "8px", left: "50%", transform: hovered ? "translateX(-50%) scale(1.05)" : "translateX(-50%) scale(1)" }),
-            opacity: hovered ? 1 : 0.88,
-            transition: "opacity 0.25s ease, transform 0.25s ease",
-          }}
-        >
-          <img src={listing.image} alt="property" className="w-full h-16 object-cover" />
-          <div className="px-2 py-1.5">
-            <p className="text-[10px] font-bold text-gray-900 leading-tight">{listing.price}</p>
-            <p className="text-[9px] text-gray-400 mt-0.5">View listing →</p>
-          </div>
-        </div>
-      )}
-      <div
-        className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full cursor-pointer whitespace-nowrap select-none"
-        style={{
-          background: hovered ? "#E34A2F" : "white", color: hovered ? "white" : "#111",
-          transform: hovered ? "scale(1.08)" : "scale(1)", transition: "all 0.2s ease",
-          boxShadow: hovered ? "0 4px 20px rgba(227,74,47,0.4)" : "0 2px 12px rgba(0,0,0,0.25)",
-        }}
-      >
-        {listing.hasThumb && <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: hovered ? "white" : "#E34A2F" }} />}
-        {listing.price}
-      </div>
     </div>
   );
 }
@@ -601,26 +442,23 @@ function ExploreMapSection() {
           </div>
 
           {/* Center Content */}
-          <div
-          className="absolute inset-0 z-10 flex flex-col items-center justify-center text-center px-4"
-          
-        >
-          <h2 className="text-white font-Semibold leading-[1.1] text-[28px] sm:text-[42px] md:text-[56px] lg:text-[68px] max-w-[280px] sm:max-w-2xl md:max-w-4xl">
-            Explore Nearby Homes
-          </h2>
-          <p className="text-white/60 text-[13px] sm:text-base md:text-lg leading-relaxed mt-4 mb-7 max-w-[260px] sm:max-w-lg">
-            Browse available homes near you and explore listings in your
-            favorite areas.
-          </p>
-          <Link href="/contact">
-            <button
-              className="pointer-events-auto px-6 sm:px-8 md:px-10 py-3 sm:py-4 bg-white text-gray-900 font-bold text-sm sm:text-base rounded-full transition-all duration-300 hover:bg-gray-100 hover:-translate-y-1 active:scale-95"
-              style={{ boxShadow: "0 8px 32px rgba(0,0,0,0.35)" }}
-            >
-              Get Started
-            </button>
-          </Link>
-        </div>
+          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center text-center px-4">
+            <h2 className="text-white font-Semibold leading-[1.1] text-[28px] sm:text-[42px] md:text-[56px] lg:text-[68px] max-w-[280px] sm:max-w-2xl md:max-w-4xl">
+              Explore Nearby Homes
+            </h2>
+            <p className="text-white/60 text-[13px] sm:text-base md:text-lg leading-relaxed mt-4 mb-7 max-w-[260px] sm:max-w-lg">
+              Browse available homes near you and explore listings in your
+              favorite areas.
+            </p>
+            <Link href="/contact">
+              <button
+                className="pointer-events-auto px-6 sm:px-8 md:px-10 py-3 sm:py-4 bg-white text-gray-900 font-bold text-sm sm:text-base rounded-full transition-all duration-300 hover:bg-gray-100 hover:-translate-y-1 active:scale-95"
+                style={{ boxShadow: "0 8px 32px rgba(0,0,0,0.35)" }}
+              >
+                Get Started
+              </button>
+            </Link>
+          </div>
         </div>
       </section>
     </>
@@ -650,7 +488,7 @@ function Reveal({ children, delay = 0, direction = "up", className = "" }) {
   );
 }
 
-// ── ProcessStep — extracted to fix hooks-in-loops error ───────────
+// ── ProcessStep ───────────────────────────────────────────────────
 function ProcessStep({ item, index }) {
   const [ref, inView] = useInView();
   return (
@@ -675,6 +513,18 @@ const processSteps = [
   { step: "04", title: "Handover",          desc: "Delivering your dream home on time, with full transparency and care." },
 ];
 
+// ── Loading Skeleton ──────────────────────────────────────────────
+function ProjectSkeleton() {
+  return (
+    <div
+      style={{
+        height: "560px", borderRadius: "20px", background: "#e5e7eb",
+        animation: "skeletonPulse 1.5s ease-in-out infinite",
+      }}
+    />
+  );
+}
+
 // ── Main Project List Page ────────────────────────────────────────
 export default function Project() {
   const [loaded, setLoaded] = useState(false);
@@ -686,9 +536,36 @@ export default function Project() {
   const scrollProgress = useScrollProgress();
   const [showScrollTop, setShowScrollTop] = useState(false);
 
+  // ── Dynamic project state ───────────────────────────────────────
+  const [projects, setProjects] = useState([]);
+  const [projectsLoading, setProjectsLoading] = useState(true);
+  const [projectsError, setProjectsError] = useState(null);
+
+  // Derive unique type categories from fetched projects for the type filter
+  const typeFilters = [
+    "All Types",
+    ...Array.from(new Set(projects.map((p) => p.category).filter(Boolean))),
+  ];
+
   useEffect(() => {
     const t = setTimeout(() => setLoaded(true), 50);
     return () => clearTimeout(t);
+  }, []);
+
+  // ── Fetch projects from Firebase (same service as Dashboard) ────
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        const data = await getProjects();
+        setProjects(data.map(mapProjectToCard));
+      } catch (err) {
+        console.error("Failed to load projects:", err);
+        setProjectsError("Failed to load projects. Please try again.");
+      } finally {
+        setProjectsLoading(false);
+      }
+    };
+    fetchProjects();
   }, []);
 
   const scrollToTop = () => { window.scrollTo({ top: 0, behavior: "smooth" }); };
@@ -725,6 +602,10 @@ export default function Project() {
         @keyframes scrollTopBounce {
           0%, 100% { transform: translateY(0); }
           50%      { transform: translateY(-4px); }
+        }
+        @keyframes skeletonPulse {
+          0%, 100% { opacity: 1; }
+          50%      { opacity: 0.5; }
         }
         .scroll-top-btn { animation: scrollTopReveal 0.4s cubic-bezier(.34,1.56,.64,1) both; }
         .scroll-top-btn:hover .scroll-top-arrow { animation: scrollTopBounce 0.6s ease infinite; }
@@ -805,17 +686,23 @@ export default function Project() {
           <Reveal direction="up" delay={0.05}>
             <div className="flex flex-col gap-4 mb-12">
               <div className="flex flex-col lg:flex-row lg:items-center gap-4">
+                {/* Status filters */}
                 <div className="flex flex-wrap gap-2">
                   {filters.map((f) => (
                     <button key={f} onClick={() => setActiveFilter(f)} className={`text-sm font-medium px-4 py-2 rounded-full transition-all duration-200 ${activeFilter === f ? "bg-[#E34A2F] text-white shadow-sm" : "bg-white text-gray-600 border border-gray-200 hover:border-gray-400"}`}>{f}</button>
                   ))}
                 </div>
-                <div className="hidden lg:block w-px h-10 bg-gray-200" />
-                <div className="flex flex-wrap gap-2">
-                  {typeFilters.map((f) => (
-                    <button key={f} onClick={() => setActiveType(f)} className={`text-sm font-medium px-4 py-2 rounded-full transition-all duration-200 ${activeType === f ? "bg-gray-900 text-white shadow-sm" : "bg-white text-gray-600 border border-gray-200 hover:border-gray-400"}`}>{f}</button>
-                  ))}
-                </div>
+                {typeFilters.length > 1 && (
+                  <>
+                    <div className="hidden lg:block w-px h-10 bg-gray-200" />
+                    {/* Type filters — built dynamically from fetched data */}
+                    <div className="flex flex-wrap gap-2">
+                      {typeFilters.map((f) => (
+                        <button key={f} onClick={() => setActiveType(f)} className={`text-sm font-medium px-4 py-2 rounded-full transition-all duration-200 ${activeType === f ? "bg-gray-900 text-white shadow-sm" : "bg-white text-gray-600 border border-gray-200 hover:border-gray-400"}`}>{f}</button>
+                      ))}
+                    </div>
+                  </>
+                )}
               </div>
               <div className="flex flex-wrap items-center gap-3">
                 <span className="text-sm font-medium text-gray-500">Price Range:</span>
@@ -826,14 +713,38 @@ export default function Project() {
             </div>
           </Reveal>
 
-          <p className="text-xs text-gray-400 uppercase tracking-widest mb-8">Showing {filtered.length} project{filtered.length !== 1 ? "s" : ""}</p>
-
-          <div className="flex flex-col gap-6">
-            {filtered.length > 0
-              ? filtered.map((project, i) => <ProjectCard key={project.id} project={project} index={i} onSelect={setSelectedProject} />)
-              : <div className="text-center py-24 text-gray-400"><p className="text-lg">No projects match the selected filters.</p></div>
-            }
-          </div>
+          {/* Loading / Error / Empty / Cards */}
+          {projectsLoading ? (
+            <>
+              <p className="text-xs text-gray-400 uppercase tracking-widest mb-8">Loading projects…</p>
+              <div className="flex flex-col gap-6">
+                {[1, 2, 3].map((n) => <ProjectSkeleton key={n} />)}
+              </div>
+            </>
+          ) : projectsError ? (
+            <div className="text-center py-24">
+              <p className="text-lg text-red-500 mb-2">{projectsError}</p>
+              <p className="text-sm text-gray-400">Please check your connection and refresh the page.</p>
+            </div>
+          ) : (
+            <>
+              <p className="text-xs text-gray-400 uppercase tracking-widest mb-8">
+                Showing {filtered.length} project{filtered.length !== 1 ? "s" : ""}
+              </p>
+              <div className="flex flex-col gap-6">
+                {filtered.length > 0
+                  ? filtered.map((project, i) => (
+                      <ProjectCard key={project.id} project={project} index={i} onSelect={setSelectedProject} />
+                    ))
+                  : (
+                    <div className="text-center py-24 text-gray-400">
+                      <p className="text-lg">No projects match the selected filters.</p>
+                    </div>
+                  )
+                }
+              </div>
+            </>
+          )}
         </div>
       </section>
 

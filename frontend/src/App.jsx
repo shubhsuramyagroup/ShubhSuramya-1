@@ -7,8 +7,12 @@ import ProjectDetailPage from "./pages/ProjectDetailPage";
 import ScrollToTop from "./components/ScrollToTop";
 
 import AdminLogin from "./admin/pages/AdminLogin";
-import Dashboard from "./admin/pages/Dashboard";
 import ProtectedRoute from "./admin/components/ProtectedRoute";
+
+import Dashboard from "./admin/pages/Dashboard";
+import AddProject from "./admin/pages/AddProject";
+import AllProjects from "./admin/pages/AllProjects";
+import EditProject from "./admin/pages/EditProject";
 import "./App.css";
 
 function App() {
@@ -20,7 +24,7 @@ function App() {
         <Route path="/about" element={<About />} />
         <Route path="/projects" element={<Project />} />
         <Route path="/contact" element={<Contact />} />
-        <Route path="/project-details" element={<ProjectDetailPage />} />
+        <Route path="/project-details/:projectId" element={<ProjectDetailPage />} />
         <Route
           path="/admin"
           element={<AdminLogin />}
@@ -32,6 +36,18 @@ function App() {
               <Dashboard />
             </ProtectedRoute>
           }
+        />
+        <Route
+          path="/admin/add-project"
+          element={<AddProject />}
+        />
+        <Route
+          path="/admin/projects"
+          element={<AllProjects />}
+        />
+        <Route
+          path="/admin/edit-project/:id"
+          element={<EditProject />}
         />
       </Routes>
     </BrowserRouter>
