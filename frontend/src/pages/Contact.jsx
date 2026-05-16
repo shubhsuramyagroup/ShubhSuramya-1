@@ -317,18 +317,6 @@ export default function Contact() {
       phone: "+91 80 4567 8900",
       mapUrl: "https://maps.google.com/?q=MG+Road+Bengaluru",
     },
-    {
-      city: "Mumbai Office",
-      address: "Level 8, Bandra Kurla Complex, Mumbai, Maharashtra 400051",
-      phone: "+91 22 6789 0123",
-      mapUrl: "https://maps.google.com/?q=Bandra+Kurla+Complex+Mumbai",
-    },
-    {
-      city: "Pune Office",
-      address: "Wing B, Baner Road, Pune, Maharashtra 411045",
-      phone: "+91 20 2345 6789",
-      mapUrl: "https://maps.google.com/?q=Baner+Road+Pune",
-    },
   ];
 
   return (
@@ -795,8 +783,6 @@ function MapSection({ offices }) {
 
   const mapQueries = [
     "MG+Road+Bengaluru+Karnataka",
-    "Bandra+Kurla+Complex+Mumbai+Maharashtra",
-    "Baner+Road+Pune+Maharashtra",
   ];
 
   return (

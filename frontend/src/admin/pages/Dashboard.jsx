@@ -1,39 +1,36 @@
 import { useEffect, useState } from "react";
-
-import { Link } from "react-router-dom";
-
+import { Link, useNavigate } from "react-router-dom";
 import { signOut } from "firebase/auth";
 
 import { auth } from "../../firebase";
-
-import { useNavigate } from "react-router-dom";
-
 import { getProjects } from "../../services/projectService";
+import { getArticles } from "../../services/articleService";
 
 export default function Dashboard() {
   const [projects, setProjects] = useState([]);
-
+  const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetchProjects();
+    loadData();
   }, []);
 
-  const fetchProjects = async () => {
+  const loadData = async () => {
     try {
-      const data = await getProjects();
+      const projectData = await getProjects();
+      const articleData = await getArticles();
 
-      setProjects(data);
+      setProjects(projectData);
+      setArticles(articleData);
 
       setLoading(false);
     } catch (error) {
       console.log(error);
+      setLoading(false);
     }
   };
-
-  // Stats
 
   const totalProjects = projects.length;
 
@@ -49,13 +46,11 @@ export default function Dashboard() {
     item.status?.toLowerCase().includes("upcoming"),
   ).length;
 
-  const ongoingProjects = projects.filter((item) =>
-    item.status?.toLowerCase().includes("ongoing"),
-  ).length;
-
   const completedProjects = projects.filter((item) =>
     item.status?.toLowerCase().includes("completed"),
   ).length;
+
+  const totalArticles = articles.length;
 
   const handleLogout = async () => {
     try {
@@ -73,448 +68,199 @@ export default function Dashboard() {
     {
       title: "Total Projects",
       value: totalProjects,
-      bg: "#1F2A44",
+      bg: "bg-[#1F2A44]",
     },
-
     {
       title: "Residential",
       value: residentialProjects,
-      bg: "#E4572E",
+      bg: "bg-[#E4572E]",
     },
-
     {
       title: "Commercial",
       value: commercialProjects,
-      bg: "#0E9F6E",
+      bg: "bg-emerald-600",
     },
-
+    {
+      title: "Total Articles",
+      value: totalArticles,
+      bg: "bg-purple-600",
+    },
     {
       title: "Upcoming",
       value: upcomingProjects,
-      bg: "#7C3AED",
+      bg: "bg-orange-500",
     },
-
-    {
-      title: "Ongoing",
-      value: ongoingProjects,
-      bg: "#D97706",
-    },
-
     {
       title: "Completed",
       value: completedProjects,
-      bg: "#2563EB",
+      bg: "bg-blue-600",
     },
   ];
 
   if (loading) {
     return (
-      <div
-        style={{
-          minHeight: "100vh",
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          background: "#F8F7F4",
-          fontSize: "24px",
-          color: "#1F2A44",
-        }}
-      >
+      <div className="min-h-screen bg-[#F8F7F4] flex items-center justify-center text-2xl font-semibold text-[#1F2A44]">
         Loading Dashboard...
       </div>
     );
   }
 
   return (
-    <div
-      style={{
-        background: "#F8F7F4",
-        minHeight: "100vh",
-        padding: "40px",
-      }}
-    >
-      <div
-        style={{
-          maxWidth: "1450px",
-          margin: "0 auto",
-        }}
-      >
+    <div className="min-h-screen bg-[#F8F7F4] p-5 lg:p-10">
+      <div className="max-w-[1450px] mx-auto">
         {/* Header */}
 
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: "40px",
-            flexWrap: "wrap",
-            gap: "20px",
-          }}
-        >
+        <div className="flex flex-wrap justify-between items-center gap-5 mb-10">
           <div>
-            <h1
-              style={{
-                fontSize: "44px",
-                color: "#1F2A44",
-                marginBottom: "8px",
-              }}
-            >
+            <h1 className="text-4xl md:text-5xl font-bold text-[#1F2A44]">
               Dashboard
             </h1>
 
-            <p
-              style={{
-                color: "#777",
-                fontSize: "15px",
-              }}
-            >
-              Manage your real estate projects
-            </p>
+            <p className="text-gray-500 mt-2">Manage projects and articles</p>
           </div>
 
-          <div
-            style={{
-              display: "flex",
-              gap: "15px",
-              alignItems: "center",
-            }}
-          >
-            <Link
-              to="/admin/add-project"
-              style={{
-                textDecoration: "none",
-              }}
-            >
-              <button
-                style={{
-                  padding: "15px 24px",
-                  border: "none",
-                  borderRadius: "14px",
-                  background: "#E4572E",
-                  color: "#fff",
-                  fontWeight: "600",
-                  cursor: "pointer",
-                  fontSize: "15px",
-                  boxShadow: "0 8px 20px rgba(228,87,46,0.25)",
-                }}
-              >
-                + Add New Project
+          <div className="flex flex-wrap gap-4">
+            <Link to="/admin/add-project">
+              <button className="px-6 py-4 rounded-xl bg-[#E4572E] text-white font-semibold shadow-lg">
+                + Add Project
+              </button>
+            </Link>
+
+            <Link to="/admin/add-article">
+              <button className="px-6 py-4 rounded-xl bg-purple-600 text-white font-semibold shadow-lg">
+                + Add Article
               </button>
             </Link>
 
             <button
               onClick={handleLogout}
-              style={{
-                padding: "15px 24px",
-                border: "none",
-                borderRadius: "14px",
-                background: "#1F2A44",
-                color: "#fff",
-                fontWeight: "600",
-                cursor: "pointer",
-                fontSize: "15px",
-              }}
+              className="px-6 py-4 rounded-xl bg-[#1F2A44] text-white font-semibold"
             >
               Logout
             </button>
           </div>
         </div>
 
-        {/* Stats Cards */}
+        {/* Stats */}
 
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit,minmax(240px,1fr))",
-            gap: "24px",
-            marginBottom: "45px",
-          }}
-        >
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
           {dashboardCards.map((card, index) => (
             <div
               key={index}
-              style={{
-                background: card.bg,
-                padding: "28px",
-                borderRadius: "24px",
-                color: "#fff",
-                boxShadow: "0 10px 30px rgba(0,0,0,0.08)",
-              }}
+              className={`${card.bg} rounded-3xl p-8 text-white shadow-lg`}
             >
-              <p
-                style={{
-                  fontSize: "15px",
-                  opacity: "0.9",
-                  marginBottom: "12px",
-                }}
-              >
-                {card.title}
-              </p>
+              <p className="opacity-90">{card.title}</p>
 
-              <h2
-                style={{
-                  fontSize: "42px",
-                  fontWeight: "700",
-                }}
-              >
-                {card.value}
-              </h2>
+              <h2 className="text-5xl font-bold mt-3">{card.value}</h2>
             </div>
           ))}
         </div>
 
         {/* Recent Projects */}
 
-        <div
-          style={{
-            background: "#fff",
-            borderRadius: "26px",
-            padding: "30px",
-            boxShadow: "0 6px 24px rgba(0,0,0,0.05)",
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              marginBottom: "25px",
-            }}
-          >
+        <div className="bg-white rounded-3xl p-8 shadow-md mb-10">
+          <div className="flex flex-wrap justify-between items-center gap-4 mb-8">
             <div>
-              <h2
-                style={{
-                  fontSize: "28px",
-                  color: "#1F2A44",
-                }}
-              >
+              <h2 className="text-3xl font-bold text-[#1F2A44]">
                 Recent Projects
               </h2>
 
-              <p
-                style={{
-                  color: "#777",
-                  marginTop: "6px",
-                }}
-              >
-                Latest uploaded projects
-              </p>
+              <p className="text-gray-500 mt-2">Latest uploaded projects</p>
             </div>
 
-            <Link
-              to="/admin/projects"
-              style={{
-                textDecoration: "none",
-              }}
-            >
-              <button
-                style={{
-                  padding: "12px 20px",
-                  borderRadius: "12px",
-                  border: "1px solid #ddd",
-                  background: "#fff",
-                  cursor: "pointer",
-                  fontWeight: "600",
-                }}
-              >
+            <Link to="/admin/projects">
+              <button className="px-5 py-3 rounded-xl border border-gray-300 font-semibold hover:bg-gray-50 transition">
                 View All
               </button>
             </Link>
           </div>
 
-          {projects.length === 0 ? (
-            <div
-              style={{
-                padding: "60px 20px",
-                textAlign: "center",
-              }}
-            >
-              <h3
-                style={{
-                  fontSize: "28px",
-                  color: "#1F2A44",
-                  marginBottom: "10px",
-                }}
-              >
-                No Projects Found
-              </h3>
+          <div className="overflow-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-[#F8F7F4]">
+                  <th className="p-4 text-left">Image</th>
 
-              <p
-                style={{
-                  color: "#777",
-                }}
-              >
-                Start adding your first project
-              </p>
+                  <th className="p-4 text-left">Title</th>
+
+                  <th className="p-4 text-left">Type</th>
+
+                  <th className="p-4 text-left">Status</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {projects.slice(0, 5).map((project) => (
+                  <tr key={project.id} className="border-b">
+                    <td className="p-4">
+                      <img
+                        src={project.mainImage}
+                        alt=""
+                        className="w-[80px] h-[60px] rounded-xl object-cover"
+                      />
+                    </td>
+
+                    <td className="p-4 font-semibold">{project.title}</td>
+
+                    <td className="p-4">{project.type}</td>
+
+                    <td className="p-4">{project.status}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Recent Articles */}
+
+        <div className="bg-white rounded-3xl p-8 shadow-md">
+          <div className="flex justify-between items-center mb-8">
+            <div>
+              <h2 className="text-3xl font-bold text-[#1F2A44]">
+                Recent Articles
+              </h2>
+
+              <p className="text-gray-500 mt-2">Latest uploaded articles</p>
+            </div>
+
+            <Link to="/admin/articles">
+              <button className="border px-5 py-3 rounded-xl font-semibold">
+                View All
+              </button>
+            </Link>
+          </div>
+
+          {articles.length === 0 ? (
+            <div className="text-center py-10 text-gray-500">
+              No Articles Found
             </div>
           ) : (
-            <div
-              style={{
-                overflowX: "auto",
-              }}
-            >
-              <table
-                style={{
-                  width: "100%",
-                  borderCollapse: "collapse",
-                }}
-              >
-                <thead>
-                  <tr
-                    style={{
-                      background: "#F8F7F4",
-                    }}
-                  >
-                    <th
-                      style={{
-                        padding: "18px",
-                        textAlign: "left",
-                      }}
-                    >
-                      Image
-                    </th>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {articles.slice(0, 4).map((article) => (
+                <div
+                  key={article.id}
+                  className="border rounded-3xl overflow-hidden"
+                >
+                  <img
+                    src={article.image}
+                    alt=""
+                    className="w-full h-[180px] object-cover"
+                  />
 
-                    <th
-                      style={{
-                        padding: "18px",
-                        textAlign: "left",
-                      }}
-                    >
-                      Title
-                    </th>
+                  <div className="p-5">
+                    <span className="bg-orange-100 text-[#E4572E] px-3 py-2 rounded-full text-xs font-semibold">
+                      {article.type}
+                    </span>
 
-                    <th
-                      style={{
-                        padding: "18px",
-                        textAlign: "left",
-                      }}
-                    >
-                      Type
-                    </th>
+                    <h3 className="font-bold text-lg mt-4 text-[#1F2A44] line-clamp-2">
+                      {article.heading}
+                    </h3>
 
-                    <th
-                      style={{
-                        padding: "18px",
-                        textAlign: "left",
-                      }}
-                    >
-                      Status
-                    </th>
-
-                    <th
-                      style={{
-                        padding: "18px",
-                        textAlign: "left",
-                      }}
-                    >
-                      Location
-                    </th>
-
-                    <th
-                      style={{
-                        padding: "18px",
-                        textAlign: "left",
-                      }}
-                    >
-                      Price
-                    </th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {projects.slice(0, 6).map((project) => (
-                    <tr
-                      key={project.id}
-                      style={{
-                        borderBottom: "1px solid #eee",
-                      }}
-                    >
-                      <td
-                        style={{
-                          padding: "18px",
-                        }}
-                      >
-                        <img
-                          src={project.mainImage}
-                          alt={project.title}
-                          style={{
-                            width: "90px",
-                            height: "70px",
-                            objectFit: "cover",
-                            borderRadius: "12px",
-                          }}
-                        />
-                      </td>
-
-                      <td
-                        style={{
-                          padding: "18px",
-                          fontWeight: "600",
-                          color: "#1F2A44",
-                        }}
-                      >
-                        {project.title}
-                      </td>
-
-                      <td
-                        style={{
-                          padding: "18px",
-                          color: "#555",
-                        }}
-                      >
-                        {project.type}
-                      </td>
-
-                      <td
-                        style={{
-                          padding: "18px",
-                        }}
-                      >
-                        <span
-                          style={{
-                            padding: "8px 14px",
-                            borderRadius: "999px",
-                            background: project.status
-                              ?.toLowerCase()
-                              .includes("completed")
-                              ? "#DCFCE7"
-                              : project.status
-                                    ?.toLowerCase()
-                                    .includes("ongoing")
-                                ? "#FEF3C7"
-                                : "#E0E7FF",
-
-                            color: "#111",
-                            fontSize: "13px",
-                            fontWeight: "600",
-                          }}
-                        >
-                          {project.status}
-                        </span>
-                      </td>
-
-                      <td
-                        style={{
-                          padding: "18px",
-                          color: "#555",
-                        }}
-                      >
-                        {project.location}
-                      </td>
-
-                      <td
-                        style={{
-                          padding: "18px",
-                          fontWeight: "600",
-                          color: "#E4572E",
-                        }}
-                      >
-                        {project.startingPrice}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                    <p className="text-gray-500 mt-3">{article.date}</p>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>
