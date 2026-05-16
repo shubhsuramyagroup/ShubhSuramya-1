@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import { addContact } from "../services/contactService";
 
 // ── useInView hook ────────────────────────────────────────────────
 function useInView(threshold = 0.12) {
@@ -32,6 +33,109 @@ function useScrollProgress() {
     return () => window.removeEventListener("scroll", update);
   }, []);
   return progress;
+}
+
+// ── Toast notification ────────────────────────────────────────────
+function Toast({ show, onClose }) {
+  useEffect(() => {
+    if (!show) return;
+    const t = setTimeout(onClose, 3500);
+    return () => clearTimeout(t);
+  }, [show, onClose]);
+
+  if (!show) return null;
+
+  return (
+    <div
+      style={{
+        position: "fixed",
+        top: "24px",
+        right: "20px",
+        zIndex: 99999,
+        animation: "toastSlideIn 0.4s cubic-bezier(.34,1.56,.64,1) both",
+        maxWidth: "calc(100vw - 40px)",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "12px",
+          background: "#fff",
+          border: "1.5px solid #d1fae5",
+          borderLeft: "4px solid #10b981",
+          borderRadius: "14px",
+          padding: "14px 18px",
+          boxShadow:
+            "0 8px 32px rgba(16,185,129,0.15), 0 2px 8px rgba(0,0,0,0.08)",
+          minWidth: "280px",
+        }}
+      >
+        {/* Icon */}
+        <span
+          style={{
+            width: "36px",
+            height: "36px",
+            borderRadius: "50%",
+            background: "#ecfdf5",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flexShrink: 0,
+          }}
+        >
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="#10b981">
+            <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+          </svg>
+        </span>
+
+        {/* Text */}
+        <div style={{ flex: 1 }}>
+          <p
+            style={{
+              margin: 0,
+              fontWeight: 700,
+              fontSize: "14px",
+              color: "#065f46",
+            }}
+          >
+            Message sent!
+          </p>
+          <p style={{ margin: "2px 0 0", fontSize: "12px", color: "#6b7280" }}>
+            We'll be in touch within one business day.
+          </p>
+        </div>
+
+        {/* Close */}
+        <button
+          onClick={onClose}
+          style={{
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            padding: "4px",
+            color: "#9ca3af",
+            display: "flex",
+            alignItems: "center",
+            borderRadius: "6px",
+            flexShrink: 0,
+          }}
+          aria-label="Dismiss"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            width="16"
+            height="16"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+          >
+            <path d="M18 6L6 18M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  );
 }
 
 // ── Office card ───────────────────────────────────────────────────
@@ -73,26 +177,47 @@ function OfficeCard({ city, address, phone, mapUrl, delay }) {
 }
 
 // ── Contact form ──────────────────────────────────────────────────
-function ContactForm() {
+function ContactForm({ onSuccess }) {
   const [formRef, inView] = useInView(0.1);
   const [form, setForm] = useState({
-    name: "",
+    fullName: "",
     email: "",
     phone: "",
-    birthdate: "",
+    dob: "",
     subject: "",
     message: "",
   });
-  const [submitted, setSubmitted] = useState(false);
 
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setSubmitted(true);
-    setTimeout(() => setSubmitted(false), 3500);
-    setForm({ name: "", email: "", phone: "", subject: "", message: "" });
+
+    try {
+      await addContact({
+        fullName: form.fullName,
+        email: form.email,
+        phone: form.phone,
+        dob: form.dob,
+        subject: form.subject,
+        message: form.message,
+        createdAt: new Date(),
+      });
+
+      onSuccess();
+
+      setForm({
+        fullName: "",
+        email: "",
+        phone: "",
+        dob: "",
+        subject: "",
+        message: "",
+      });
+    } catch (err) {
+      console.log(err);
+    }
   };
 
   return (
@@ -103,26 +228,15 @@ function ContactForm() {
         transform: inView ? "translateY(0)" : "translateY(36px)",
         transition: "opacity 0.75s ease 0.1s, transform 0.75s ease 0.1s",
       }}
-      className="bg-white rounded-3xl shadow-xl border border-gray-100 p-8 sm:p-10"
+      className="bg-white rounded-3xl shadow-xl border border-gray-100 p-6 sm:p-8 lg:p-10"
     >
-      <h3 className="text-2xl font-semibold text-gray-900 mb-1">
+      
+      <h3 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-1">
         Send us a message
       </h3>
       <p className="text-gray-400 text-sm mb-8">
         We'll get back to you within one business day.
       </p>
-
-      {submitted && (
-        <div className="mb-6 flex items-center gap-3 bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm font-semibold px-4 py-3 rounded-xl">
-          <svg
-            viewBox="0 0 24 24"
-            className="w-5 h-5 fill-emerald-600 flex-shrink-0"
-          >
-            <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
-          </svg>
-          Message sent! We'll be in touch soon.
-        </div>
-      )}
 
       <form onSubmit={handleSubmit} className="space-y-5">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
@@ -132,8 +246,8 @@ function ContactForm() {
             </label>
             <input
               type="text"
-              name="name"
-              value={form.name}
+              name="fullName"
+              value={form.fullName}
               onChange={handleChange}
               required
               placeholder="Arjun Mehta"
@@ -176,33 +290,25 @@ function ContactForm() {
             </label>
             <input
               type="date"
-              name="birthdate"
-              value={form.birthdate}
+              name="dob"
+              value={form.dob}
               onChange={handleChange}
-              placeholder="27"
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:border-[#E34A2F] focus:ring-2 focus:ring-[#E34A2F]/10 transition-all bg-gray-50 focus:bg-white"
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-900 focus:outline-none focus:border-[#E34A2F] focus:ring-2 focus:ring-[#E34A2F]/10 transition-all bg-gray-50 focus:bg-white"
             />
           </div>
-          <div>
+          <div className="sm:col-span-2">
             <label className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1.5 block">
               Subject
             </label>
-            <select
+            <input
+              type="text"
               name="subject"
               value={form.subject}
               onChange={handleChange}
               required
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-900 focus:outline-none focus:border-[#E34A2F] focus:ring-2 focus:ring-[#E34A2F]/10 transition-all bg-gray-50 focus:bg-white appearance-none cursor-pointer"
-            >
-              <option value="" disabled>
-                Select a topic
-              </option>
-              <option>Site Visit Request</option>
-              <option>Investment Enquiry</option>
-              <option>Project Information</option>
-              <option>Partnership Opportunity</option>
-              <option>Other</option>
-            </select>
+              placeholder="Enter subject"
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:border-[#E34A2F] focus:ring-2 focus:ring-[#E34A2F]/10 transition-all bg-gray-50 focus:bg-white"
+            />
           </div>
         </div>
 
@@ -239,35 +345,21 @@ export default function Contact() {
   const [officeRef, officeInView] = useInView(0.1);
   const scrollProgress = useScrollProgress();
   const [showScrollTop, setShowScrollTop] = useState(false);
-
-  useEffect(() => {
-    const t = setTimeout(() => setLoaded(true), 50);
-    return () => clearTimeout(t);
-  }, []);
-
-  const scrollToTop = () => {
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth",
-    });
-  };
-
-  useEffect(() => {
-    const onScroll = () => setShowScrollTop(window.scrollY > 400);
-
-    window.addEventListener("scroll", onScroll, { passive: true });
-
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-  useEffect(() => {
-    const onScroll = () => setShowScrollTop(window.scrollY > 400);
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+  const [showToast, setShowToast] = useState(false);
 
   useEffect(() => {
     const t = setTimeout(() => setLoaded(true), 60);
     return () => clearTimeout(t);
+  }, []);
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    const onScroll = () => setShowScrollTop(window.scrollY > 400);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
   const offices = [
@@ -288,6 +380,10 @@ export default function Contact() {
 
         *, *::before, *::after { box-sizing: border-box; }
 
+        @keyframes toastSlideIn {
+          from { opacity: 0; transform: translateX(60px) scale(0.9); }
+          to   { opacity: 1; transform: translateX(0) scale(1); }
+        }
         @keyframes scrollDrop {
           0%   { transform:translateY(-100%); opacity:0; }
           25%  { opacity:1; }
@@ -412,103 +508,37 @@ export default function Contact() {
           to   { transform: rotate(360deg); }
         }
 
-        /* ── Hero entrance ── */
         .hero-badge   { animation: badgePop 0.7s cubic-bezier(.34,1.56,.64,1) 0.4s both; }
         .hero-h1      { animation: heroContentIn 0.9s cubic-bezier(.22,1,.36,1) 0.65s both; }
         .hero-line    { animation: heroLineGrow 0.6s cubic-bezier(.22,1,.36,1) 1.1s both; }
         .hero-p       { animation: heroContentIn 0.8s cubic-bezier(.22,1,.36,1) 1.2s both; }
 
-        /* ── Scroll line ── */
-        .scroll-line {
-          animation: scrollLineDrop 1.8s ease-in-out infinite;
-        }
-        .scroll-down-indicator {
-          animation: heroFadeIn 0.8s ease 1.8s both;
-        }
+        .scroll-line { animation: scrollLineDrop 1.8s ease-in-out infinite; }
+        .scroll-down-indicator { animation: heroFadeIn 0.8s ease 1.8s both; }
 
-        /* ── Scroll-to-top ── */
-        .scroll-top-btn {
-          animation: scrollTopReveal 0.4s cubic-bezier(.34,1.56,.64,1) both;
-        }
-        .scroll-top-btn:hover .scroll-top-arrow {
-          animation: scrollTopBounce 0.6s ease infinite;
-        }
+        .scroll-top-btn { animation: scrollTopReveal 0.4s cubic-bezier(.34,1.56,.64,1) both; }
+        .scroll-top-btn:hover .scroll-top-arrow { animation: scrollTopBounce 0.6s ease infinite; }
 
-        /* ── Blog card ── */
-        .blog-card {
-          transition: transform 0.35s cubic-bezier(.22,1,.36,1);
-        }
-        .blog-card:hover {
-          transform: translateY(-6px);
-        }
-        .blog-img {
-          transition: transform 0.6s cubic-bezier(.22,1,.36,1);
-        }
-        .blog-card:hover .blog-img {
-          transform: scale(1.07);
-        }
+        .blog-card { transition: transform 0.35s cubic-bezier(.22,1,.36,1); }
+        .blog-card:hover { transform: translateY(-6px); }
+        .blog-img { transition: transform 0.6s cubic-bezier(.22,1,.36,1); }
+        .blog-card:hover .blog-img { transform: scale(1.07); }
 
-        /* ── Process card ── */
-        .process-card {
-          transition: transform 0.35s cubic-bezier(.22,1,.36,1), box-shadow 0.35s ease;
-        }
-        .process-card:hover {
-          transform: translateY(-8px) perspective(600px) rotateX(3deg);
-          box-shadow: 0 24px 48px rgba(0,0,0,0.1);
-        }
+        .process-card { transition: transform 0.35s cubic-bezier(.22,1,.36,1), box-shadow 0.35s ease; }
+        .process-card:hover { transform: translateY(-8px) perspective(600px) rotateX(3deg); box-shadow: 0 24px 48px rgba(0,0,0,0.1); }
 
-        /* ── Hero scroll ── */
-        .hero-scroll-indicator {
-          animation: scrollDrop 2s ease-in-out infinite 2s;
-        }
+        .hero-scroll-indicator { animation: scrollDrop 2s ease-in-out infinite 2s; }
+        .floating-badge { animation: floatBadge 3s ease-in-out infinite; }
+        .blob-bg { animation: morphBlob 8s ease-in-out infinite; }
+        .float-3d { animation: float3D 6s ease-in-out infinite; }
+        .stat-depth { animation: depthPulse 4s ease-in-out infinite; }
+        .process-arrow { animation: processArrowPulse 1.6s ease-in-out infinite; }
+        .ring-rotate { animation: rotateSlowly 18s linear infinite; }
 
-        /* ── Floating ── */
-        .floating-badge {
-          animation: floatBadge 3s ease-in-out infinite;
-        }
+        .perspective-container { perspective: 1200px; perspective-origin: center center; }
+        .feature-card-3d { transition: transform 0.25s cubic-bezier(.22,1,.36,1), box-shadow 0.25s ease, border-color 0.25s ease; }
+        .stats-3d-reveal { transform-style: preserve-3d; }
 
-        /* ── Blob ── */
-        .blob-bg {
-          animation: morphBlob 8s ease-in-out infinite;
-        }
-
-        /* ── 3D floating card ── */
-        .float-3d {
-          animation: float3D 6s ease-in-out infinite;
-        }
-
-        /* ── Stat card depth ── */
-        .stat-depth {
-          animation: depthPulse 4s ease-in-out infinite;
-        }
-
-        /* ── Process arrow ── */
-        .process-arrow {
-          animation: processArrowPulse 1.6s ease-in-out infinite;
-        }
-
-        /* ── Slowly rotating deco ring ── */
-        .ring-rotate {
-          animation: rotateSlowly 18s linear infinite;
-        }
-
-        /* ── Perspective container ── */
-        .perspective-container {
-          perspective: 1200px;
-          perspective-origin: center center;
-        }
-
-        /* ── Feature card interactive 3D ── */
-        .feature-card-3d {
-          transition: transform 0.25s cubic-bezier(.22,1,.36,1), box-shadow 0.25s ease, border-color 0.25s ease;
-        }
-
-        /* ── Stats 3D section reveal ── */
-        .stats-3d-reveal {
-          transform-style: preserve-3d;
-        }
-
-        /* ── Scroll progress bar ── */
         .scroll-progress-bar {
           position: fixed;
           top: 0;
@@ -519,31 +549,27 @@ export default function Contact() {
           transition: width 0.1s linear;
         }
 
-        /* ── Smooth scrolling ── */
         html { scroll-behavior: smooth; }
 
-        /* ── Custom scrollbar ── */
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: #FDFAF6; }
         ::-webkit-scrollbar-thumb { background: #E34A2F; border-radius: 3px; }
 
-        /* ── Project card image ── */
-        .project-card img {
-          transition: transform 0.6s cubic-bezier(.22,1,.36,1);
-        }
+        .project-card img { transition: transform 0.6s cubic-bezier(.22,1,.36,1); }
 
-        /* ── Responsive video section ── */
         @media (max-width: 640px) {
           .hero-content { padding-bottom: 80px !important; }
         }
 
-        /* ── Mobile tap ── */
         @media (hover: none) {
           .feature-card:hover { transform: none; }
           .stat-card:hover { transform: none; }
           .process-card:hover { transform: none; }
         }
       `}</style>
+
+      {/* ── TOAST NOTIFICATION ── */}
+      <Toast show={showToast} onClose={() => setShowToast(false)} />
 
       {/* ── SCROLL PROGRESS BAR ── */}
       <div
@@ -591,7 +617,7 @@ export default function Contact() {
         {/* Content */}
         <div
           ref={heroRef}
-          className="relative z-10 max-w-2xl mx-auto text-center"
+          className="relative z-10 max-w-2xl mx-auto text-center px-4"
           style={{
             opacity: loaded ? 1 : 0,
             transform: loaded ? "translateY(0)" : "translateY(30px)",
@@ -607,20 +633,20 @@ export default function Contact() {
             <span className="text-white">Contact</span>
           </nav>
 
-          <h1 className="text-white font-Regular text-4xl sm:text-5xl md:text-6xl leading-tight mb-5">
+          <h1 className="text-white font-Regular text-3xl sm:text-5xl md:text-6xl leading-tight mb-5">
             Let's <span className="text-[#E34A2F]">Connect</span> With Us
           </h1>
 
-          <p className="text-gray-300 text-base leading-relaxed max-w-md mx-auto mb-10">
+          <p className="text-gray-300 text-sm sm:text-base leading-relaxed max-w-md mx-auto mb-10">
             Let's talk about your project or dream home. Send us a message and
             we will be in touch within one business day.
           </p>
 
           {/* Quick contact pills */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
             <a
               href="tel:+918045678900"
-              className="flex items-center gap-3 bg-white/90 hover:bg-white border border-gray-200 rounded-full px-6 py-3 transition-all duration-200 hover:-translate-y-0.5 group"
+              className="w-full sm:w-auto flex items-center justify-center gap-3 bg-white/90 hover:bg-white border border-gray-200 rounded-full px-5 sm:px-6 py-3 transition-all duration-200 hover:-translate-y-0.5 group"
             >
               <span className="w-8 h-8 rounded-full bg-[#E34A2F] flex items-center justify-center flex-shrink-0">
                 <svg viewBox="0 0 24 24" className="w-4 h-4 fill-white">
@@ -634,7 +660,7 @@ export default function Contact() {
 
             <a
               href="mailto:hello@realestate.com"
-              className="flex items-center gap-3 bg-white/90 hover:bg-white border border-gray-200 rounded-full px-6 py-3 transition-all duration-200 hover:-translate-y-0.5 group"
+              className="w-full sm:w-auto flex items-center justify-center gap-3 bg-white/90 hover:bg-white border border-gray-200 rounded-full px-5 sm:px-6 py-3 transition-all duration-200 hover:-translate-y-0.5 group"
             >
               <span className="w-8 h-8 rounded-full bg-[#E34A2F] flex items-center justify-center flex-shrink-0">
                 <svg viewBox="0 0 24 24" className="w-4 h-4 fill-white">
@@ -650,14 +676,16 @@ export default function Contact() {
       </section>
 
       {/* ── FORM + OFFICE SECTION ── */}
-      <section className="bg-[#F8F7F4] py-15 sm:py-20 px-2 sm:px-4 lg:px-8 xl:px-12">
-        <div className="w-full grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
+      <section className="bg-[#F8F7F4] py-12 sm:py-20 px-4 sm:px-6 lg:px-8 xl:px-12">
+        <div className="max-w-screen-xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-stretch">
           {/* Left — Contact form */}
-          <ContactForm />
+          <div className="h-full">
+            <ContactForm onSuccess={() => setShowToast(true)} />
+          </div>
 
-          {/* Right — Office info + map */}
-          <div>
-            {/* Section label */}
+          {/* Right — Office info */}
+          <div className="h-full flex flex-col">
+            {/* Header */}
             <div
               ref={officeRef}
               style={{
@@ -669,7 +697,8 @@ export default function Contact() {
               <span className="text-[#E34A2F] text-xs font-bold tracking-[0.3em] uppercase mb-3 block">
                 Our Offices
               </span>
-              <h2 className="text-gray-900 font-semibold text-3xl sm:text-4xl mb-8 leading-tight">
+
+              <h2 className="text-gray-900 font-semibold text-2xl sm:text-3xl lg:text-4xl mb-8 leading-tight">
                 Some of our
                 <br />
                 office locations
@@ -677,13 +706,13 @@ export default function Contact() {
             </div>
 
             {/* Office list */}
-            <div className="space-y-7 mb-10">
+            <div className="space-y-7 mb-8">
               {offices.map((office, i) => (
                 <OfficeCard key={i} {...office} delay={i * 0.12} />
               ))}
             </div>
 
-            {/* Office image */}
+            {/* Auto height image */}
             <div
               style={{
                 opacity: officeInView ? 1 : 0,
@@ -691,19 +720,21 @@ export default function Contact() {
                 transition:
                   "opacity 0.75s ease 0.35s, transform 0.75s ease 0.35s",
               }}
-              className="relative rounded-2xl overflow-hidden shadow-lg"
-              style={{ height: "220px" }}
+              className="relative rounded-2xl overflow-hidden shadow-lg flex-1 min-h-[180px]"
             >
               <img
                 src="https://images.unsplash.com/photo-1486325212027-8081e485255e?w=800&q=80"
                 alt="Our office building"
-                className="w-full h-full object-cover"
+                className="absolute inset-0 w-full h-full object-cover"
               />
+
               <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+
               <div className="absolute bottom-4 left-5 text-white">
                 <p className="text-xs font-bold uppercase tracking-widest text-white/70">
                   Headquarter
                 </p>
+
                 <p className="text-sm font-semibold">Bengaluru, Karnataka</p>
               </div>
             </div>
@@ -712,13 +743,13 @@ export default function Contact() {
       </section>
 
       {/* ── MAP SECTION ── */}
-      <section className="bg-white py-15 sm:py-20 px-2 sm:px-4 lg:px-8 xl:px-12">
-        <div className="w-full">
-          <div className="text-center mb-12">
+      <section className="bg-white py-12 sm:py-20 px-4 sm:px-6 lg:px-8 xl:px-12">
+        <div className="max-w-screen-xl mx-auto">
+          <div className="text-center mb-10 sm:mb-12">
             <span className="text-[#E34A2F] text-xs font-bold tracking-[0.3em] uppercase mb-3 block">
               Find Us
             </span>
-            <h2 className="text-gray-900 font-semibold text-3xl sm:text-4xl">
+            <h2 className="text-gray-900 font-semibold text-2xl sm:text-3xl lg:text-4xl">
               Visit our offices on the map
             </h2>
             <p className="text-gray-400 text-sm mt-3 max-w-md mx-auto">
@@ -773,7 +804,7 @@ function MapSection({ offices }) {
       </div>
 
       {/* Selected office info bar */}
-      <div className="bg-gray-50 border border-gray-200 rounded-2xl px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+      <div className="bg-gray-50 border border-gray-200 rounded-2xl px-4 sm:px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
         <div className="flex items-start gap-3">
           <div className="w-9 h-9 rounded-full bg-[#E34A2F]/10 flex items-center justify-center flex-shrink-0 mt-0.5">
             <svg viewBox="0 0 24 24" className="w-5 h-5 fill-[#E34A2F]">
@@ -787,7 +818,7 @@ function MapSection({ offices }) {
             <p className="text-gray-500 text-xs">{offices[active].address}</p>
           </div>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
           <span className="text-gray-500 text-xs">{offices[active].phone}</span>
           <a
             href={offices[active].mapUrl}
@@ -815,7 +846,7 @@ function MapSection({ offices }) {
       {/* Google Maps embed */}
       <div
         className="relative rounded-2xl overflow-hidden border border-gray-200 shadow-sm"
-        style={{ height: "420px" }}
+        style={{ height: "320px" }}
       >
         <iframe
           key={active}
