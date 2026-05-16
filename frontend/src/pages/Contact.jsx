@@ -34,60 +34,6 @@ function useScrollProgress() {
   return progress;
 }
 
-// ── Decorative floating shape ─────────────────────────────────────
-function Shape({ type, color, style }) {
-  if (type === "plus")
-    return (
-      <svg
-        width="24"
-        height="24"
-        viewBox="0 0 24 24"
-        fill="none"
-        style={style}
-        className="absolute pointer-events-none select-none"
-      >
-        <line
-          x1="12"
-          y1="2"
-          x2="12"
-          y2="22"
-          stroke={color}
-          strokeWidth="3"
-          strokeLinecap="round"
-        />
-        <line
-          x1="2"
-          y1="12"
-          x2="22"
-          y2="12"
-          stroke={color}
-          strokeWidth="3"
-          strokeLinecap="round"
-        />
-      </svg>
-    );
-  if (type === "arc")
-    return (
-      <svg
-        width="40"
-        height="22"
-        viewBox="0 0 40 22"
-        fill="none"
-        style={style}
-        className="absolute pointer-events-none select-none"
-      >
-        <path
-          d="M2 20 Q20 2 38 20"
-          stroke={color}
-          strokeWidth="3.5"
-          strokeLinecap="round"
-          fill="none"
-        />
-      </svg>
-    );
-  return null;
-}
-
 // ── Office card ───────────────────────────────────────────────────
 function OfficeCard({ city, address, phone, mapUrl, delay }) {
   const [ref, inView] = useInView();
@@ -133,6 +79,7 @@ function ContactForm() {
     name: "",
     email: "",
     phone: "",
+    birthdate: "",
     subject: "",
     message: "",
   });
@@ -220,6 +167,19 @@ function ContactForm() {
               value={form.phone}
               onChange={handleChange}
               placeholder="+91 98765 43210"
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:border-[#E34A2F] focus:ring-2 focus:ring-[#E34A2F]/10 transition-all bg-gray-50 focus:bg-white"
+            />
+          </div>
+          <div>
+            <label className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1.5 block">
+              Date of birth
+            </label>
+            <input
+              type="date"
+              name="birthdate"
+              value={form.birthdate}
+              onChange={handleChange}
+              placeholder="27"
               className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:border-[#E34A2F] focus:ring-2 focus:ring-[#E34A2F]/10 transition-all bg-gray-50 focus:bg-white"
             />
           </div>
@@ -781,9 +741,7 @@ function MapSection({ offices }) {
   const [active, setActive] = useState(0);
   const [mapRef, inView] = useInView(0.1);
 
-  const mapQueries = [
-    "MG+Road+Bengaluru+Karnataka",
-  ];
+  const mapQueries = ["MG+Road+Bengaluru+Karnataka"];
 
   return (
     <div
