@@ -1,5 +1,6 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 /* ─── Firebase Config ─────────────────────────────────────────────────────── */
 const FB = {
@@ -21,7 +22,11 @@ async function fsList(token, col) {
   const r = await fetch(`${FS()}/${col}?pageSize=200`, {
     headers: { Authorization: `Bearer ${token}` },
   });
-  if (!r.ok) return [];
+  if (!r.ok) {
+    // If unauthorized, token is expired — propagate so caller can handle
+    if (r.status === 401) throw new Error("AUTH_EXPIRED");
+    return [];
+  }
   const d = await r.json();
   return d.documents || [];
 }
@@ -62,24 +67,89 @@ function docToObj(doc) {
     obj[k] = v.stringValue ?? v.doubleValue ?? v.booleanValue ?? "";
   return obj;
 }
+
+/* ─── Auth helpers ───────────────────────────────────────────────────────── */
+const AUTH_KEY = "shubh_admin_session";
+
 async function signIn(email, password) {
   const r = await fetch(
     `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${FB.apiKey}`,
-    { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email, password, returnSecureToken: true }) }
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password, returnSecureToken: true }),
+    }
   );
   const d = await r.json();
   if (!r.ok) throw new Error(d.error?.message || "Login failed");
-  return { token: d.idToken, uid: d.localId, email: d.email };
+  // Store expiry so we can validate on reload
+  const expiresAt = Date.now() + Number(d.expiresIn || 3600) * 1000;
+  return { token: d.idToken, uid: d.localId, email: d.email, expiresAt };
 }
+
+async function refreshToken(refreshToken) {
+  const r = await fetch(
+    `https://securetoken.googleapis.com/v1/token?key=${FB.apiKey}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ grant_type: "refresh_token", refresh_token: refreshToken }),
+    }
+  );
+  const d = await r.json();
+  if (!r.ok) throw new Error("Token refresh failed");
+  return {
+    token: d.id_token,
+    refreshToken: d.refresh_token,
+    expiresAt: Date.now() + Number(d.expires_in || 3600) * 1000,
+  };
+}
+
+function saveSession(user) {
+  try {
+    localStorage.setItem(AUTH_KEY, JSON.stringify(user));
+  } catch (e) {
+    console.warn("Could not save session", e);
+  }
+}
+
+function loadSession() {
+  try {
+    const raw = localStorage.getItem(AUTH_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    // Must have a token field (our own format)
+    if (!parsed?.token) return null;
+    // Check if expired (with 60s buffer)
+    if (parsed.expiresAt && Date.now() > parsed.expiresAt - 60_000) {
+      // Token expired — remove session
+      localStorage.removeItem(AUTH_KEY);
+      return null;
+    }
+    return parsed;
+  } catch (e) {
+    localStorage.removeItem(AUTH_KEY);
+    return null;
+  }
+}
+
+function clearSession() {
+  localStorage.removeItem(AUTH_KEY);
+}
+
+/* ─── Razorpay helper ────────────────────────────────────────────────────── */
 function openRazorpayCheckout({ amount, vendorName, description, onSuccess, onFailure }) {
-  console.log("Opening Razorpay with key:", RAZORPAY_KEY_ID, "Amount:", amount);
   if (!RAZORPAY_KEY_ID) { alert("Razorpay Key ID missing in .env"); return; }
   if (!window.Razorpay) { alert("Razorpay SDK not loaded."); return; }
   const rzp = new window.Razorpay({
-    key: RAZORPAY_KEY_ID, amount: Math.round(amount * 100), currency: "INR",
-    name: "Shubh Infracon", description: `Payment to ${vendorName} – ${description || "Vendor payment"}`,
+    key: RAZORPAY_KEY_ID,
+    amount: Math.round(amount * 100),
+    currency: "INR",
+    name: "Shubh Infracon",
+    description: `Payment to ${vendorName} – ${description || "Vendor payment"}`,
     handler: (res) => onSuccess(res.razorpay_payment_id),
-    prefill: { name: vendorName }, theme: { color: "#E34A2F" },
+    prefill: { name: vendorName },
+    theme: { color: "#E34A2F" },
     modal: { ondismiss: () => onFailure("Payment cancelled") },
   });
   rzp.on("payment.failed", (resp) => onFailure(resp.error.description));
@@ -122,7 +192,7 @@ const makeBtn = (variant = "default", extra = {}) => ({
     variant === "outline" ? "transparent" :
     variant === "ghost" ? "transparent" : "rgba(30,42,90,0.06)",
   color:
-    ["primary","navy","razorpay","danger"].includes(variant) ? "#fff" :
+    ["primary", "navy", "razorpay", "danger"].includes(variant) ? "#fff" :
     variant === "outline" ? T.navy : T.navy,
   boxShadow:
     variant === "primary" ? "0 4px 16px rgba(227,74,47,0.35)" :
@@ -219,7 +289,7 @@ function Modal({ title, subtitle, onClose, children, width = 540 }) {
               {subtitle && <p style={{ margin: "4px 0 0", fontSize: 12, color: T.muted, fontFamily: "'Manrope',sans-serif" }}>{subtitle}</p>}
             </div>
             <button style={{ ...makeBtn("ghost", { padding: 8, borderRadius: 10, background: "rgba(30,42,90,0.06)" }), flexShrink: 0 }} onClick={onClose}>
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 1l12 12M13 1L1 13" stroke={T.navy} strokeWidth="2" strokeLinecap="round"/></svg>
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 1l12 12M13 1L1 13" stroke={T.navy} strokeWidth="2" strokeLinecap="round" /></svg>
             </button>
           </div>
           <div style={{ height: 2, background: `linear-gradient(90deg,${T.coral},${T.gold})`, borderRadius: 99, marginTop: 16 }} />
@@ -416,11 +486,6 @@ function PaymentForm({ vendor, onSave, onClose, saving }) {
               transition: "all 0.2s", fontFamily: "'Manrope',sans-serif",
             }}>
               {m}
-              {m === "Razorpay X" && (
-                <svg width="14" height="14" viewBox="0 0 24 24" style={{ marginLeft: 6, fill: f.paymentMode === m ? "#fff" : "#3395FF" }}>
-                  <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H4V6h16v12zM6 10h2v2H6zm0 4h8v2H6zm10 0h2v2h-2zm-6-4h8v2h-8z"/>
-                </svg>
-              )}
             </button>
           ))}
         </div>
@@ -456,7 +521,7 @@ function PaymentSuccess({ amount, vendor, paymentId, onClose }) {
     <div style={{ position: "fixed", inset: 0, background: "rgba(10,14,30,0.65)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2000, padding: 16 }}>
       <div style={{ background: T.cream, borderRadius: 24, maxWidth: 420, width: "100%", padding: "3rem 2.5rem", textAlign: "center", boxShadow: "0 32px 80px rgba(10,14,30,0.25)", animation: "modalIn 0.4s cubic-bezier(.34,1.56,.64,1) both", border: `1px solid ${T.border}` }}>
         <div style={{ width: 72, height: 72, borderRadius: "50%", background: `linear-gradient(135deg,${T.success},#25c492)`, display: "inline-flex", alignItems: "center", justifyContent: "center", marginBottom: 20, boxShadow: `0 8px 24px rgba(29,158,117,0.35)` }}>
-          <svg width="30" height="30" viewBox="0 0 30 30" fill="none"><path d="M6 15l7 7 11-13" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          <svg width="30" height="30" viewBox="0 0 30 30" fill="none"><path d="M6 15l7 7 11-13" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
         </div>
         <h2 style={{ margin: "0 0 8px", fontSize: 22, fontWeight: 800, color: T.navy, fontFamily: "'Montserrat',sans-serif" }}>Payment Successful!</h2>
         <p style={{ margin: "0 0 24px", color: T.muted, fontSize: 14, fontFamily: "'Manrope',sans-serif" }}>{fmtINR(amount)} recorded for <strong style={{ color: T.navy }}>{vendor}</strong></p>
@@ -467,6 +532,20 @@ function PaymentSuccess({ amount, vendor, paymentId, onClose }) {
           </div>
         )}
         <button style={{ ...makeBtn("primary", { width: "100%", justifyContent: "center", padding: "12px 20px" }) }} onClick={onClose}>Done</button>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Session Expired Banner ─────────────────────────────────────────────── */
+function SessionExpiredBanner({ onLogin }) {
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(10,14,30,0.75)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 3000, padding: 16 }}>
+      <div style={{ background: T.cream, borderRadius: 24, maxWidth: 400, width: "100%", padding: "2.5rem", textAlign: "center", boxShadow: "0 32px 80px rgba(10,14,30,0.25)", border: `1px solid ${T.border}` }}>
+        <div style={{ fontSize: 48, marginBottom: 16 }}>⏱️</div>
+        <h2 style={{ margin: "0 0 8px", fontSize: 20, fontWeight: 800, color: T.navy, fontFamily: "'Montserrat',sans-serif" }}>Session Expired</h2>
+        <p style={{ margin: "0 0 24px", color: T.muted, fontSize: 14, fontFamily: "'Manrope',sans-serif" }}>Your login session has expired. Please sign in again to continue.</p>
+        <button style={{ ...makeBtn("primary", { width: "100%", justifyContent: "center", padding: "12px 20px" }) }} onClick={onLogin}>Sign In Again</button>
       </div>
     </div>
   );
@@ -488,7 +567,7 @@ function Navbar({ user, tab, setTab, onLogout }) {
           {/* Logo */}
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <div style={{ width: 38, height: 38, borderRadius: 12, background: `linear-gradient(135deg,${T.coral},${T.gold})`, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 12px rgba(227,74,47,0.4)", flexShrink: 0 }}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" stroke="#fff" strokeWidth="2" strokeLinejoin="round"/><polyline points="9 22 9 12 15 12 15 22" stroke="#fff" strokeWidth="2" strokeLinejoin="round"/></svg>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" stroke="#fff" strokeWidth="2" strokeLinejoin="round" /><polyline points="9 22 9 12 15 12 15 22" stroke="#fff" strokeWidth="2" strokeLinejoin="round" /></svg>
             </div>
             <div>
               <p style={{ margin: 0, color: "#fff", fontWeight: 800, fontSize: 15, fontFamily: "'Montserrat',sans-serif", letterSpacing: "-0.3px" }}>Shubh Infracon</p>
@@ -514,14 +593,23 @@ function Navbar({ user, tab, setTab, onLogout }) {
 
           {/* User / Logout */}
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 50, padding: "6px 14px 6px 8px" }}>
-              <div style={{ width: 26, height: 26, borderRadius: "50%", background: `linear-gradient(135deg,${T.coral},${T.gold})`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="#fff" strokeWidth="2"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="#fff" strokeWidth="2" strokeLinecap="round"/></svg>
+            <Link to="/" style={{ textDecoration: "none" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, background: "rgba(255,255,255,0.10)", border: "1px solid rgba(255,255,255,0.10)", borderRadius: 50, padding: "6px 14px 6px 8px", cursor: "pointer" }}>
+                <div style={{ width: 26, height: 26, borderRadius: "50%", background: `linear-gradient(135deg,${T.coral},${T.gold})`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="8" r="4" stroke="#fff" strokeWidth="2" />
+                    <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="#fff" strokeWidth="2" strokeLinecap="round" />
+                  </svg>
+                </div>
+                <span style={{ fontSize: 11, color: "rgba(255,255,255,0.75)", fontFamily: "'Manrope',sans-serif", maxWidth: 120, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {user.email}
+                </span>
               </div>
-              <span style={{ fontSize: 11, color: "rgba(255,255,255,0.75)", fontFamily: "'Manrope',sans-serif", maxWidth: 120, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user.email}</span>
-            </div>
-            <button onClick={onLogout} style={{ width: 36, height: 36, borderRadius: 50, background: "rgba(227,74,47,0.15)", border: "1px solid rgba(227,74,47,0.3)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", transition: "all 0.2s" }} title="Logout">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" stroke="#ff6b5a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            </Link>
+            <button onClick={onLogout} title="Logout" style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(227,74,47,0.15)", border: "1px solid rgba(227,74,47,0.30)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", transition: "all 0.2s" }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" stroke="#ff6b5a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
             </button>
           </div>
         </div>
@@ -624,7 +712,7 @@ function DashboardTab({ companies, vendors, payments, filterCompany, setFilterCo
             <div key={p.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 0", borderBottom: `1px solid ${T.border}` }}>
               <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                 <div style={{ width: 40, height: 40, borderRadius: 12, background: `linear-gradient(135deg,rgba(30,42,90,0.08),rgba(30,42,90,0.04))`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><rect x="2" y="5" width="20" height="14" rx="2" stroke={T.navy} strokeWidth="1.8"/><path d="M2 10h20" stroke={T.navy} strokeWidth="1.8"/></svg>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><rect x="2" y="5" width="20" height="14" rx="2" stroke={T.navy} strokeWidth="1.8" /><path d="M2 10h20" stroke={T.navy} strokeWidth="1.8" /></svg>
                 </div>
                 <div>
                   <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: T.navy, fontFamily: "'Manrope',sans-serif" }}>{p.vendorName}</p>
@@ -661,14 +749,12 @@ function CompaniesTab({ companies, vendors, onAdd, onEdit, onDelete }) {
           const net = cNet(c.id), paid = cPaid(c.id), due = net - paid, pct = net > 0 ? (paid / net) * 100 : 0;
           return (
             <div key={c.id} style={{ ...card, position: "relative", overflow: "hidden", animation: `fadeUp 0.5s cubic-bezier(.22,1,.36,1) ${i * 80}ms both`, padding: 0 }}>
-              {/* Top accent bar */}
               <div style={{ height: 4, background: pct >= 100 ? `linear-gradient(90deg,${T.success},#25c492)` : `linear-gradient(90deg,${T.coral},${T.gold})` }} />
               <div style={{ padding: "22px 24px" }}>
-                {/* Header */}
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
                   <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
                     <div style={{ width: 44, height: 44, borderRadius: 13, background: `linear-gradient(135deg,${T.navy},#2d3d7a)`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" stroke="#fff" strokeWidth="1.8"/><path d="M3 9h18M9 21V9" stroke="#fff" strokeWidth="1.8" strokeLinecap="round"/></svg>
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" stroke="#fff" strokeWidth="1.8" /><path d="M3 9h18M9 21V9" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" /></svg>
                     </div>
                     <div>
                       <p style={{ margin: 0, fontWeight: 800, fontSize: 16, color: T.navy, fontFamily: "'Montserrat',sans-serif" }}>{c.name}</p>
@@ -677,14 +763,13 @@ function CompaniesTab({ companies, vendors, onAdd, onEdit, onDelete }) {
                   </div>
                   <div style={{ display: "flex", gap: 6 }}>
                     <button onClick={() => onEdit(c)} style={{ width: 34, height: 34, borderRadius: 10, background: "rgba(30,42,90,0.06)", border: `1px solid ${T.border}`, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" stroke={T.navy} strokeWidth="2" strokeLinecap="round"/><path d="M18.5 2.5a2.12 2.12 0 013 3L12 15l-4 1 1-4 9.5-9.5z" stroke={T.navy} strokeWidth="2" strokeLinecap="round"/></svg>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" stroke={T.navy} strokeWidth="2" strokeLinecap="round" /><path d="M18.5 2.5a2.12 2.12 0 013 3L12 15l-4 1 1-4 9.5-9.5z" stroke={T.navy} strokeWidth="2" strokeLinecap="round" /></svg>
                     </button>
                     <button onClick={() => onDelete(c.id)} style={{ width: 34, height: 34, borderRadius: 10, background: "rgba(227,74,47,0.08)", border: "1px solid rgba(227,74,47,0.2)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><polyline points="3 6 5 6 21 6" stroke={T.coral} strokeWidth="2" strokeLinecap="round"/><path d="M19 6l-1 14H6L5 6M10 11v6M14 11v6M9 6V4h6v2" stroke={T.coral} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><polyline points="3 6 5 6 21 6" stroke={T.coral} strokeWidth="2" strokeLinecap="round" /><path d="M19 6l-1 14H6L5 6M10 11v6M14 11v6M9 6V4h6v2" stroke={T.coral} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
                     </button>
                   </div>
                 </div>
-                {/* Details */}
                 {(c.gstin || c.pan) && (
                   <div style={{ display: "flex", gap: 12, marginBottom: 8, flexWrap: "wrap" }}>
                     {c.gstin && <span style={{ fontSize: 11, color: T.muted, fontFamily: "'Manrope',sans-serif" }}>GSTIN: <strong>{c.gstin}</strong></span>}
@@ -692,7 +777,6 @@ function CompaniesTab({ companies, vendors, onAdd, onEdit, onDelete }) {
                   </div>
                 )}
                 {c.address && <p style={{ margin: "0 0 14px", fontSize: 12, color: T.hint, fontFamily: "'Manrope',sans-serif" }}>📍 {c.address}</p>}
-                {/* Finance grid */}
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginTop: 4 }}>
                   {[
                     ["Net Payable", fmtINR(net), null],
@@ -705,7 +789,6 @@ function CompaniesTab({ companies, vendors, onAdd, onEdit, onDelete }) {
                     </div>
                   ))}
                 </div>
-                {/* Progress */}
                 <div style={{ marginTop: 14 }}>
                   <ProgressBar pct={pct} />
                   <div style={{ display: "flex", justifyContent: "space-between", marginTop: 5 }}>
@@ -735,10 +818,9 @@ function VendorsTab({ vendors, companies, onAdd, onEdit, onDelete, onPay }) {
       <SectionHeader eyebrow="Directory" title="Vendors" action={
         <button style={{ ...makeBtn("primary") }} onClick={onAdd} disabled={companies.length === 0}>+ Add Vendor</button>
       } />
-      {/* Filters */}
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
         <div style={{ position: "relative", flex: "1 1 200px", maxWidth: 280 }}>
-          <svg style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)" }} width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="8" stroke={T.muted} strokeWidth="2"/><path d="M21 21l-4.35-4.35" stroke={T.muted} strokeWidth="2" strokeLinecap="round"/></svg>
+          <svg style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)" }} width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="8" stroke={T.muted} strokeWidth="2" /><path d="M21 21l-4.35-4.35" stroke={T.muted} strokeWidth="2" strokeLinecap="round" /></svg>
           <input style={{ ...inp, paddingLeft: 36 }} placeholder="Search vendors…" value={searchQ} onChange={(e) => setSearchQ(e.target.value)} onFocus={e => { e.target.style.borderColor = T.coral; e.target.style.boxShadow = `0 0 0 3px ${T.coral}22`; }} onBlur={e => { e.target.style.borderColor = T.border2; e.target.style.boxShadow = "none"; }} />
         </div>
         <select style={{ ...inp, width: "auto", flex: "0 0 auto" }} value={filterCompany} onChange={(e) => setFilterCompany(e.target.value)} onFocus={e => { e.target.style.borderColor = T.coral; }} onBlur={e => { e.target.style.borderColor = T.border2; }}>
@@ -763,7 +845,6 @@ function VendorsTab({ vendors, companies, onAdd, onEdit, onDelete, onPay }) {
               <div style={{ padding: "20px 22px 18px" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16, flexWrap: "wrap" }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    {/* Name & badges */}
                     <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 8 }}>
                       <p style={{ margin: 0, fontWeight: 800, fontSize: 16, color: T.navy, fontFamily: "'Montserrat',sans-serif" }}>{v.name}</p>
                       {comp && <Badge color="navy">{comp.name}</Badge>}
@@ -772,7 +853,6 @@ function VendorsTab({ vendors, companies, onAdd, onEdit, onDelete, onPay }) {
                     </div>
                     {v.description && <p style={{ margin: "0 0 12px", fontSize: 12.5, color: T.muted, fontFamily: "'Manrope',sans-serif" }}>{v.description}{v.hsnCode ? ` (HSN: ${v.hsnCode})` : ""}</p>}
 
-                    {/* Finance row */}
                     <div style={{ display: "flex", gap: 12, flexWrap: "wrap", background: "rgba(30,42,90,0.04)", borderRadius: 14, padding: "14px 16px" }}>
                       {[
                         ["Sub Total", v.totalBill], ["CGST", v.cgst], ["SGST", v.sgst],
@@ -790,14 +870,8 @@ function VendorsTab({ vendors, companies, onAdd, onEdit, onDelete, onPay }) {
                       <span style={{ fontSize: 10.5, color: T.hint, display: "block", marginTop: 4, fontFamily: "'Manrope',sans-serif" }}>{pct.toFixed(1)}% settled</span>
                     </div>
                   </div>
-                  {/* Action buttons */}
                   <div style={{ display: "flex", flexDirection: "column", gap: 8, flexShrink: 0 }}>
-                    <button style={{ ...makeBtn("primary", { fontSize: 12, padding: "9px 16px" }) }} onClick={() => onPay(v)}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ marginRight: 6 }}>
-                        <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H4V6h16v12zM6 10h2v2H6zm0 4h8v2H6zm10 0h2v2h-2zm-6-4h8v2h-8z" fill="#fff"/>
-                      </svg>
-                      Pay
-                    </button>
+                    <button style={{ ...makeBtn("primary", { fontSize: 12, padding: "9px 16px" }) }} onClick={() => onPay(v)}>💳 Pay</button>
                     <button style={{ ...makeBtn("default", { fontSize: 12, padding: "8px 14px", background: "#fff", border: `1.5px solid ${T.border2}` }) }} onClick={() => onEdit(v)}>✏️ Edit</button>
                     <button style={{ ...makeBtn("danger", { fontSize: 12, padding: "8px 14px" }) }} onClick={() => onDelete(v.id)}>🗑️</button>
                   </div>
@@ -867,8 +941,8 @@ function PaymentsTab({ payments, companies }) {
 }
 
 /* ─── Login Page ─────────────────────────────────────────────────────────── */
-function LoginPage({ onLogin }) {
-  const [email, setEmail] = useState("");
+function LoginPage({ onLogin, prefillEmail = "" }) {
+  const [email, setEmail] = useState(prefillEmail);
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -877,9 +951,16 @@ function LoginPage({ onLogin }) {
   async function handleSubmit() {
     if (!email || !password) { setError("Please enter your email and password."); return; }
     setError(""); setLoading(true);
-    try { const u = await signIn(email, password); onLogin(u); }
-    catch (e) { setError(e.message.replace("INVALID_LOGIN_CREDENTIALS", "Invalid email or password.").replace("TOO_MANY_ATTEMPTS_TRY_LATER", "Too many attempts. Try later.")); }
-    finally { setLoading(false); }
+    try {
+      const u = await signIn(email, password);
+      onLogin(u);
+    } catch (e) {
+      setError(
+        e.message
+          .replace("INVALID_LOGIN_CREDENTIALS", "Invalid email or password.")
+          .replace("TOO_MANY_ATTEMPTS_TRY_LATER", "Too many attempts. Try later.")
+      );
+    } finally { setLoading(false); }
   }
   const focusStyle = (e) => { e.target.style.borderColor = T.coral; e.target.style.boxShadow = `0 0 0 3px ${T.coral}22`; };
   const blurStyle = (e) => { e.target.style.borderColor = T.border2; e.target.style.boxShadow = "none"; };
@@ -892,8 +973,6 @@ function LoginPage({ onLogin }) {
         @keyframes spin{to{transform:rotate(360deg)}}
         @keyframes fadeUp{from{opacity:0;transform:translateY(32px)}to{opacity:1;transform:translateY(0)}}
         @keyframes modalIn{from{opacity:0;transform:scale(0.94) translateY(16px)}to{opacity:1;transform:scale(1) translateY(0)}}
-        @keyframes floatBadge{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
-        @keyframes pulseRing{0%{transform:scale(1);opacity:0.6}100%{transform:scale(1.8);opacity:0}}
         input:focus,select:focus{outline:none;}
         button:disabled{opacity:0.55;cursor:not-allowed;}
         ::-webkit-scrollbar{width:6px;height:6px}
@@ -901,8 +980,7 @@ function LoginPage({ onLogin }) {
         html{scroll-behavior:smooth}
       `}</style>
 
-      {/* Right: login form */}
-      <div style={{ width: "100%", maxWidth: 520, display: "flex", alignItems: "center", justifyContent: "center", padding: "2rem", background: T.cream, boxShadow: "-20px 0 60px rgba(10,14,30,0.08)" }}>
+      <div style={{ width: "100%", maxWidth: 520, display: "flex", alignItems: "center", justifyContent: "center", padding: "2rem", background: T.cream, boxShadow: "-20px 0 60px rgba(10,14,30,0.08)", margin: "0 auto" }}>
         <div style={{ width: "100%", maxWidth: 400, animation: "fadeUp 0.6s cubic-bezier(.22,1,.36,1) 0.1s both" }}>
           <div style={{ marginBottom: 36 }}>
             <p style={{ margin: "0 0 6px", fontSize: 10.5, fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", color: T.coral, fontFamily: "'Manrope',sans-serif" }}>Admin Portal</p>
@@ -919,8 +997,8 @@ function LoginPage({ onLogin }) {
                 <input style={{ ...inp, paddingRight: 44 }} type={show ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" onFocus={focusStyle} onBlur={blurStyle} onKeyDown={(e) => e.key === "Enter" && handleSubmit()} />
                 <button onClick={() => setShow(s => !s)} style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: T.muted, padding: 4 }}>
                   {show
-                    ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24" stroke={T.muted} strokeWidth="2" strokeLinecap="round"/><line x1="1" y1="1" x2="23" y2="23" stroke={T.muted} strokeWidth="2" strokeLinecap="round"/></svg>
-                    : <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke={T.muted} strokeWidth="2"/><circle cx="12" cy="12" r="3" stroke={T.muted} strokeWidth="2"/></svg>
+                    ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24" stroke={T.muted} strokeWidth="2" strokeLinecap="round" /><line x1="1" y1="1" x2="23" y2="23" stroke={T.muted} strokeWidth="2" strokeLinecap="round" /></svg>
+                    : <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke={T.muted} strokeWidth="2" /><circle cx="12" cy="12" r="3" stroke={T.muted} strokeWidth="2" /></svg>
                   }
                 </button>
               </div>
@@ -953,6 +1031,7 @@ function LoginPage({ onLogin }) {
 export default function App() {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
+  const [sessionExpired, setSessionExpired] = useState(false);
   const [tab, setTab] = useState("dashboard");
   const [companies, setCompanies] = useState([]);
   const [vendors, setVendors] = useState([]);
@@ -966,53 +1045,94 @@ export default function App() {
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [searchParams] = useSearchParams();
 
+  // ── Load Razorpay SDK + scroll listener + tab deep-link ──
   useEffect(() => {
     if (!document.getElementById("razorpay-sdk")) {
       const sc = document.createElement("script");
-      sc.id = "razorpay-sdk"; sc.src = "https://checkout.razorpay.com/v1/checkout.js"; sc.async = true;
+      sc.id = "razorpay-sdk";
+      sc.src = "https://checkout.razorpay.com/v1/checkout.js";
+      sc.async = true;
       document.head.appendChild(sc);
     }
     const onScroll = () => setShowScrollTop(window.scrollY > 300);
     window.addEventListener("scroll", onScroll, { passive: true });
 
-    // Handle deep-linking via query param
     const tabParam = searchParams.get("tab");
     if (tabParam && ["dashboard", "companies", "vendors", "payments"].includes(tabParam)) {
       setTab(tabParam);
     }
 
-    // Sync auth from localStorage
-    const savedAdmin = localStorage.getItem("admin");
-    if (savedAdmin && !user) {
-      try {
-        const parsed = JSON.parse(savedAdmin);
-        if (parsed.stsTokenManager?.accessToken || parsed.accessToken) {
-          setUser(parsed);
-          setToken(parsed.stsTokenManager?.accessToken || parsed.accessToken);
-        }
-      } catch (e) { console.error("Auth sync failed", e); }
-    }
-
     return () => window.removeEventListener("scroll", onScroll);
-  }, [searchParams, user]);
+  }, [searchParams]);
 
-  const showToast = (msg, type = "success") => { setToast({ msg, type }); setTimeout(() => setToast(null), 3500); };
+  // ── Restore session from localStorage on mount ──
+  useEffect(() => {
+    const session = loadSession();
+    if (session) {
+      setUser({ email: session.email, uid: session.uid });
+      setToken(session.token);
+    }
+  }, []);
+
+  const showToast = (msg, type = "success") => {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), 3500);
+  };
+
+  const handleAuthError = useCallback(() => {
+    // Token expired mid-session
+    clearSession();
+    setToken(null);
+    setUser(null);
+    setCompanies([]);
+    setVendors([]);
+    setPayments([]);
+    setSessionExpired(true);
+  }, []);
 
   const loadAll = useCallback(async (tok) => {
     setLoading(true);
     try {
-      const [cD, vD, pD] = await Promise.all([fsList(tok, "companies"), fsList(tok, "vendors"), fsList(tok, "payments")]);
+      const [cD, vD, pD] = await Promise.all([
+        fsList(tok, "companies"),
+        fsList(tok, "vendors"),
+        fsList(tok, "payments"),
+      ]);
       setCompanies(cD.map(docToObj).filter(Boolean));
       setVendors(vD.map(docToObj).filter(Boolean));
       setPayments(pD.map(docToObj).filter(Boolean));
-    } catch (e) { showToast("Failed to load data", "error"); }
-    finally { setLoading(false); }
-  }, []);
+    } catch (e) {
+      if (e.message === "AUTH_EXPIRED") {
+        handleAuthError();
+      } else {
+        showToast("Failed to load data", "error");
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [handleAuthError]);
 
-  useEffect(() => { if (token) loadAll(token); }, [token, loadAll]);
+  useEffect(() => {
+    if (token) loadAll(token);
+  }, [token, loadAll]);
 
-  function handleLogin(u) { setUser(u); setToken(u.token); }
-  function handleLogout() { setUser(null); setToken(null); setCompanies([]); setVendors([]); setPayments([]); }
+  function handleLogin(u) {
+    // u = { token, uid, email, expiresAt }
+    saveSession(u);
+    setUser({ email: u.email, uid: u.uid });
+    setToken(u.token);
+    setSessionExpired(false);
+  }
+
+  function handleLogout() {
+    clearSession();
+    setUser(null);
+    setToken(null);
+    setCompanies([]);
+    setVendors([]);
+    setPayments([]);
+    setSessionExpired(false);
+  }
 
   async function saveCompany(form, existing) {
     setSaving(true);
@@ -1021,8 +1141,12 @@ export default function App() {
         ? await fsSet(token, `companies/${existing.id}`, form)
         : await fsCreate(token, "companies", { ...form, createdAt: new Date().toISOString() });
       showToast(existing ? "Company updated" : "Company added");
-      await loadAll(token); setModal(null);
-    } catch (e) { showToast(e.message, "error"); } finally { setSaving(false); }
+      await loadAll(token);
+      setModal(null);
+    } catch (e) {
+      if (e.message?.includes("401")) handleAuthError();
+      else showToast(e.message, "error");
+    } finally { setSaving(false); }
   }
 
   async function deleteCompany(id) {
@@ -1031,8 +1155,11 @@ export default function App() {
     try {
       await fsDelete(token, `companies/${id}`);
       await Promise.all(vendors.filter((v) => v.companyId === id).map((v) => fsDelete(token, `vendors/${v.id}`)));
-      await loadAll(token); showToast("Company deleted");
-    } catch (e) { showToast(e.message, "error"); } finally { setSaving(false); }
+      await loadAll(token);
+      showToast("Company deleted");
+    } catch (e) {
+      showToast(e.message, "error");
+    } finally { setSaving(false); }
   }
 
   async function saveVendor(form, existing) {
@@ -1043,18 +1170,24 @@ export default function App() {
         ? await fsSet(token, `vendors/${existing.id}`, data)
         : await fsCreate(token, "vendors", data);
       showToast(existing ? "Vendor updated" : "Vendor added");
-      await loadAll(token); setModal(null);
-    } catch (e) { showToast(e.message, "error"); } finally { setSaving(false); }
+      await loadAll(token);
+      setModal(null);
+    } catch (e) {
+      if (e.message?.includes("401")) handleAuthError();
+      else showToast(e.message, "error");
+    } finally { setSaving(false); }
   }
 
   async function deleteVendor(id) {
     if (!window.confirm("Delete this vendor?")) return;
-    try { await fsDelete(token, `vendors/${id}`); await loadAll(token); showToast("Vendor deleted"); }
-    catch (e) { showToast(e.message, "error"); }
+    try {
+      await fsDelete(token, `vendors/${id}`);
+      await loadAll(token);
+      showToast("Vendor deleted");
+    } catch (e) { showToast(e.message, "error"); }
   }
 
   async function recordPayment(vendor, form, useRazorpay) {
-    console.log("Recording payment:", { vendor: vendor.name, amount: form.amountPaid, useRazorpay });
     const amount = Number(form.amountPaid || 0);
     const due = Number(vendor.netAmount || 0) - Number(vendor.amountPaid || 0);
 
@@ -1088,11 +1221,15 @@ export default function App() {
       createdAt: new Date().toISOString(),
     });
     await fsSet(token, `vendors/${vendor.id}`, { ...vendor, amountPaid: newPaid });
-    await loadAll(token); setModal(null);
+    await loadAll(token);
+    setModal(null);
     setSuccessPayment({ amount, vendor: vendor.name, paymentId: razorpayId });
   }
 
-  if (!user) return <LoginPage onLogin={handleLogin} />;
+  // Not logged in
+  if (!user) {
+    return <LoginPage onLogin={handleLogin} />;
+  }
 
   return (
     <div style={{ minHeight: "100vh", background: T.cream, fontFamily: "'Manrope', sans-serif" }}>
@@ -1102,7 +1239,6 @@ export default function App() {
         @keyframes spin{to{transform:rotate(360deg)}}
         @keyframes fadeUp{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:translateY(0)}}
         @keyframes modalIn{from{opacity:0;transform:scale(0.94) translateY(16px)}to{opacity:1;transform:scale(1) translateY(0)}}
-        @keyframes floatBadge{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
         @keyframes toastIn{from{opacity:0;transform:translateY(16px) scale(0.95)}to{opacity:1;transform:translateY(0) scale(1)}}
         @keyframes scrollTopReveal{from{opacity:0;transform:translateY(16px) scale(0.85)}to{opacity:1;transform:translateY(0) scale(1)}}
         input:focus,select:focus{outline:none;}
@@ -1114,6 +1250,11 @@ export default function App() {
         ::-webkit-scrollbar-track{background:transparent}
         html{scroll-behavior:smooth}
       `}</style>
+
+      {/* Session expired overlay */}
+      {sessionExpired && (
+        <SessionExpiredBanner onLogin={() => setSessionExpired(false)} />
+      )}
 
       <Navbar user={user} tab={tab} setTab={setTab} onLogout={handleLogout} />
 
@@ -1131,7 +1272,7 @@ export default function App() {
       {/* Scroll to top */}
       {showScrollTop && (
         <button onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} style={{ position: "fixed", bottom: 28, right: 24, width: 44, height: 44, borderRadius: "50%", background: `linear-gradient(135deg,${T.coral},#f5743a)`, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 20px rgba(227,74,47,0.4)", animation: "scrollTopReveal 0.4s cubic-bezier(.34,1.56,.64,1) both", zIndex: 900 }}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M18 15l-6-6-6 6" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M18 15l-6-6-6 6" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
         </button>
       )}
 
