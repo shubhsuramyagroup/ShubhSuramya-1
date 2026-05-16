@@ -8,6 +8,20 @@ export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
+  // Replace with your WhatsApp number
+  const whatsappNumber = "8128299287";
+
+  const openWhatsApp = () => {
+    const message = encodeURIComponent(
+      "Hello, I want to inquire about your projects."
+    );
+
+    window.open(
+      `https://wa.me/${whatsappNumber}?text=${message}`,
+      "_blank"
+    );
+  };
+
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 20);
@@ -47,23 +61,22 @@ export default function Navbar() {
           }`}
         >
           <div className="flex items-center justify-between h-[72px] sm:h-[78px] px-4 sm:px-6 lg:px-8">
+
             {/* LOGO */}
             <Link to="/" className="flex items-center pt-2 gap-2 flex-shrink-0">
-              {/* FIRST LOGO */}
               <div className="flex items-center justify-center flex-shrink-0">
                 <img
                   src={logo}
                   alt="logo"
-                  className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 object-contain flex-shrink-0"
+                  className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 object-contain"
                 />
               </div>
 
-              {/* SECOND LOGO */}
               <div className="flex items-center justify-center flex-shrink-0">
                 <img
                   src={logo1}
                   alt="logo text"
-                 className="h-8 w-12 sm:h-10 sm:w-14 md:h-11 md:w-16 lg:h-12 lg:w-20 object-contain flex-shrink-0"
+                  className="h-8 w-12 sm:h-10 sm:w-14 md:h-11 md:w-16 lg:h-12 lg:w-20 object-contain"
                 />
               </div>
             </Link>
@@ -100,10 +113,16 @@ export default function Navbar() {
 
             {/* RIGHT SIDE */}
             <div className="flex items-center gap-3">
-              {/* CTA BUTTON */}
-              <button className="hidden sm:inline-flex items-center gap-2 rounded-full bg-[#1E2A5A] hover:bg-[#25D366] text-white px-5 lg:px-6 py-2.5 text-[13px] font-semibold transition-all duration-300 shadow-sm hover:shadow-lg hover:-translate-y-[1px]">
+
+              {/* WHATSAPP BUTTON */}
+              <button
+                onClick={openWhatsApp}
+                className="hidden sm:inline-flex items-center gap-2 rounded-full bg-[#1E2A5A] hover:bg-[#25D366] text-white px-5 lg:px-6 py-2.5 text-[13px] font-semibold transition-all duration-300 shadow-sm hover:shadow-lg hover:-translate-y-[1px]"
+              >
                 <FaWhatsapp className="text-[18px]" />
-                <span className="hidden md:block">Inquire Now</span>
+                <span className="hidden md:block">
+                  Inquire Now
+                </span>
               </button>
 
               {/* MOBILE MENU BUTTON */}
@@ -145,6 +164,7 @@ export default function Navbar() {
           }`}
         >
           <div className="max-w-7xl mx-auto rounded-2xl bg-white border border-gray-100 shadow-[0_20px_60px_rgba(0,0,0,0.08)] overflow-hidden">
+
             {/* MENU LINKS */}
             <div className="flex flex-col py-3">
               {navLinks.map((item, index) => (
@@ -174,8 +194,6 @@ export default function Navbar() {
                     fill="none"
                     stroke="currentColor"
                     strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
                   >
                     <path d="M5 12h14" />
                     <path d="M13 5l7 7-7 7" />
@@ -184,9 +202,12 @@ export default function Navbar() {
               ))}
             </div>
 
-            {/* MOBILE BUTTON */}
+            {/* MOBILE WHATSAPP BUTTON */}
             <div className="p-5 sm:p-6 border-t border-gray-100 bg-[#FAFAFA]">
-              <button className="w-full flex items-center justify-center gap-2 rounded-full bg-[#1E2A5A] hover:bg-[#25D366] text-white py-3 text-[14px] font-semibold transition-all duration-300">
+              <button
+                onClick={openWhatsApp}
+                className="w-full flex items-center justify-center gap-2 rounded-full bg-[#1E2A5A] hover:bg-[#25D366] text-white py-3 text-[14px] font-semibold transition-all duration-300"
+              >
                 <FaWhatsapp className="text-[18px]" />
                 Inquire Now
               </button>
