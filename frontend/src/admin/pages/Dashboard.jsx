@@ -8,11 +8,13 @@ import { auth } from "../../firebase";
 import { getProjects } from "../../services/projectService";
 import { getArticles } from "../../services/articleService";
 import { getContacts } from "../../services/contactService";
+import { getAllVendors } from "../../services/vendorService";
 
 export default function Dashboard() {
   const [projects, setProjects] = useState([]);
   const [articles, setArticles] = useState([]);
   const [contacts, setContacts] = useState([]);
+  const [vendors, setVendors] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const navigate = useNavigate();
@@ -27,15 +29,18 @@ export default function Dashboard() {
         projectData,
         articleData,
         contactData,
+        vendorData,
       ] = await Promise.all([
         getProjects(),
         getArticles(),
         getContacts(),
+        getAllVendors(),
       ]);
 
       setProjects(projectData);
       setArticles(articleData);
       setContacts(contactData);
+      setVendors(vendorData);
 
       setLoading(false);
 
@@ -98,6 +103,11 @@ export default function Dashboard() {
       title: "Contacts",
       value: contacts.length,
       bg: "bg-green-600",
+    },
+    {
+      title: "Vendors",
+      value: vendors.length,
+      bg: "bg-blue-500",
     },
     {
       title: "Residential",
@@ -169,6 +179,12 @@ export default function Dashboard() {
             <Link to="/admin/contacts">
               <button className="bg-green-600 text-white px-6 py-4 rounded-xl">
                 Contacts
+              </button>
+            </Link>
+
+            <Link to="/admin/vendors?tab=vendors">
+              <button className="bg-blue-600 text-white px-6 py-4 rounded-xl">
+                Vendors
               </button>
             </Link>
 

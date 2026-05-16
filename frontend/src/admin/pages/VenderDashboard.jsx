@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useSearchParams } from "react-router-dom";
 
 /* ─── Firebase Config ─────────────────────────────────────────────────────── */
 const FB = {
@@ -71,6 +72,8 @@ async function signIn(email, password) {
   return { token: d.idToken, uid: d.localId, email: d.email };
 }
 function openRazorpayCheckout({ amount, vendorName, description, onSuccess, onFailure }) {
+  console.log("Opening Razorpay with key:", RAZORPAY_KEY_ID, "Amount:", amount);
+  if (!RAZORPAY_KEY_ID) { alert("Razorpay Key ID missing in .env"); return; }
   if (!window.Razorpay) { alert("Razorpay SDK not loaded."); return; }
   const rzp = new window.Razorpay({
     key: RAZORPAY_KEY_ID, amount: Math.round(amount * 100), currency: "INR",
@@ -207,9 +210,9 @@ function Empty({ icon, text }) {
 
 function Modal({ title, subtitle, onClose, children, width = 540 }) {
   return (
-    <div onClick={(e) => e.target === e.currentTarget && onClose()} style={{ position: "fixed", inset: 0, background: "rgba(10,14,30,0.55)", backdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: 16, overflowY: "auto" }}>
-      <div style={{ background: T.cream, borderRadius: 24, width: "100%", maxWidth: width, maxHeight: "92vh", overflowY: "auto", boxShadow: "0 24px 80px rgba(10,14,30,0.22)", border: `1px solid ${T.border}`, animation: "modalIn 0.3s cubic-bezier(.22,1,.36,1) both" }}>
-        <div style={{ padding: "24px 28px 0" }}>
+    <div onClick={(e) => e.target === e.currentTarget && onClose()} style={{ position: "fixed", inset: 0, background: "rgba(10,14,30,0.55)", backdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: 16 }}>
+      <div style={{ background: T.cream, borderRadius: 24, width: "100%", maxWidth: width, maxHeight: "96vh", display: "flex", flexDirection: "column", boxShadow: "0 24px 80px rgba(10,14,30,0.22)", border: `1px solid ${T.border}`, animation: "modalIn 0.3s cubic-bezier(.22,1,.36,1) both" }}>
+        <div style={{ padding: "24px 28px 0", flexShrink: 0 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 4 }}>
             <div>
               <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: T.navy, fontFamily: "'Montserrat',sans-serif" }}>{title}</h3>
@@ -221,7 +224,7 @@ function Modal({ title, subtitle, onClose, children, width = 540 }) {
           </div>
           <div style={{ height: 2, background: `linear-gradient(90deg,${T.coral},${T.gold})`, borderRadius: 99, marginTop: 16 }} />
         </div>
-        <div style={{ padding: "24px 28px 28px" }}>{children}</div>
+        <div style={{ padding: "20px 28px 28px", overflowY: "auto", flex: 1 }}>{children}</div>
       </div>
     </div>
   );
@@ -357,7 +360,7 @@ function VendorForm({ initial, companies, onSave, onClose, saving }) {
 
 function PaymentForm({ vendor, onSave, onClose, saving }) {
   const due = Number(vendor.netAmount || 0) - Number(vendor.amountPaid || 0);
-  const [f, setF] = useState({ date: today(), particulars: "", chequeNo: "", amountPaid: String(due > 0 ? due.toFixed(2) : ""), paymentMode: "Cash" });
+  const [f, setF] = useState({ date: today(), particulars: "", chequeNo: "", amountPaid: String(due > 0 ? due.toFixed(2) : ""), paymentMode: "Razorpay X" });
   const set = (k) => (e) => setF((p) => ({ ...p, [k]: e.target.value }));
   const isRazorpay = f.paymentMode === "Razorpay X";
   const focusStyle = (e) => { e.target.style.borderColor = T.coral; e.target.style.boxShadow = `0 0 0 3px ${T.coral}22`; };
@@ -413,6 +416,11 @@ function PaymentForm({ vendor, onSave, onClose, saving }) {
               transition: "all 0.2s", fontFamily: "'Manrope',sans-serif",
             }}>
               {m}
+              {m === "Razorpay X" && (
+                <svg width="14" height="14" viewBox="0 0 24 24" style={{ marginLeft: 6, fill: f.paymentMode === m ? "#fff" : "#3395FF" }}>
+                  <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H4V6h16v12zM6 10h2v2H6zm0 4h8v2H6zm10 0h2v2h-2zm-6-4h8v2h-8z"/>
+                </svg>
+              )}
             </button>
           ))}
         </div>
@@ -784,7 +792,12 @@ function VendorsTab({ vendors, companies, onAdd, onEdit, onDelete, onPay }) {
                   </div>
                   {/* Action buttons */}
                   <div style={{ display: "flex", flexDirection: "column", gap: 8, flexShrink: 0 }}>
-                    <button style={{ ...makeBtn("primary", { fontSize: 12, padding: "9px 16px" }) }} onClick={() => onPay(v)}>💳 Pay</button>
+                    <button style={{ ...makeBtn("primary", { fontSize: 12, padding: "9px 16px" }) }} onClick={() => onPay(v)}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ marginRight: 6 }}>
+                        <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H4V6h16v12zM6 10h2v2H6zm0 4h8v2H6zm10 0h2v2h-2zm-6-4h8v2h-8z" fill="#fff"/>
+                      </svg>
+                      Pay
+                    </button>
                     <button style={{ ...makeBtn("default", { fontSize: 12, padding: "8px 14px", background: "#fff", border: `1.5px solid ${T.border2}` }) }} onClick={() => onEdit(v)}>✏️ Edit</button>
                     <button style={{ ...makeBtn("danger", { fontSize: 12, padding: "8px 14px" }) }} onClick={() => onDelete(v.id)}>🗑️</button>
                   </div>
@@ -951,6 +964,7 @@ export default function App() {
   const [toast, setToast] = useState(null);
   const [successPayment, setSuccessPayment] = useState(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [searchParams] = useSearchParams();
 
   useEffect(() => {
     if (!document.getElementById("razorpay-sdk")) {
@@ -960,8 +974,27 @@ export default function App() {
     }
     const onScroll = () => setShowScrollTop(window.scrollY > 300);
     window.addEventListener("scroll", onScroll, { passive: true });
+
+    // Handle deep-linking via query param
+    const tabParam = searchParams.get("tab");
+    if (tabParam && ["dashboard", "companies", "vendors", "payments"].includes(tabParam)) {
+      setTab(tabParam);
+    }
+
+    // Sync auth from localStorage
+    const savedAdmin = localStorage.getItem("admin");
+    if (savedAdmin && !user) {
+      try {
+        const parsed = JSON.parse(savedAdmin);
+        if (parsed.stsTokenManager?.accessToken || parsed.accessToken) {
+          setUser(parsed);
+          setToken(parsed.stsTokenManager?.accessToken || parsed.accessToken);
+        }
+      } catch (e) { console.error("Auth sync failed", e); }
+    }
+
     return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+  }, [searchParams, user]);
 
   const showToast = (msg, type = "success") => { setToast({ msg, type }); setTimeout(() => setToast(null), 3500); };
 
@@ -1021,8 +1054,14 @@ export default function App() {
   }
 
   async function recordPayment(vendor, form, useRazorpay) {
+    console.log("Recording payment:", { vendor: vendor.name, amount: form.amountPaid, useRazorpay });
     const amount = Number(form.amountPaid || 0);
+    const due = Number(vendor.netAmount || 0) - Number(vendor.amountPaid || 0);
+
     if (!amount || amount <= 0) { showToast("Enter a valid amount", "error"); return; }
+    if (amount > due + 0.01) { showToast("Amount exceeds outstanding balance", "error"); return; }
+    if (form.particulars && form.particulars.length > 200) { showToast("Particulars too long", "error"); return; }
+
     if (useRazorpay) {
       setSaving(true);
       openRazorpayCheckout({

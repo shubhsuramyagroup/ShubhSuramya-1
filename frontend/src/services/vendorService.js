@@ -8,7 +8,7 @@ import {
   doc,
 } from "firebase/firestore";
 
-import { db } from "../firebase/firebaseConfig";
+import { db } from "../firebase";
 
 export const addVendor = async (data) => {
   await addDoc(collection(db, "vendors"), {
@@ -25,6 +25,14 @@ export const getVendors = async (companyId) => {
 
   const snapshot = await getDocs(q);
 
+  return snapshot.docs.map((doc) => ({
+    id: doc.id,
+    ...doc.data(),
+  }));
+};
+
+export const getAllVendors = async () => {
+  const snapshot = await getDocs(collection(db, "vendors"));
   return snapshot.docs.map((doc) => ({
     id: doc.id,
     ...doc.data(),
