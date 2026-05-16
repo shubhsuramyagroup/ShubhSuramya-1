@@ -9,46 +9,27 @@ import { getStorage } from "firebase/storage";
 import { getAnalytics } from "firebase/analytics";
 
 const firebaseConfig = {
-  apiKey:
-    "AIzaSyAqqiVxUk_qXquOtK7n9gJU6vydK0DhYyw",
-
-  authDomain:
-    "shubhsuramya-e4184.firebaseapp.com",
-
-  projectId:
-    "shubhsuramya-e4184",
-
-  storageBucket:
-    "shubhsuramya-e4184.appspot.com",
-
-  messagingSenderId:
-    "558181692753",
-
-  appId:
-    "1:558181692753:web:9b537091035e9322024f70",
-
-  measurementId:
-    "G-BXWRLQ1DY5",
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
 };
 
-const app = initializeApp(
-  firebaseConfig
-);
+const app = initializeApp(firebaseConfig);
 
 // Analytics
 
-export const analytics =
-  getAnalytics(app);
+export const analytics = getAnalytics(app);
 
 // Firebase Services
 
-export const auth =
-  getAuth(app);
+export const auth = getAuth(app);
 
-export const db =
-  getFirestore(app);
+export const db = getFirestore(app);
 
-export const storage =
-  getStorage(app);
+export const storage = getStorage(app);
 
 export default app;

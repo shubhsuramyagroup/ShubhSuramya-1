@@ -17,6 +17,8 @@ import AddArticle from "./admin/pages/AddArticle";
 import Articles from "./admin/pages/Articles";
 import EditArticle from "./admin/pages/EditArticle";
 import Contacts from "./admin/pages/Contacts";
+
+import VendorDashboard from "../src/admin/pages/VenderDashboard";
 import "./App.css";
 
 function App() {
@@ -49,6 +51,7 @@ function App() {
         <Route path="/admin/articles" element={<Articles />} />
         <Route path="/admin/edit-article/:id" element={<EditArticle />} />
         <Route path="/admin/contacts" element={<Contacts />} />
+        <Route path="/admin/vendors" element={<VendorDashboard />} />
       </Routes>
     </BrowserRouter>
   );
