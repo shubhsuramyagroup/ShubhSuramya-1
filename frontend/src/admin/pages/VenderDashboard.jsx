@@ -1,5 +1,22 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  LineChart,
+  Line,
+  AreaChart,
+  Area,
+  Legend
+} from "recharts";
 
 /* ─── Firebase Config ─────────────────────────────────────────────────────── */
 const FB = {
@@ -67,6 +84,19 @@ function docToObj(doc) {
   for (const [k, v] of Object.entries(doc.fields))
     obj[k] = v.stringValue ?? v.doubleValue ?? v.booleanValue ?? "";
   return obj;
+}
+
+/* ─── Activity Log helpers ───────────────────────────────────────────────── */
+async function logActivity(token, type, description, details = {}) {
+  try {
+    await fsCreate(token, "activity_log", {
+      type, description,
+      companyName: details.companyName || "",
+      vendorName: details.vendorName || "",
+      amount: details.amount || 0,
+      createdAt: new Date().toISOString(),
+    });
+  } catch (e) { /* silent fail for logs */ }
 }
 
 /* ─── Auth helpers ───────────────────────────────────────────────────────── */
@@ -143,11 +173,35 @@ const T = {
   danger: "#E34A2F",
   amber: "#EF9F27",
   blue: "#378ADD",
+  purple: "#8B5CF6",
+  teal: "#0D9488",
 };
+
+const CHART_COLORS = [T.coral, T.blue, T.success, T.amber, T.purple, T.teal, T.navy, T.gold];
 
 const fmtINR = (n) =>
   `₹${Number(n || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 const today = () => new Date().toISOString().slice(0, 10);
+
+/* ─── Date helpers ───────────────────────────────────────────────────────── */
+function getMonthKey(dateStr) {
+  if (!dateStr) return "";
+  const d = new Date(dateStr);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
+function formatMonthLabel(key) {
+  if (!key) return "";
+  const [y, m] = key.split("-");
+  const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  return `${months[parseInt(m, 10) - 1]} ${y}`;
+}
+function isToday(dateStr) {
+  return dateStr === today();
+}
+function isThisMonth(dateStr) {
+  if (!dateStr) return false;
+  return getMonthKey(dateStr) === getMonthKey(today());
+}
 
 /* ─── Style helpers ──────────────────────────────────────────────────────── */
 const makeBtn = (variant = "default", extra = {}) => ({
@@ -193,6 +247,7 @@ function Badge({ children, color = "navy" }) {
     red:   { bg: "rgba(227,74,47,0.10)",  text: T.coral },
     amber: { bg: "rgba(239,159,39,0.12)", text: "#9a620a" },
     blue:  { bg: "rgba(55,138,221,0.10)", text: "#1a5a9e" },
+    purple:{ bg: "rgba(139,92,246,0.10)", text: "#6d28d9" },
   };
   const t = map[color] || map.navy;
   return (
@@ -223,6 +278,15 @@ function Spinner() {
       <p style={{ color: T.muted, fontSize: 13, fontFamily: "'Plus Jakarta Sans',sans-serif", margin: 0 }}>
         Loading…
       </p>
+    </div>
+  );
+}
+
+function SkeletonCard() {
+  return (
+    <div style={{ ...card, animation: "pulse 1.5s ease-in-out infinite" }}>
+      <div style={{ height: 12, background: "rgba(30,42,90,0.07)", borderRadius: 6, marginBottom: 10, width: "60%" }} />
+      <div style={{ height: 24, background: "rgba(30,42,90,0.05)", borderRadius: 6, width: "40%" }} />
     </div>
   );
 }
@@ -294,6 +358,102 @@ function SectionHeader({ title, action }) {
       <h2 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: T.navy,
         fontFamily: "'Plus Jakarta Sans',sans-serif" }}>{title}</h2>
       {action}
+    </div>
+  );
+}
+
+/* ─── Delete Confirm Modal ───────────────────────────────────────────────── */
+function DeleteConfirmModal({ type, name, invoiceNo, onConfirm, onCancel, loading }) {
+  const [input, setInput] = useState("");
+  const matchValue = type === "bill" ? (invoiceNo || name) : name;
+  const matches = input === matchValue;
+  const [mismatch, setMismatch] = useState(false);
+
+  const typeLabel = type === "company" ? "Company" : type === "vendor" ? "Vendor" : "Bill";
+  const cascadeMsg = type === "company"
+    ? "This will permanently delete the company, all its vendors, and all their bills."
+    : type === "vendor"
+    ? "This will permanently delete the vendor and all its bills."
+    : "This will permanently delete this bill.";
+
+  function handleDelete() {
+    if (!matches) {
+      setMismatch(true);
+      setTimeout(() => setMismatch(false), 3000);
+      return;
+    }
+    onConfirm();
+  }
+
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(10,14,30,0.60)",
+      backdropFilter: "blur(8px)", display: "flex", alignItems: "center",
+      justifyContent: "center", zIndex: 1500, padding: 16 }}>
+      <div style={{ background: T.cream, borderRadius: 20, maxWidth: 440, width: "100%",
+        padding: "28px 28px 24px",
+        boxShadow: "0 24px 60px rgba(10,14,30,0.24)", border: `1px solid ${T.border}`,
+        animation: "modalIn 0.28s cubic-bezier(.22,1,.36,1) both" }}>
+        {/* Icon */}
+        <div style={{ width: 52, height: 52, borderRadius: 16,
+          background: "rgba(227,74,47,0.10)", border: "1.5px solid rgba(227,74,47,0.22)",
+          display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 16 }}>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+            <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"
+              stroke={T.coral} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            <line x1="12" y1="9" x2="12" y2="13" stroke={T.coral} strokeWidth="2" strokeLinecap="round" />
+            <line x1="12" y1="17" x2="12.01" y2="17" stroke={T.coral} strokeWidth="2" strokeLinecap="round" />
+          </svg>
+        </div>
+
+        <h3 style={{ margin: "0 0 6px", fontSize: 18, fontWeight: 700, color: T.navy,
+          fontFamily: "'Plus Jakarta Sans',sans-serif" }}>
+          Delete {typeLabel}
+        </h3>
+        <p style={{ margin: "0 0 14px", fontSize: 13, color: T.muted, lineHeight: 1.6,
+          fontFamily: "'Plus Jakarta Sans',sans-serif" }}>{cascadeMsg}</p>
+
+        {/* Name display */}
+        <div style={{ background: "rgba(227,74,47,0.05)", borderRadius: 10,
+          padding: "10px 14px", marginBottom: 16, border: "1px solid rgba(227,74,47,0.12)" }}>
+          <p style={{ margin: 0, fontSize: 11, color: T.muted, textTransform: "uppercase",
+            letterSpacing: "0.7px", fontWeight: 600, fontFamily: "'Plus Jakarta Sans',sans-serif" }}>
+            {type === "bill" ? "Invoice / Bill ID" : `${typeLabel} Name`}
+          </p>
+          <p style={{ margin: "3px 0 0", fontSize: 14, fontWeight: 700, color: T.coral,
+            fontFamily: "'Plus Jakarta Sans',sans-serif" }}>{matchValue}</p>
+        </div>
+
+        <Field label={`Type "${matchValue}" to confirm`}>
+          <input style={{ ...inp, borderColor: mismatch ? T.coral : T.border2,
+            boxShadow: mismatch ? `0 0 0 3px ${T.coral}20` : "none" }}
+            value={input} onChange={(e) => { setInput(e.target.value); setMismatch(false); }}
+            placeholder={`Type exact ${type === "bill" ? "invoice no." : "name"}…`}
+            onFocus={focusOn} onBlur={focusOff}
+            onKeyDown={(e) => e.key === "Enter" && handleDelete()} autoFocus />
+        </Field>
+
+        {mismatch && (
+          <div style={{ marginTop: 10, background: "rgba(227,74,47,0.07)", borderRadius: 8,
+            padding: "8px 12px", border: "1px solid rgba(227,74,47,0.18)" }}>
+            <p style={{ margin: 0, fontSize: 12, color: T.coral, fontFamily: "'Plus Jakarta Sans',sans-serif" }}>
+              ⚠️ Entered value does not match. Deletion cancelled.
+            </p>
+          </div>
+        )}
+
+        <div style={{ display: "flex", gap: 8, marginTop: 20, justifyContent: "flex-end" }}>
+          <button style={makeBtn("default")} onClick={onCancel} disabled={loading}>Cancel</button>
+          <button style={makeBtn("danger", { opacity: matches ? 1 : 0.45 })}
+            onClick={handleDelete} disabled={loading || !matches}>
+            {loading
+              ? <><span style={{ width: 12, height: 12, border: "2px solid rgba(255,255,255,0.35)",
+                  borderTopColor: "#fff", borderRadius: "50%", display: "inline-block",
+                  animation: "spin 0.6s linear infinite" }} /> Deleting…</>
+              : `Delete ${typeLabel}`
+            }
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -403,7 +563,6 @@ function BillForm({ initial, vendor, companies, onSave, onClose, saving }) {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-      {/* Vendor info */}
       <div style={{ background: `linear-gradient(135deg,${T.navy},#2d3d7a)`, borderRadius: 12,
         padding: "14px 16px", color: "#fff", display: "flex", justifyContent: "space-between",
         alignItems: "center" }}>
@@ -427,7 +586,6 @@ function BillForm({ initial, vendor, companies, onSave, onClose, saving }) {
         ))}
       </div>
 
-      {/* Bill breakdown */}
       <div style={{ background: "rgba(30,42,90,0.03)", borderRadius: 12, padding: 16,
         border: `1px solid ${T.border}` }}>
         <p style={{ margin: "0 0 12px", fontSize: 11, fontWeight: 700, color: T.navy,
@@ -478,7 +636,6 @@ function PaymentForm({ bill, vendor, onSave, onClose, saving }) {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-      {/* Bill summary */}
       <div style={{ background: `linear-gradient(135deg,${T.navy},#2d3d7a)`, borderRadius: 12,
         padding: "16px 18px", color: "#fff" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
@@ -655,8 +812,6 @@ function Navbar({ user, tab, setTab, onLogout }) {
       boxShadow: "0 2px 20px rgba(10,14,30,0.22)" }}>
       <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 20px" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", height: 60 }}>
-
-          {/* Logo */}
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <div style={{ width: 34, height: 34, borderRadius: 10,
               background: `linear-gradient(135deg,${T.coral},${T.gold})`,
@@ -676,7 +831,6 @@ function Navbar({ user, tab, setTab, onLogout }) {
             </div>
           </div>
 
-          {/* Nav */}
           <nav style={{ display: "flex", gap: 2 }}>
             {navItems.map((n) => (
               <button key={n.key} onClick={() => setTab(n.key)} style={{
@@ -694,7 +848,6 @@ function Navbar({ user, tab, setTab, onLogout }) {
             ))}
           </nav>
 
-          {/* User / Logout */}
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 7,
               background: "rgba(255,255,255,0.09)", borderRadius: 50,
@@ -713,7 +866,6 @@ function Navbar({ user, tab, setTab, onLogout }) {
                 {user.email}
               </span>
             </div>
-            {/* Logout → navigates to / */}
             <button onClick={onLogout} title="Logout" style={{
               width: 34, height: 34, borderRadius: "50%",
               background: "rgba(227,74,47,0.14)", border: "1px solid rgba(227,74,47,0.28)",
@@ -733,7 +885,7 @@ function Navbar({ user, tab, setTab, onLogout }) {
 }
 
 /* ─── StatCard ───────────────────────────────────────────────────────────── */
-function StatCard({ label, value, icon, accent, delay = 0 }) {
+function StatCard({ label, value, icon, accent, delay = 0, sub }) {
   return (
     <div style={{ ...card, position: "relative", overflow: "hidden",
       animation: `fadeUp 0.5s ease ${delay}ms both` }}>
@@ -750,206 +902,541 @@ function StatCard({ label, value, icon, accent, delay = 0 }) {
       </div>
       <p style={{ margin: 0, fontSize: 22, fontWeight: 700, color: accent || T.navy,
         fontFamily: "'Plus Jakarta Sans',sans-serif" }}>{value}</p>
+      {sub && <p style={{ margin: "3px 0 0", fontSize: 11, color: T.muted,
+        fontFamily: "'Plus Jakarta Sans',sans-serif" }}>{sub}</p>}
     </div>
   );
 }
 
+/* ─── Custom Tooltip ─────────────────────────────────────────────────────── */
+function ChartTooltip({ active, payload, label, prefix = "₹" }) {
+  if (!active || !payload?.length) return null;
+  return (
+    <div style={{ background: T.navy, borderRadius: 10, padding: "10px 14px",
+      boxShadow: "0 8px 24px rgba(10,14,30,0.25)", border: "1px solid rgba(255,255,255,0.08)" }}>
+      {label && <p style={{ margin: "0 0 6px", fontSize: 11, color: "rgba(255,255,255,0.6)",
+        fontFamily: "'Plus Jakarta Sans',sans-serif" }}>{label}</p>}
+      {payload.map((p, i) => (
+        <p key={i} style={{ margin: 0, fontSize: 13, fontWeight: 700, color: "#fff",
+          fontFamily: "'Plus Jakarta Sans',sans-serif" }}>
+          <span style={{ color: p.color || T.coral }}>{p.name}: </span>
+          {prefix}{Number(p.value || 0).toLocaleString("en-IN")}
+        </p>
+      ))}
+    </div>
+  );
+}
+
+/* ─── Activity Icon ──────────────────────────────────────────────────────── */
+function ActivityIcon({ type }) {
+  const map = {
+    company_added: { icon: "🏢", bg: "rgba(30,42,90,0.08)" },
+    vendor_added:  { icon: "👥", bg: "rgba(55,138,221,0.10)" },
+    bill_added:    { icon: "📋", bg: "rgba(245,166,35,0.10)" },
+    payment_made:  { icon: "💳", bg: "rgba(29,158,117,0.10)" },
+    bill_deleted:  { icon: "🗑️", bg: "rgba(227,74,47,0.08)" },
+    vendor_deleted:{ icon: "🗑️", bg: "rgba(227,74,47,0.08)" },
+    company_deleted:{ icon:"🗑️", bg: "rgba(227,74,47,0.08)" },
+  };
+  const { icon, bg } = map[type] || { icon: "📌", bg: "rgba(30,42,90,0.06)" };
+  return (
+    <div style={{ width: 36, height: 36, borderRadius: 10, background: bg,
+      display: "flex", alignItems: "center", justifyContent: "center",
+      fontSize: 16, flexShrink: 0 }}>{icon}</div>
+  );
+}
+
 /* ─── Dashboard Tab ──────────────────────────────────────────────────────── */
-function DashboardTab({ companies, vendors, bills, payments, setTab }) {
+function DashboardTab({ companies, vendors, bills, payments, activityLog, setTab, loading }) {
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo,   setDateTo]   = useState("");
+  const [search,   setSearch]   = useState("");
+
   const sum = (arr, key) => arr.reduce((s, v) => s + Number(v[key] || 0), 0);
 
-  const totalNet  = sum(bills, "netAmount");
-  const totalPaid = sum(bills, "amountPaid");
-  const totalDue  = totalNet - totalPaid;
-  const totalTDS  = sum(bills, "tds");
+  // Filtered payments for date range
+  const filteredPayments = useMemo(() => {
+    return payments.filter(p => {
+      if (dateFrom && p.date < dateFrom) return false;
+      if (dateTo   && p.date > dateTo)   return false;
+      if (search) {
+        const q = search.toLowerCase();
+        return (p.vendorName || "").toLowerCase().includes(q) ||
+               (p.particulars || "").toLowerCase().includes(q);
+      }
+      return true;
+    });
+  }, [payments, dateFrom, dateTo, search]);
 
-  const cVendors = (cid) => vendors.filter(v => v.companyId === cid).length;
-  const cBills   = (cid) => {
-    const vids = vendors.filter(v => v.companyId === cid).map(v => v.id);
-    return bills.filter(b => vids.includes(b.vendorId));
-  };
-  const cNet  = (cid) => sum(cBills(cid), "netAmount");
-  const cPaid = (cid) => sum(cBills(cid), "amountPaid");
+  // Summary
+  const totalNet    = sum(bills, "netAmount");
+  const totalPaid   = sum(bills, "amountPaid");
+  const totalDue    = totalNet - totalPaid;
+  const totalTDS    = sum(bills, "tds");
+  const paidBillCnt = bills.filter(b => Number(b.netAmount) > 0 && Number(b.amountPaid) >= Number(b.netAmount) - 0.01).length;
+  const pendBillCnt = bills.length - paidBillCnt;
 
-  const recentPayments = [...payments]
+  const todayRev  = filteredPayments.filter(p => isToday(p.date)).reduce((s, p) => s + Number(p.amountPaid || 0), 0);
+  const monthRev  = filteredPayments.filter(p => isThisMonth(p.date)).reduce((s, p) => s + Number(p.amountPaid || 0), 0);
+
+  // Company-wise chart data
+  const companyBarData = useMemo(() => companies.map(c => {
+    const vids = vendors.filter(v => v.companyId === c.id).map(v => v.id);
+    const cb = bills.filter(b => vids.includes(b.vendorId));
+    return {
+      name: c.name.length > 14 ? c.name.slice(0, 14) + "…" : c.name,
+      total: sum(cb, "netAmount"),
+      paid:  sum(cb, "amountPaid"),
+    };
+  }).sort((a, b) => b.total - a.total), [companies, vendors, bills]);
+
+  // Paid vs Pending pie
+  const paidVsPendingData = [
+    { name: "Paid", value: totalPaid },
+    { name: "Pending", value: totalDue > 0 ? totalDue : 0 },
+  ];
+
+  // Monthly revenue line/area chart
+  const monthlyData = useMemo(() => {
+    const map = {};
+    filteredPayments.forEach(p => {
+      const k = getMonthKey(p.date);
+      if (!k) return;
+      map[k] = (map[k] || 0) + Number(p.amountPaid || 0);
+    });
+    return Object.entries(map)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .slice(-12)
+      .map(([k, v]) => ({ month: formatMonthLabel(k), revenue: v }));
+  }, [filteredPayments]);
+
+  // Vendor-wise doughnut (top 8)
+  const vendorDonutData = useMemo(() => {
+    return vendors.map(v => {
+      const vb = bills.filter(b => b.vendorId === v.id);
+      return { name: v.name, value: sum(vb, "netAmount") };
+    }).sort((a, b) => b.value - a.value).slice(0, 8);
+  }, [vendors, bills]);
+
+  // Top companies
+  const top5Companies = [...companyBarData].slice(0, 5);
+
+  // Top vendors
+  const top5Vendors = useMemo(() => {
+    return vendors.map(v => {
+      const vb = bills.filter(b => b.vendorId === v.id);
+      const comp = companies.find(c => c.id === v.companyId);
+      return { name: v.name, company: comp?.name || "—", total: sum(vb, "netAmount"), paid: sum(vb, "amountPaid") };
+    }).sort((a, b) => b.total - a.total).slice(0, 5);
+  }, [vendors, bills, companies]);
+
+  // Bill extremes
+  const billAmounts = bills.map(b => Number(b.netAmount || 0)).filter(v => v > 0);
+  const maxBill = billAmounts.length ? Math.max(...billAmounts) : 0;
+  const minBill = billAmounts.length ? Math.min(...billAmounts) : 0;
+
+  // Recent activity
+  const recentActivity = [...activityLog]
+    .sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""))
+    .slice(0, 8);
+
+  const recentPayments = [...filteredPayments]
     .sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""))
     .slice(0, 5);
+
+  if (loading) {
+    return (
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(160px,1fr))", gap: 12 }}>
+        {Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i} />)}
+      </div>
+    );
+  }
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
 
-      {/* Stats */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(160px,1fr))", gap: 12 }}>
-        <StatCard label="Companies"    value={companies.length} icon="🏢" delay={0} />
-        <StatCard label="Vendors"      value={vendors.length}   icon="👥" delay={50} />
-        <StatCard label="Total Bills"  value={bills.length}     icon="📋" delay={100} />
-        <StatCard label="Net Payable"  value={fmtINR(totalNet)}  accent={T.navy}    icon="💼" delay={150} />
-        <StatCard label="Amount Paid"  value={fmtINR(totalPaid)} accent={T.success} icon="✅" delay={200} />
-        <StatCard label="Outstanding"  value={fmtINR(totalDue)}
-          accent={totalDue > 0 ? T.coral : T.success} icon={totalDue > 0 ? "⚠️" : "🎉"} delay={250} />
+      {/* Date Range + Search */}
+      <div style={{ ...card, padding: "14px 18px" }}>
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
+            <rect x="3" y="4" width="18" height="18" rx="2" stroke={T.muted} strokeWidth="2" />
+            <path d="M16 2v4M8 2v4M3 10h18" stroke={T.muted} strokeWidth="2" strokeLinecap="round" />
+          </svg>
+          <input style={{ ...inp, width: "auto", flex: "1 1 140px" }} type="date"
+            value={dateFrom} onChange={e => setDateFrom(e.target.value)} onFocus={focusOn} onBlur={focusOff} />
+          <span style={{ color: T.muted, fontSize: 12 }}>to</span>
+          <input style={{ ...inp, width: "auto", flex: "1 1 140px" }} type="date"
+            value={dateTo} onChange={e => setDateTo(e.target.value)} onFocus={focusOn} onBlur={focusOff} />
+          <div style={{ position: "relative", flex: "2 1 200px" }}>
+            <svg style={{ position: "absolute", left: 11, top: "50%", transform: "translateY(-50%)" }}
+              width="13" height="13" viewBox="0 0 24 24" fill="none">
+              <circle cx="11" cy="11" r="8" stroke={T.muted} strokeWidth="2" />
+              <path d="M21 21l-4.35-4.35" stroke={T.muted} strokeWidth="2" strokeLinecap="round" />
+            </svg>
+            <input style={{ ...inp, paddingLeft: 33 }} placeholder="Search payments…"
+              value={search} onChange={e => setSearch(e.target.value)} onFocus={focusOn} onBlur={focusOff} />
+          </div>
+          {(dateFrom || dateTo || search) && (
+            <button style={makeBtn("default", { fontSize: 12, padding: "8px 14px" })}
+              onClick={() => { setDateFrom(""); setDateTo(""); setSearch(""); }}>
+              Clear
+            </button>
+          )}
+        </div>
       </div>
 
+      {/* Summary Stats */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(155px,1fr))", gap: 12 }}>
+        <StatCard label="Companies"     value={companies.length}   icon="🏢"  delay={0} />
+        <StatCard label="Vendors"       value={vendors.length}     icon="👥"  delay={50} />
+        <StatCard label="Total Bills"   value={bills.length}       icon="📋"  delay={100} />
+        <StatCard label="Paid Bills"    value={paidBillCnt}        icon="✅"  accent={T.success} delay={150} />
+        <StatCard label="Pending Bills" value={pendBillCnt}        icon="⏳"  accent={T.amber}  delay={200} />
+        <StatCard label="Net Payable"   value={fmtINR(totalNet)}   icon="💼"  accent={T.navy}   delay={250} />
+        <StatCard label="Amount Paid"   value={fmtINR(totalPaid)}  icon="💚"  accent={T.success} delay={300} />
+        <StatCard label="Outstanding"   value={fmtINR(totalDue)}
+          accent={totalDue > 0 ? T.coral : T.success}
+          icon={totalDue > 0 ? "⚠️" : "🎉"} delay={350} />
+        <StatCard label="Today Revenue"  value={fmtINR(todayRev)}  icon="📅"  accent={T.blue}   delay={400} />
+        <StatCard label="Monthly Revenue" value={fmtINR(monthRev)} icon="📆"  accent={T.purple} delay={450} />
+      </div>
+
+      {/* Charts Row 1: Bar + Pie */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
 
-        {/* Companies panel */}
+        {/* Company Bar Chart */}
         <div style={{ ...card }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+          <h3 style={{ margin: "0 0 16px", fontSize: 15, fontWeight: 700, color: T.navy,
+            fontFamily: "'Plus Jakarta Sans',sans-serif" }}>Company-wise Bills</h3>
+          {companyBarData.length === 0
+            ? <Empty icon="📊" text="No company data yet." />
+            : (
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart data={companyBarData} barSize={18} barGap={4}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(30,42,90,0.06)" vertical={false} />
+                <XAxis dataKey="name" tick={{ fontSize: 10, fill: T.muted, fontFamily: "'Plus Jakarta Sans',sans-serif" }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 10, fill: T.muted }} axisLine={false} tickLine={false}
+                  tickFormatter={v => `₹${(v/1000).toFixed(0)}k`} />
+                <Tooltip content={<ChartTooltip />} cursor={{ fill: "rgba(30,42,90,0.04)" }} />
+                <Legend wrapperStyle={{ fontSize: 11, fontFamily: "'Plus Jakarta Sans',sans-serif" }} />
+                <Bar dataKey="total" name="Total" fill={T.coral} radius={[4,4,0,0]} />
+                <Bar dataKey="paid"  name="Paid"  fill={T.success} radius={[4,4,0,0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          )}
+        </div>
+
+        {/* Paid vs Pending Pie */}
+        <div style={{ ...card }}>
+          <h3 style={{ margin: "0 0 16px", fontSize: 15, fontWeight: 700, color: T.navy,
+            fontFamily: "'Plus Jakarta Sans',sans-serif" }}>Paid vs Pending</h3>
+          {totalNet <= 0
+            ? <Empty icon="🥧" text="No billing data yet." />
+            : (
+            <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+              <ResponsiveContainer width="60%" height={200}>
+                <PieChart>
+                  <Pie data={paidVsPendingData} cx="50%" cy="50%" innerRadius={50} outerRadius={80}
+                    paddingAngle={4} dataKey="value">
+                    <Cell fill={T.success} />
+                    <Cell fill={T.coral} />
+                  </Pie>
+                  <Tooltip content={<ChartTooltip />} />
+                </PieChart>
+              </ResponsiveContainer>
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                {paidVsPendingData.map((d, i) => (
+                  <div key={d.name}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+                      <div style={{ width: 10, height: 10, borderRadius: "50%",
+                        background: i === 0 ? T.success : T.coral }} />
+                      <span style={{ fontSize: 12, color: T.muted, fontFamily: "'Plus Jakarta Sans',sans-serif" }}>
+                        {d.name}
+                      </span>
+                    </div>
+                    <p style={{ margin: "2px 0 0 17px", fontSize: 14, fontWeight: 700,
+                      color: i === 0 ? T.success : T.coral, fontFamily: "'Plus Jakarta Sans',sans-serif" }}>
+                      {fmtINR(d.value)}
+                    </p>
+                    <p style={{ margin: 0, fontSize: 10.5, color: T.hint, marginLeft: 17,
+                      fontFamily: "'Plus Jakarta Sans',sans-serif" }}>
+                      {totalNet > 0 ? ((d.value / totalNet) * 100).toFixed(1) : 0}%
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Charts Row 2: Area + Doughnut */}
+      <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 20 }}>
+
+        {/* Monthly Revenue Area Chart */}
+        <div style={{ ...card }}>
+          <h3 style={{ margin: "0 0 16px", fontSize: 15, fontWeight: 700, color: T.navy,
+            fontFamily: "'Plus Jakarta Sans',sans-serif" }}>Monthly Revenue Trend</h3>
+          {monthlyData.length < 2
+            ? <Empty icon="📈" text="Need payments across 2+ months to show trend." />
+            : (
+            <ResponsiveContainer width="100%" height={220}>
+              <AreaChart data={monthlyData}>
+                <defs>
+                  <linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor={T.coral} stopOpacity={0.25} />
+                    <stop offset="95%" stopColor={T.coral} stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(30,42,90,0.06)" vertical={false} />
+                <XAxis dataKey="month" tick={{ fontSize: 10, fill: T.muted, fontFamily: "'Plus Jakarta Sans',sans-serif" }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 10, fill: T.muted }} axisLine={false} tickLine={false}
+                  tickFormatter={v => `₹${(v/1000).toFixed(0)}k`} />
+                <Tooltip content={<ChartTooltip />} />
+                <Area type="monotone" dataKey="revenue" name="Revenue" stroke={T.coral} strokeWidth={2.5}
+                  fill="url(#revGrad)" dot={{ fill: T.coral, strokeWidth: 0, r: 4 }} activeDot={{ r: 6 }} />
+              </AreaChart>
+            </ResponsiveContainer>
+          )}
+        </div>
+
+        {/* Vendor Doughnut */}
+        <div style={{ ...card }}>
+          <h3 style={{ margin: "0 0 16px", fontSize: 15, fontWeight: 700, color: T.navy,
+            fontFamily: "'Plus Jakarta Sans',sans-serif" }}>Vendor Revenue Share</h3>
+          {vendorDonutData.filter(d => d.value > 0).length === 0
+            ? <Empty icon="🍩" text="No vendor billing data." />
+            : (
+            <div>
+              <ResponsiveContainer width="100%" height={160}>
+                <PieChart>
+                  <Pie data={vendorDonutData.filter(d => d.value > 0)} cx="50%" cy="50%"
+                    innerRadius={44} outerRadius={70} paddingAngle={3} dataKey="value">
+                    {vendorDonutData.map((_, i) => (
+                      <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip content={<ChartTooltip />} />
+                </PieChart>
+              </ResponsiveContainer>
+              <div style={{ display: "flex", flexDirection: "column", gap: 5, marginTop: 8 }}>
+                {vendorDonutData.slice(0, 4).map((d, i) => (
+                  <div key={d.name} style={{ display: "flex", justifyContent: "space-between",
+                    alignItems: "center" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      <div style={{ width: 8, height: 8, borderRadius: "50%", flexShrink: 0,
+                        background: CHART_COLORS[i % CHART_COLORS.length] }} />
+                      <span style={{ fontSize: 11, color: T.muted, fontFamily: "'Plus Jakarta Sans',sans-serif",
+                        maxWidth: 90, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {d.name}
+                      </span>
+                    </div>
+                    <span style={{ fontSize: 11, fontWeight: 600, color: T.navy,
+                      fontFamily: "'Plus Jakarta Sans',sans-serif" }}>
+                      {fmtINR(d.value)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Top Performance + Recent Payments */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
+
+        {/* Top 5 Companies */}
+        <div style={{ ...card }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
             <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: T.navy,
-              fontFamily: "'Plus Jakarta Sans',sans-serif" }}>Companies</h3>
+              fontFamily: "'Plus Jakarta Sans',sans-serif" }}>🏆 Top Companies</h3>
             <button style={{ ...makeBtn("default", { fontSize: 11, padding: "5px 12px",
               background: "#fff", border: `1.5px solid ${T.border2}` }) }}
               onClick={() => setTab("companies")}>View All →</button>
           </div>
-          {companies.length === 0 ? (
-            <p style={{ color: T.muted, fontSize: 12, textAlign: "center", padding: "1.5rem 0",
-              fontFamily: "'Plus Jakarta Sans',sans-serif" }}>No companies yet.</p>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              {companies.slice(0, 4).map((c) => {
-                const net  = cNet(c.id);
-                const paid = cPaid(c.id);
-                const pct  = net > 0 ? (paid / net) * 100 : 0;
+          {top5Companies.length === 0
+            ? <p style={{ color: T.muted, fontSize: 12, textAlign: "center", padding: "1rem 0",
+                fontFamily: "'Plus Jakarta Sans',sans-serif" }}>No data.</p>
+            : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {top5Companies.map((c, i) => {
+                const pct = c.total > 0 ? (c.paid / c.total) * 100 : 0;
                 return (
-                  <div key={c.id} style={{ padding: "12px 14px", borderRadius: 10,
+                  <div key={c.name} style={{ padding: "10px 12px", borderRadius: 10,
                     background: "rgba(30,42,90,0.03)", border: `1px solid ${T.border}` }}>
                     <div style={{ display: "flex", justifyContent: "space-between",
-                      alignItems: "center", marginBottom: 8 }}>
-                      <div>
-                        <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: T.navy,
-                          fontFamily: "'Plus Jakarta Sans',sans-serif" }}>{c.name}</p>
-                        <p style={{ margin: "2px 0 0", fontSize: 11, color: T.muted,
-                          fontFamily: "'Plus Jakarta Sans',sans-serif" }}>
-                          {cVendors(c.id)} vendor{cVendors(c.id) !== 1 ? "s" : ""}
-                          &nbsp;·&nbsp;{cBills(c.id).length} bill{cBills(c.id).length !== 1 ? "s" : ""}
-                        </p>
+                      alignItems: "center", marginBottom: 6 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <span style={{ width: 20, height: 20, borderRadius: "50%",
+                          background: CHART_COLORS[i], display: "flex", alignItems: "center",
+                          justifyContent: "center", fontSize: 9, fontWeight: 700, color: "#fff",
+                          flexShrink: 0, fontFamily: "'Plus Jakarta Sans',sans-serif" }}>
+                          {i + 1}
+                        </span>
+                        <span style={{ fontSize: 12, fontWeight: 600, color: T.navy,
+                          fontFamily: "'Plus Jakarta Sans',sans-serif" }}>{c.name}</span>
                       </div>
-                      <div style={{ textAlign: "right" }}>
-                        <p style={{ margin: 0, fontSize: 12, fontWeight: 600, color: T.coral,
-                          fontFamily: "'Plus Jakarta Sans',sans-serif" }}>{fmtINR(net - paid)}</p>
-                        <p style={{ margin: 0, fontSize: 10, color: T.muted,
-                          fontFamily: "'Plus Jakarta Sans',sans-serif" }}>due</p>
-                      </div>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: T.coral,
+                        fontFamily: "'Plus Jakarta Sans',sans-serif" }}>{fmtINR(c.total)}</span>
                     </div>
-                    <ProgressBar pct={pct} />
-                    <p style={{ margin: "4px 0 0", fontSize: 10, color: T.hint,
-                      fontFamily: "'Plus Jakarta Sans',sans-serif" }}>{pct.toFixed(0)}% settled</p>
+                    <ProgressBar pct={pct} color={CHART_COLORS[i]} />
+                    <p style={{ margin: "3px 0 0", fontSize: 10, color: T.hint,
+                      fontFamily: "'Plus Jakarta Sans',sans-serif" }}>{pct.toFixed(1)}% settled</p>
                   </div>
                 );
               })}
-              {companies.length > 4 && (
-                <button style={{ ...makeBtn("default", { fontSize: 11, padding: "7px 14px",
-                  width: "100%", justifyContent: "center", background: "#fff",
-                  border: `1.5px solid ${T.border2}` }) }}
-                  onClick={() => setTab("companies")}>
-                  +{companies.length - 4} more companies →
-                </button>
-              )}
+            </div>
+          )}
+
+          {/* Bill extremes */}
+          {billAmounts.length > 0 && (
+            <div style={{ marginTop: 14, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+              {[["🔺 Highest Bill", maxBill, T.coral], ["🔻 Lowest Bill", minBill, T.success]].map(([l, v, c]) => (
+                <div key={l} style={{ background: "rgba(30,42,90,0.04)", borderRadius: 10,
+                  padding: "10px 12px", textAlign: "center" }}>
+                  <p style={{ margin: 0, fontSize: 10.5, color: T.muted, fontFamily: "'Plus Jakarta Sans',sans-serif" }}>{l}</p>
+                  <p style={{ margin: "3px 0 0", fontSize: 14, fontWeight: 700, color: c,
+                    fontFamily: "'Plus Jakarta Sans',sans-serif" }}>{fmtINR(v)}</p>
+                </div>
+              ))}
             </div>
           )}
         </div>
 
-        {/* Vendors panel */}
+        {/* Top 5 Vendors */}
         <div style={{ ...card }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
             <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: T.navy,
-              fontFamily: "'Plus Jakarta Sans',sans-serif" }}>Vendors</h3>
+              fontFamily: "'Plus Jakarta Sans',sans-serif" }}>👥 Top Vendors</h3>
             <button style={{ ...makeBtn("default", { fontSize: 11, padding: "5px 12px",
               background: "#fff", border: `1.5px solid ${T.border2}` }) }}
               onClick={() => setTab("vendors")}>View All →</button>
           </div>
-          {vendors.length === 0 ? (
-            <p style={{ color: T.muted, fontSize: 12, textAlign: "center", padding: "1.5rem 0",
-              fontFamily: "'Plus Jakarta Sans',sans-serif" }}>No vendors yet.</p>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              {vendors.slice(0, 5).map((v) => {
-                const vBills  = bills.filter(b => b.vendorId === v.id);
-                const vNet    = vBills.reduce((s, b) => s + Number(b.netAmount || 0), 0);
-                const vPaid   = vBills.reduce((s, b) => s + Number(b.amountPaid || 0), 0);
-                const vDue    = vNet - vPaid;
-                const comp    = companies.find(c => c.id === v.companyId);
-                const status  = vDue <= 0 && vNet > 0 ? "paid" : vPaid > 0 ? "partial" : "unpaid";
-                const sColor  = { paid: T.success, partial: T.amber, unpaid: T.coral }[status];
+          {top5Vendors.length === 0
+            ? <p style={{ color: T.muted, fontSize: 12, textAlign: "center", padding: "1rem 0",
+                fontFamily: "'Plus Jakarta Sans',sans-serif" }}>No data.</p>
+            : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {top5Vendors.map((v, i) => {
+                const due = v.total - v.paid;
                 return (
-                  <div key={v.id} style={{ display: "flex", justifyContent: "space-between",
+                  <div key={v.name} style={{ display: "flex", justifyContent: "space-between",
                     alignItems: "center", padding: "10px 12px", borderRadius: 10,
                     background: "rgba(30,42,90,0.03)", border: `1px solid ${T.border}`,
-                    borderLeft: `3px solid ${sColor}` }}>
+                    borderLeft: `3px solid ${CHART_COLORS[i]}` }}>
                     <div>
-                      <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: T.navy,
+                      <p style={{ margin: 0, fontSize: 12, fontWeight: 600, color: T.navy,
                         fontFamily: "'Plus Jakarta Sans',sans-serif" }}>{v.name}</p>
-                      <p style={{ margin: "2px 0 0", fontSize: 10.5, color: T.muted,
-                        fontFamily: "'Plus Jakarta Sans',sans-serif" }}>
-                        {comp?.name || "—"} · {vBills.length} bill{vBills.length !== 1 ? "s" : ""}
-                      </p>
+                      <p style={{ margin: "1px 0 0", fontSize: 10.5, color: T.muted,
+                        fontFamily: "'Plus Jakarta Sans',sans-serif" }}>{v.company}</p>
                     </div>
                     <div style={{ textAlign: "right" }}>
-                      <p style={{ margin: 0, fontSize: 12, fontWeight: 600, color: sColor,
-                        fontFamily: "'Plus Jakarta Sans',sans-serif" }}>{fmtINR(vDue)}</p>
-                      <p style={{ margin: 0, fontSize: 10, color: T.muted,
-                        fontFamily: "'Plus Jakarta Sans',sans-serif" }}>due</p>
+                      <p style={{ margin: 0, fontSize: 12, fontWeight: 700, color: T.navy,
+                        fontFamily: "'Plus Jakarta Sans',sans-serif" }}>{fmtINR(v.total)}</p>
+                      <p style={{ margin: 0, fontSize: 10.5, color: due > 0 ? T.coral : T.success,
+                        fontFamily: "'Plus Jakarta Sans',sans-serif" }}>
+                        {due > 0 ? `${fmtINR(due)} due` : "Settled"}
+                      </p>
                     </div>
                   </div>
                 );
               })}
-              {vendors.length > 5 && (
-                <button style={{ ...makeBtn("default", { fontSize: 11, padding: "7px 14px",
-                  width: "100%", justifyContent: "center", background: "#fff",
-                  border: `1.5px solid ${T.border2}` }) }}
-                  onClick={() => setTab("vendors")}>
-                  +{vendors.length - 5} more vendors →
-                </button>
-              )}
             </div>
           )}
         </div>
       </div>
 
-      {/* Payment History panel */}
-      <div style={{ ...card }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-          <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: T.navy,
-            fontFamily: "'Plus Jakarta Sans',sans-serif" }}>Payment History</h3>
-          <button style={{ ...makeBtn("default", { fontSize: 11, padding: "5px 12px",
-            background: "#fff", border: `1.5px solid ${T.border2}` }) }}
-            onClick={() => setTab("payments")}>View All →</button>
+      {/* Recent Activity + Recent Payments */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
+
+        {/* Recent Activity */}
+        <div style={{ ...card }}>
+          <h3 style={{ margin: "0 0 14px", fontSize: 15, fontWeight: 700, color: T.navy,
+            fontFamily: "'Plus Jakarta Sans',sans-serif" }}>⚡ Recent Activity</h3>
+          {recentActivity.length === 0 ? (
+            <p style={{ color: T.muted, fontSize: 12, textAlign: "center", padding: "1.5rem 0",
+              fontFamily: "'Plus Jakarta Sans',sans-serif" }}>No activity yet.</p>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column" }}>
+              {recentActivity.map((a, i) => {
+                const dt = a.createdAt ? new Date(a.createdAt) : null;
+                const dtStr = dt ? dt.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "2-digit" })
+                  + " " + dt.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }) : "—";
+                return (
+                  <div key={a.id} style={{ display: "flex", alignItems: "flex-start", gap: 10,
+                    padding: "10px 0",
+                    borderBottom: i < recentActivity.length - 1 ? `1px solid ${T.border}` : "none" }}>
+                    <ActivityIcon type={a.type} />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ margin: 0, fontSize: 12.5, fontWeight: 600, color: T.navy,
+                        fontFamily: "'Plus Jakarta Sans',sans-serif" }}>{a.description}</p>
+                      <div style={{ display: "flex", gap: 8, marginTop: 2, flexWrap: "wrap" }}>
+                        {a.companyName && <span style={{ fontSize: 10.5, color: T.muted,
+                          fontFamily: "'Plus Jakarta Sans',sans-serif" }}>{a.companyName}</span>}
+                        {a.vendorName && <span style={{ fontSize: 10.5, color: T.muted,
+                          fontFamily: "'Plus Jakarta Sans',sans-serif" }}>· {a.vendorName}</span>}
+                        {Number(a.amount) > 0 && <span style={{ fontSize: 10.5, color: T.success,
+                          fontWeight: 600, fontFamily: "'Plus Jakarta Sans',sans-serif" }}>
+                          · {fmtINR(a.amount)}
+                        </span>}
+                      </div>
+                      <p style={{ margin: "2px 0 0", fontSize: 10.5, color: T.hint,
+                        fontFamily: "'Plus Jakarta Sans',sans-serif" }}>{dtStr}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
-        {recentPayments.length === 0 ? (
-          <p style={{ color: T.muted, fontSize: 12, textAlign: "center", padding: "1.5rem 0",
-            fontFamily: "'Plus Jakarta Sans',sans-serif" }}>No payments yet.</p>
-        ) : (
-          <div style={{ display: "flex", flexDirection: "column" }}>
-            {recentPayments.map((p, i) => (
-              <div key={p.id} style={{ display: "flex", justifyContent: "space-between",
-                alignItems: "center", padding: "12px 0",
-                borderBottom: i < recentPayments.length - 1 ? `1px solid ${T.border}` : "none" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <div style={{ width: 36, height: 36, borderRadius: 10,
-                    background: "rgba(29,158,117,0.09)", border: `1px solid rgba(29,158,117,0.15)`,
-                    display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
-                      <rect x="2" y="5" width="20" height="14" rx="2" stroke={T.success} strokeWidth="1.8" />
-                      <path d="M2 10h20" stroke={T.success} strokeWidth="1.8" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: T.navy,
-                      fontFamily: "'Plus Jakarta Sans',sans-serif" }}>{p.vendorName}</p>
-                    <p style={{ margin: "2px 0 0", fontSize: 11, color: T.muted,
-                      fontFamily: "'Plus Jakarta Sans',sans-serif" }}>
-                      {p.date} · {p.particulars || "—"}
-                    </p>
-                  </div>
-                </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <Badge color={p.paymentMode === "Razorpay X" ? "blue" : "green"}>{p.paymentMode}</Badge>
-                  <span style={{ fontWeight: 700, color: T.success, fontSize: 14,
-                    fontFamily: "'Plus Jakarta Sans',sans-serif" }}>{fmtINR(p.amountPaid)}</span>
-                </div>
-              </div>
-            ))}
+
+        {/* Recent Payments */}
+        <div style={{ ...card }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+            <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: T.navy,
+              fontFamily: "'Plus Jakarta Sans',sans-serif" }}>Recent Payments</h3>
+            <button style={{ ...makeBtn("default", { fontSize: 11, padding: "5px 12px",
+              background: "#fff", border: `1.5px solid ${T.border2}` }) }}
+              onClick={() => setTab("payments")}>View All →</button>
           </div>
-        )}
+          {recentPayments.length === 0 ? (
+            <p style={{ color: T.muted, fontSize: 12, textAlign: "center", padding: "1.5rem 0",
+              fontFamily: "'Plus Jakarta Sans',sans-serif" }}>No payments yet.</p>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column" }}>
+              {recentPayments.map((p, i) => (
+                <div key={p.id} style={{ display: "flex", justifyContent: "space-between",
+                  alignItems: "center", padding: "12px 0",
+                  borderBottom: i < recentPayments.length - 1 ? `1px solid ${T.border}` : "none" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <div style={{ width: 36, height: 36, borderRadius: 10,
+                      background: "rgba(29,158,117,0.09)", border: `1px solid rgba(29,158,117,0.15)`,
+                      display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+                        <rect x="2" y="5" width="20" height="14" rx="2" stroke={T.success} strokeWidth="1.8" />
+                        <path d="M2 10h20" stroke={T.success} strokeWidth="1.8" />
+                      </svg>
+                    </div>
+                    <div>
+                      <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: T.navy,
+                        fontFamily: "'Plus Jakarta Sans',sans-serif" }}>{p.vendorName}</p>
+                      <p style={{ margin: "2px 0 0", fontSize: 11, color: T.muted,
+                        fontFamily: "'Plus Jakarta Sans',sans-serif" }}>
+                        {p.date} · {p.particulars || "—"}
+                      </p>
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <Badge color={p.paymentMode === "Razorpay X" ? "blue" : "green"}>{p.paymentMode}</Badge>
+                    <span style={{ fontWeight: 700, color: T.success, fontSize: 14,
+                      fontFamily: "'Plus Jakarta Sans',sans-serif" }}>{fmtINR(p.amountPaid)}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -1014,7 +1501,7 @@ function CompaniesTab({ companies, vendors, bills, onAdd, onEdit, onDelete }) {
                         <path d="M18.5 2.5a2.12 2.12 0 013 3L12 15l-4 1 1-4 9.5-9.5z" stroke={T.navy} strokeWidth="2" strokeLinecap="round" />
                       </svg>
                     </button>
-                    <button onClick={() => onDelete(c.id)} style={{ width: 30, height: 30,
+                    <button onClick={() => onDelete(c)} style={{ width: 30, height: 30,
                       borderRadius: 8, background: "rgba(227,74,47,0.07)",
                       border: "1px solid rgba(227,74,47,0.18)", cursor: "pointer",
                       display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -1084,7 +1571,6 @@ function VendorsTab({ vendors, companies, bills, onAdd, onEdit, onDelete, onAddB
         </button>
       } />
 
-      {/* Filters */}
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 18 }}>
         <div style={{ position: "relative", flex: "1 1 200px", maxWidth: 260 }}>
           <svg style={{ position: "absolute", left: 11, top: "50%", transform: "translateY(-50%)" }}
@@ -1122,7 +1608,6 @@ function VendorsTab({ vendors, companies, bills, onAdd, onEdit, onDelete, onAddB
             <div key={v.id} style={{ ...card, padding: 0, overflow: "hidden",
               borderLeft: `3px solid ${sColor}`,
               animation: `fadeUp 0.45s ease ${i * 50}ms both` }}>
-              {/* Vendor header */}
               <div style={{ padding: "16px 18px" }}>
                 <div style={{ display: "flex", justifyContent: "space-between",
                   alignItems: "flex-start", gap: 12 }}>
@@ -1172,12 +1657,11 @@ function VendorsTab({ vendors, companies, bills, onAdd, onEdit, onDelete, onAddB
                       background: "#fff", border: `1.5px solid ${T.border2}` })}
                       onClick={() => onEdit(v)}>✏️ Edit</button>
                     <button style={makeBtn("danger", { fontSize: 11, padding: "7px 12px" })}
-                      onClick={() => onDelete(v.id)}>🗑️</button>
+                      onClick={() => onDelete(v)}>🗑️</button>
                   </div>
                 </div>
               </div>
 
-              {/* Bills list (expandable) */}
               {isOpen && (
                 <div style={{ borderTop: `1px solid ${T.border}`,
                   background: "rgba(30,42,90,0.02)", padding: "14px 18px" }}>
@@ -1259,7 +1743,7 @@ function VendorsTab({ vendors, companies, bills, onAdd, onEdit, onDelete, onAddB
                                   background: "#fff", border: `1.5px solid ${T.border2}` })}
                                   onClick={() => onEditBill(b, v)}>✏️</button>
                                 <button style={makeBtn("danger", { fontSize: 10.5, padding: "5px 10px" })}
-                                  onClick={() => onDeleteBill(b.id)}>🗑️</button>
+                                  onClick={() => onDeleteBill(b, v)}>🗑️</button>
                               </div>
                             </div>
                           </div>
@@ -1388,7 +1872,6 @@ function LoginPage({ onLogin }) {
       `}</style>
 
       <div style={{ width: "100%", maxWidth: 380, animation: "fadeUp 0.5s ease 0.1s both" }}>
-        {/* Logo */}
         <div style={{ textAlign: "center", marginBottom: 32 }}>
           <div style={{ width: 52, height: 52, borderRadius: 16,
             background: `linear-gradient(135deg,${T.coral},${T.gold})`,
@@ -1480,8 +1963,11 @@ export default function App() {
   const [vendors,        setVendors]        = useState([]);
   const [bills,          setBills]          = useState([]);
   const [payments,       setPayments]       = useState([]);
+  const [activityLog,    setActivityLog]    = useState([]);
   const [modal,          setModal]          = useState(null);
+  const [deleteModal,    setDeleteModal]    = useState(null); // { type, item, vendor? }
   const [loading,        setLoading]        = useState(false);
+  const [deleting,       setDeleting]       = useState(false);
   const [saving,         setSaving]         = useState(false);
   const [toast,          setToast]          = useState(null);
   const [successPayment, setSuccessPayment] = useState(null);
@@ -1518,16 +2004,18 @@ export default function App() {
   const loadAll = useCallback(async (tok) => {
     setLoading(true);
     try {
-      const [cD, vD, bD, pD] = await Promise.all([
+      const [cD, vD, bD, pD, aD] = await Promise.all([
         fsList(tok, "companies"),
         fsList(tok, "vendors"),
         fsList(tok, "bills"),
         fsList(tok, "payments"),
+        fsList(tok, "activity_log"),
       ]);
       setCompanies(cD.map(docToObj).filter(Boolean));
       setVendors(vD.map(docToObj).filter(Boolean));
       setBills(bD.map(docToObj).filter(Boolean));
       setPayments(pD.map(docToObj).filter(Boolean));
+      setActivityLog(aD.map(docToObj).filter(Boolean));
     } catch (e) {
       if (e.message === "AUTH_EXPIRED") handleAuthError();
       else showToast("Failed to load data", "error");
@@ -1548,16 +2036,20 @@ export default function App() {
     setUser(null); setToken(null);
     setCompanies([]); setVendors([]); setBills([]); setPayments([]);
     setSessionExpired(false);
-    navigate("/");          // ← navigate to / on logout
+    navigate("/");
   }
 
   /* ── Company CRUD ── */
   async function saveCompany(form, existing) {
     setSaving(true);
     try {
-      existing
-        ? await fsSet(token, `companies/${existing.id}`, form)
-        : await fsCreate(token, "companies", { ...form, createdAt: new Date().toISOString() });
+      if (existing) {
+        await fsSet(token, `companies/${existing.id}`, form);
+        await logActivity(token, "company_added", `Company "${form.name}" updated`, { companyName: form.name });
+      } else {
+        await fsCreate(token, "companies", { ...form, createdAt: new Date().toISOString() });
+        await logActivity(token, "company_added", `New company "${form.name}" added`, { companyName: form.name });
+      }
       showToast(existing ? "Company updated" : "Company added");
       await loadAll(token); setModal(null);
     } catch (e) {
@@ -1565,42 +2057,102 @@ export default function App() {
     } finally { setSaving(false); }
   }
 
-  async function deleteCompany(id) {
-    if (!window.confirm("Delete this company and all its vendors & bills?")) return;
-    setSaving(true);
+  /* ── Delete confirm trigger ── */
+  function triggerDeleteCompany(company) {
+    setDeleteModal({ type: "company", item: company });
+  }
+  function triggerDeleteVendor(vendor) {
+    setDeleteModal({ type: "vendor", item: vendor });
+  }
+  function triggerDeleteBill(bill, vendor) {
+    setDeleteModal({ type: "bill", item: bill, vendor });
+  }
+
+  /* ── Cascade Delete: Company ── */
+  async function confirmDeleteCompany(company) {
+    setDeleting(true);
     try {
-      await fsDelete(token, `companies/${id}`);
-      const cvids = vendors.filter(v => v.companyId === id).map(v => v.id);
-      await Promise.all([
-        ...vendors.filter(v => v.companyId === id).map(v => fsDelete(token, `vendors/${v.id}`)),
-        ...bills.filter(b => cvids.includes(b.vendorId)).map(b => fsDelete(token, `bills/${b.id}`)),
-      ]);
-      await loadAll(token); showToast("Company deleted");
-    } catch (e) { showToast(e.message, "error"); }
-    finally { setSaving(false); }
+      // Get all vendor IDs under this company
+      const cvids = vendors.filter(v => v.companyId === company.id).map(v => v.id);
+      // Delete all bills under those vendors
+      const billsToDelete = bills.filter(b => cvids.includes(b.vendorId));
+      await Promise.all(billsToDelete.map(b => fsDelete(token, `bills/${b.id}`)));
+      // Delete all vendors
+      const vendorsToDelete = vendors.filter(v => v.companyId === company.id);
+      await Promise.all(vendorsToDelete.map(v => fsDelete(token, `vendors/${v.id}`)));
+      // Delete company
+      await fsDelete(token, `companies/${company.id}`);
+      await logActivity(token, "company_deleted",
+        `Company "${company.name}" deleted (${vendorsToDelete.length} vendors, ${billsToDelete.length} bills)`,
+        { companyName: company.name });
+      await loadAll(token);
+      showToast("Company and all related data deleted");
+      setDeleteModal(null);
+    } catch (e) {
+      showToast(e.message || "Delete failed", "error");
+    } finally { setDeleting(false); }
+  }
+
+  /* ── Cascade Delete: Vendor ── */
+  async function confirmDeleteVendor(vendor) {
+    setDeleting(true);
+    try {
+      const vendorBills = bills.filter(b => b.vendorId === vendor.id);
+      await Promise.all(vendorBills.map(b => fsDelete(token, `bills/${b.id}`)));
+      await fsDelete(token, `vendors/${vendor.id}`);
+      await logActivity(token, "vendor_deleted",
+        `Vendor "${vendor.name}" deleted (${vendorBills.length} bills)`,
+        { vendorName: vendor.name });
+      await loadAll(token);
+      showToast("Vendor and all bills deleted");
+      setDeleteModal(null);
+    } catch (e) {
+      showToast(e.message || "Delete failed", "error");
+    } finally { setDeleting(false); }
+  }
+
+  /* ── Delete: Bill only ── */
+  async function confirmDeleteBill(bill, vendor) {
+    setDeleting(true);
+    try {
+      await fsDelete(token, `bills/${bill.id}`);
+      await logActivity(token, "bill_deleted",
+        `Bill #${bill.invoiceNo || bill.id} deleted for ${vendor?.name || bill.vendorName}`,
+        { vendorName: vendor?.name || bill.vendorName, amount: bill.netAmount });
+      await loadAll(token);
+      showToast("Bill deleted");
+      setDeleteModal(null);
+    } catch (e) {
+      showToast(e.message || "Delete failed", "error");
+    } finally { setDeleting(false); }
+  }
+
+  function handleDeleteConfirm() {
+    if (!deleteModal) return;
+    const { type, item, vendor } = deleteModal;
+    if (type === "company") confirmDeleteCompany(item);
+    else if (type === "vendor") confirmDeleteVendor(item);
+    else if (type === "bill") confirmDeleteBill(item, vendor);
   }
 
   /* ── Vendor CRUD ── */
   async function saveVendor(form, existing) {
     setSaving(true);
     try {
-      existing
-        ? await fsSet(token, `vendors/${existing.id}`, form)
-        : await fsCreate(token, "vendors", { ...form, createdAt: new Date().toISOString() });
+      if (existing) {
+        await fsSet(token, `vendors/${existing.id}`, form);
+        await logActivity(token, "vendor_added", `Vendor "${form.name}" updated`, { vendorName: form.name });
+      } else {
+        await fsCreate(token, "vendors", { ...form, createdAt: new Date().toISOString() });
+        const comp = companies.find(c => c.id === form.companyId);
+        await logActivity(token, "vendor_added", `New vendor "${form.name}" added`,
+          { vendorName: form.name, companyName: comp?.name || "" });
+      }
       showToast(existing ? "Vendor updated" : "Vendor added");
       await loadAll(token); setModal(null);
     } catch (e) {
       e.message?.includes("401") ? handleAuthError() : showToast(e.message, "error");
     } finally { setSaving(false); }
-  }
-
-  async function deleteVendor(id) {
-    if (!window.confirm("Delete this vendor and all its bills?")) return;
-    try {
-      await fsDelete(token, `vendors/${id}`);
-      await Promise.all(bills.filter(b => b.vendorId === id).map(b => fsDelete(token, `bills/${b.id}`)));
-      await loadAll(token); showToast("Vendor deleted");
-    } catch (e) { showToast(e.message, "error"); }
   }
 
   /* ── Bill CRUD ── */
@@ -1615,22 +2167,21 @@ export default function App() {
         amountPaid: existing?.amountPaid ?? 0,
         createdAt: existing?.createdAt || new Date().toISOString(),
       };
-      existing
-        ? await fsSet(token, `bills/${existing.id}`, data)
-        : await fsCreate(token, "bills", data);
+      if (existing) {
+        await fsSet(token, `bills/${existing.id}`, data);
+        await logActivity(token, "bill_added", `Bill #${form.invoiceNo || existing.id} updated for ${vendor.name}`,
+          { vendorName: vendor.name, amount: form.netAmount });
+      } else {
+        await fsCreate(token, "bills", data);
+        const comp = companies.find(c => c.id === vendor.companyId);
+        await logActivity(token, "bill_added", `New bill #${form.invoiceNo || "—"} added for ${vendor.name}`,
+          { vendorName: vendor.name, companyName: comp?.name || "", amount: form.netAmount });
+      }
       showToast(existing ? "Bill updated" : "Bill added");
       await loadAll(token); setModal(null);
     } catch (e) {
       e.message?.includes("401") ? handleAuthError() : showToast(e.message, "error");
     } finally { setSaving(false); }
-  }
-
-  async function deleteBill(id) {
-    if (!window.confirm("Delete this bill?")) return;
-    try {
-      await fsDelete(token, `bills/${id}`);
-      await loadAll(token); showToast("Bill deleted");
-    } catch (e) { showToast(e.message, "error"); }
   }
 
   /* ── Payment ── */
@@ -1659,6 +2210,7 @@ export default function App() {
 
   async function commitPayment(bill, vendor, form, amount, razorpayId) {
     const newPaid = Number(bill.amountPaid || 0) + amount;
+    const comp = companies.find(c => c.id === vendor.companyId);
     await fsCreate(token, "payments", {
       billId: bill.id, vendorId: vendor.id, vendorName: vendor.name,
       companyId: vendor.companyId, date: form.date,
@@ -1667,6 +2219,9 @@ export default function App() {
       razorpayId: razorpayId || "", createdAt: new Date().toISOString(),
     });
     await fsSet(token, `bills/${bill.id}`, { ...bill, amountPaid: newPaid });
+    await logActivity(token, "payment_made",
+      `Payment of ${fmtINR(amount)} to ${vendor.name} via ${form.paymentMode}`,
+      { vendorName: vendor.name, companyName: comp?.name || "", amount });
     await loadAll(token);
     setModal(null);
     setSuccessPayment({ amount, vendor: vendor.name, paymentId: razorpayId });
@@ -1681,6 +2236,7 @@ export default function App() {
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
         *,*::before,*::after{box-sizing:border-box;}
         @keyframes spin{to{transform:rotate(360deg)}}
+        @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
         @keyframes fadeUp{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
         @keyframes modalIn{from{opacity:0;transform:scale(0.94) translateY(14px)}to{opacity:1;transform:scale(1) translateY(0)}}
         @keyframes toastIn{from{opacity:0;transform:translateY(12px) scale(0.96)}to{opacity:1;transform:translateY(0) scale(1)}}
@@ -1704,7 +2260,8 @@ export default function App() {
             {tab === "dashboard" && (
               <DashboardTab
                 companies={companies} vendors={vendors} bills={bills}
-                payments={payments} setTab={setTab}
+                payments={payments} activityLog={activityLog}
+                setTab={setTab} loading={loading}
               />
             )}
             {tab === "companies" && (
@@ -1712,7 +2269,7 @@ export default function App() {
                 companies={companies} vendors={vendors} bills={bills}
                 onAdd={() => setModal({ type: "addCompany" })}
                 onEdit={(c) => setModal({ type: "editCompany", data: c })}
-                onDelete={deleteCompany}
+                onDelete={triggerDeleteCompany}
               />
             )}
             {tab === "vendors" && (
@@ -1720,10 +2277,10 @@ export default function App() {
                 vendors={vendors} companies={companies} bills={bills}
                 onAdd={() => setModal({ type: "addVendor" })}
                 onEdit={(v) => setModal({ type: "editVendor", data: v })}
-                onDelete={deleteVendor}
+                onDelete={triggerDeleteVendor}
                 onAddBill={(v) => setModal({ type: "addBill", vendor: v })}
                 onEditBill={(b, v) => setModal({ type: "editBill", data: b, vendor: v })}
-                onDeleteBill={deleteBill}
+                onDeleteBill={triggerDeleteBill}
                 onPay={(b, v) => setModal({ type: "payment", bill: b, vendor: v })}
               />
             )}
@@ -1734,7 +2291,21 @@ export default function App() {
         )}
       </main>
 
-      {/* ── Modals ── */}
+      {/* ── Delete Confirm Modal ── */}
+      {deleteModal && (
+        <DeleteConfirmModal
+          type={deleteModal.type}
+          name={deleteModal.type === "bill"
+            ? (deleteModal.item.description || deleteModal.item.vendorName || "Bill")
+            : deleteModal.item.name}
+          invoiceNo={deleteModal.type === "bill" ? (deleteModal.item.invoiceNo || deleteModal.item.id) : undefined}
+          onConfirm={handleDeleteConfirm}
+          onCancel={() => setDeleteModal(null)}
+          loading={deleting}
+        />
+      )}
+
+      {/* ── CRUD Modals ── */}
       {modal?.type === "addCompany" && (
         <Modal title="Add Company" onClose={() => setModal(null)} width={600}>
           <CompanyForm onSave={(f) => saveCompany(f, null)} onClose={() => setModal(null)} saving={saving} />
