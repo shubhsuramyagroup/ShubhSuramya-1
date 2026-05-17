@@ -1,69 +1,61 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { getProjects, deleteProject } from "../../services/projectService";
+import { Toast, BackButton, PageHeader, DeleteModal } from "../components/Adminshared ";
 
 export default function AllProjects() {
   const navigate = useNavigate();
+  const [projects, setProjects] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [toast, setToast] = useState(null);
 
-  const [projects,      setProjects]      = useState([]);
-  const [loading,       setLoading]       = useState(true);
-  const [modalProject,  setModalProject]  = useState(null);  // project to delete
-  const [inputName,     setInputName]     = useState("");
-  const [error,         setError]         = useState("");
-  const [deleting,      setDeleting]      = useState(false);
-  const [toast,         setToast]         = useState("");
+  // Delete modal
+  const [modalProject, setModalProject] = useState(null);
+  const [inputName, setInputName] = useState("");
+  const [error, setError] = useState("");
+  const [deleting, setDeleting] = useState(false);
 
-  // ── Fetch projects on mount ──────────────────────────────────────────────
   useEffect(() => {
-    const fetchProjects = async () => {
-      try {
-        const data = await getProjects();
-        setProjects(data);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchProjects();
   }, []);
 
-  // ── Open modal ───────────────────────────────────────────────────────────
+  const fetchProjects = async () => {
+    try {
+      const data = await getProjects();
+      setProjects(data);
+    } catch (err) {
+      console.error(err);
+      setToast({ type: "error", message: "Failed to load projects." });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const openModal = (project) => {
     setModalProject(project);
     setInputName("");
     setError("");
   };
 
-  // ── Close modal ──────────────────────────────────────────────────────────
   const closeModal = () => {
-    if (deleting) return;          // block close while delete is in progress
+    if (deleting) return;
     setModalProject(null);
     setInputName("");
     setError("");
   };
 
-  // ── Show toast then auto-hide ────────────────────────────────────────────
-  const showToast = (msg) => {
-    setToast(msg);
-    setTimeout(() => setToast(""), 3000);
-  };
-
-  // ── Handle delete ────────────────────────────────────────────────────────
   const handleDelete = async () => {
-    // Exact, case-sensitive, same-type comparison
     if (inputName !== modalProject.title) {
       setError("Project name does not match. Deletion cancelled.");
       return;
     }
-
     setDeleting(true);
     setError("");
     try {
       await deleteProject(modalProject.id);
       setProjects((prev) => prev.filter((p) => p.id !== modalProject.id));
       setModalProject(null);
-      showToast("Project deleted successfully");
+      setToast({ type: "success", message: "Project deleted successfully." });
     } catch (err) {
       console.error(err);
       setError(err?.message || "Deletion failed. Please try again.");
@@ -72,163 +64,148 @@ export default function AllProjects() {
     }
   };
 
-  // ── Loading screen ───────────────────────────────────────────────────────
   if (loading) {
     return (
-      <div style={{
-        minHeight: "100vh", display: "flex",
-        alignItems: "center", justifyContent: "center",
-        fontSize: "22px", background: "#F8F7F4",
-      }}>
-        Loading Projects...
+      <div className="min-h-screen bg-[#F8F7F4] flex flex-col items-center justify-center gap-4">
+        <div className="w-9 h-9 rounded-full border-[3px] border-[#E4572E]/20 border-t-[#E4572E]"
+             style={{ animation: "spin 0.8s linear infinite" }} />
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        <p className="text-[#1F2A44] font-semibold text-sm">Loading projects…</p>
       </div>
     );
   }
 
-  // ── Main render ──────────────────────────────────────────────────────────
   return (
-    <div style={{ minHeight: "100vh", background: "#F8F7F4", padding: "40px" }}>
-      <div style={{ maxWidth: "1400px", margin: "0 auto" }}>
+    <div className="min-h-screen bg-[#F8F7F4]">
+      <Toast show={toast} onClose={() => setToast(null)} />
 
-        {/* Header */}
-        <div style={{
-          display: "flex", justifyContent: "space-between",
-          alignItems: "center", marginBottom: "35px",
-          flexWrap: "wrap", gap: "20px",
-        }}>
-          <div style={{
-            display: "flex", justifyContent: "start",
-            alignItems: "center", marginBottom: "30px", gap: "20px",
-          }}>
-            <button
-              type="button"
-              onClick={() => (window.location.href = "/admin/dashboard")}
-              style={{
-                display: "flex", alignItems: "center", gap: "8px",
-                background: "none", border: "none", cursor: "pointer",
-                color: "#1F2A44", fontSize: "15px", fontWeight: "600", padding: "0",
-              }}
-            >
-              ← Back
-            </button>
-            <h1 style={{ fontSize: "42px", color: "#1F2A44", marginBottom: "8px" }}>
-              All Projects
-            </h1>
-            <p style={{ color: "#666", fontSize: "15px" }}>
-              Manage your real estate projects
-            </p>
-          </div>
+      {/* Top bar */}
+      <div className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-gray-100
+                      px-4 sm:px-8 h-14 flex items-center gap-4">
+        <BackButton onClick={() => navigate("/admin/dashboard")} label="Dashboard" />
+        <span className="text-gray-200 text-lg">|</span>
+        <span className="text-[#1F2A44] font-semibold text-sm">All Projects</span>
+      </div>
 
-          <Link to="/admin/add-project" style={{ textDecoration: "none" }}>
-            <button style={{
-              padding: "14px 24px", border: "none", borderRadius: "12px",
-              background: "#E4572E", color: "#fff", fontWeight: "600",
-              cursor: "pointer", fontSize: "15px",
-            }}>
-              + Add New Project
-            </button>
-          </Link>
-        </div>
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-8 py-8 sm:py-12">
+        <PageHeader
+          eyebrow="Portfolio"
+          title="All Projects"
+          subtitle="Manage your real estate projects"
+          actions={
+            <Link to="/admin/add-project">
+              <button className="inline-flex items-center gap-1.5 bg-[#E4572E] text-white
+                                 px-5 py-2.5 rounded-full text-[12px] font-semibold tracking-wide
+                                 hover:bg-[#c93d1e] hover:scale-[1.03] transition-all duration-200">
+                + Add New Project
+              </button>
+            </Link>
+          }
+        />
 
-        {/* Empty State */}
+        {/* Empty state */}
         {projects.length === 0 ? (
-          <div style={{
-            background: "#fff", padding: "80px 20px", borderRadius: "24px",
-            textAlign: "center", boxShadow: "0 4px 20px rgba(0,0,0,0.05)",
-          }}>
-            <h2 style={{ fontSize: "30px", color: "#1F2A44", marginBottom: "10px" }}>
-              No Projects Found
-            </h2>
-            <p style={{ color: "#666", marginBottom: "25px" }}>
-              Start by adding your first project
-            </p>
+          <div className="bg-white rounded-3xl border border-gray-100 shadow-sm
+                          flex flex-col items-center justify-center py-20 px-8 text-center">
+            <div className="w-16 h-16 rounded-full bg-[#FFF0EC] flex items-center justify-center mb-4">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#E4572E" strokeWidth="1.5"
+                   strokeLinecap="round" strokeLinejoin="round" className="w-7 h-7">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                <polyline points="9 22 9 12 15 12 15 22" />
+              </svg>
+            </div>
+            <h2 className="text-[#1F2A44] font-semibold text-xl mb-2">No Projects Found</h2>
+            <p className="text-gray-400 text-sm mb-6">Start by adding your first project</p>
             <button
               onClick={() => navigate("/admin/add-project")}
-              style={{
-                padding: "14px 24px", border: "none", borderRadius: "12px",
-                background: "#E4572E", color: "#fff", fontWeight: "600", cursor: "pointer",
-              }}
+              className="inline-flex items-center gap-1.5 bg-[#E4572E] text-white
+                         px-6 py-3 rounded-full text-sm font-semibold
+                         hover:bg-[#c93d1e] transition-all duration-200"
             >
-              Add Project
+              + Add Project
             </button>
           </div>
         ) : (
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit,minmax(340px,1fr))",
-            gap: "28px",
-          }}>
-            {projects.map((project) => (
-              <div key={project.id} style={{
-                background: "#fff", borderRadius: "24px",
-                overflow: "hidden", boxShadow: "0 6px 30px rgba(0,0,0,0.06)", transition: "0.3s",
-              }}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+            {projects.map((project, i) => (
+              <div
+                key={project.id}
+                className="group bg-white border border-gray-100 rounded-2xl overflow-hidden
+                           shadow-sm hover:shadow-xl hover:border-[#E4572E]/20 transition-all duration-300"
+                style={{ animation: `fadeUp 0.45s ease ${i * 50}ms both` }}
+              >
                 {/* Image */}
-                <div style={{ position: "relative" }}>
+                <div className="relative overflow-hidden h-[220px]">
                   <img
-                    src={project.mainImage || "https://via.placeholder.com/600x400"}
+                    src={project.mainImage || "https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=600&q=80"}
                     alt={project.title}
-                    style={{ width: "100%", height: "260px", objectFit: "cover" }}
+                    className="w-full h-full object-cover transition-transform duration-700
+                               group-hover:scale-105"
                   />
-                  <div style={{
-                    position: "absolute", top: "18px", left: "18px",
-                    background: "#fff", padding: "8px 14px", borderRadius: "999px",
-                    fontSize: "13px", fontWeight: "600", color: "#1F2A44",
-                  }}>
-                    {project.status || "Ongoing"}
+                  {/* Status badge */}
+                  <div className="absolute top-3 left-3">
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full
+                                     bg-white/90 backdrop-blur-sm text-[#1F2A44]
+                                     text-[10px] font-bold tracking-[1px] uppercase shadow-sm">
+                      {project.status || "Ongoing"}
+                    </span>
+                  </div>
+                  {/* Type badge */}
+                  <div className="absolute top-3 right-3">
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full
+                                     bg-[#E4572E]/90 backdrop-blur-sm text-white
+                                     text-[10px] font-bold tracking-[1px] uppercase shadow-sm">
+                      {project.type}
+                    </span>
                   </div>
                 </div>
 
                 {/* Content */}
-                <div style={{ padding: "24px" }}>
-                  <h2 style={{ fontSize: "24px", color: "#1F2A44", marginBottom: "10px" }}>
+                <div className="p-5">
+                  <h2 className="text-[#1F2A44] font-bold text-[15px] leading-snug mb-3
+                                 line-clamp-1 group-hover:text-[#E4572E] transition-colors duration-200">
                     {project.title}
                   </h2>
-                  <p style={{ color: "#777", fontSize: "14px", lineHeight: "24px", marginBottom: "18px" }}>
-                    {project.description?.slice(0, 110)}...
-                  </p>
 
-                  {/* Details */}
-                  <div style={{
-                    display: "grid", gridTemplateColumns: "1fr 1fr",
-                    gap: "14px", marginBottom: "22px",
-                  }}>
-                    <div>
-                      <p style={{ color: "#888", fontSize: "13px" }}>Location</p>
-                      <h4 style={{ color: "#1F2A44", marginTop: "4px" }}>{project.location}</h4>
-                    </div>
-                    <div>
-                      <p style={{ color: "#888", fontSize: "13px" }}>Type</p>
-                      <h4 style={{ color: "#1F2A44", marginTop: "4px" }}>{project.type}</h4>
-                    </div>
-                    <div>
-                      <p style={{ color: "#888", fontSize: "13px" }}>Area</p>
-                      <h4 style={{ color: "#1F2A44", marginTop: "4px" }}>{project.area}</h4>
-                    </div>
-                    <div>
-                      <p style={{ color: "#888", fontSize: "13px" }}>Price</p>
-                      <h4 style={{ color: "#E4572E", marginTop: "4px" }}>{project.startingPrice}</h4>
-                    </div>
+                  {/* Detail grid */}
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-2.5 mb-4">
+                    {[
+                      { label: "Location", value: project.location },
+                      { label: "Area", value: project.area },
+                      { label: "Units", value: project.units },
+                      { label: "Price", value: project.startingPrice, accent: true },
+                    ].map(({ label, value, accent }) => (
+                      <div key={label}>
+                        <p className="text-gray-400 text-[10px] font-semibold tracking-wide uppercase">{label}</p>
+                        <p className={`text-[12px] font-semibold mt-0.5 leading-tight truncate
+                                       ${accent ? "text-[#E4572E]" : "text-[#1F2A44]"}`}>
+                          {value || "—"}
+                        </p>
+                      </div>
+                    ))}
                   </div>
 
+                  {/* Description */}
+                  {project.description && (
+                    <p className="text-gray-400 text-[11px] leading-relaxed line-clamp-2 mb-4">
+                      {project.description}
+                    </p>
+                  )}
+
                   {/* Buttons */}
-                  <div style={{ display: "flex", gap: "12px" }}>
-                    <Link to={`/admin/edit-project/${project.id}`} style={{ flex: 1, textDecoration: "none" }}>
-                      <button style={{
-                        width: "100%", padding: "14px", border: "none",
-                        borderRadius: "12px", background: "#1F2A44",
-                        color: "#fff", fontWeight: "600", cursor: "pointer",
-                      }}>
+                  <div className="flex gap-2">
+                    <Link to={`/admin/edit-project/${project.id}`} className="flex-1">
+                      <button className="w-full py-2.5 rounded-full bg-[#1F2A44] text-white
+                                         text-[12px] font-semibold hover:bg-[#E4572E]
+                                         transition-all duration-200">
                         Edit
                       </button>
                     </Link>
                     <button
                       onClick={() => openModal(project)}
-                      style={{
-                        flex: 1, padding: "14px", border: "none",
-                        borderRadius: "12px", background: "#E4572E",
-                        color: "#fff", fontWeight: "600", cursor: "pointer",
-                      }}
+                      className="flex-1 py-2.5 rounded-full border-2 border-red-200 text-red-500
+                                 text-[12px] font-semibold hover:bg-red-500 hover:text-white
+                                 hover:border-red-500 transition-all duration-200"
                     >
                       Delete
                     </button>
@@ -240,161 +217,25 @@ export default function AllProjects() {
         )}
       </div>
 
-      {/* ── Delete Confirmation Modal ── */}
       {modalProject && (
-        <>
-          {/* Backdrop */}
-          <div
-            onClick={closeModal}
-            style={{
-              position: "fixed", inset: 0,
-              background: "rgba(31,42,68,0.5)",
-              backdropFilter: "blur(3px)",
-              zIndex: 1000,
-            }}
-          />
-
-          {/* Modal box */}
-          <div style={{
-            position: "fixed", top: "50%", left: "50%",
-            transform: "translate(-50%, -50%)",
-            zIndex: 1001, width: "min(90vw, 460px)",
-            background: "#fff", borderRadius: "24px",
-            boxShadow: "0 24px 80px rgba(31,42,68,0.2)",
-            padding: "36px 32px 28px",
-          }}>
-            {/* Warning icon */}
-            <div style={{ textAlign: "center", marginBottom: "16px", fontSize: "40px" }}>
-              ⚠️
-            </div>
-
-            {/* Title */}
-            <h2 style={{
-              textAlign: "center", fontSize: "22px",
-              fontWeight: "700", color: "#1F2A44", marginBottom: "10px",
-            }}>
-              Delete Project
-            </h2>
-
-            {/* Info */}
-            <p style={{ textAlign: "center", color: "#666", fontSize: "14px", lineHeight: "1.6", marginBottom: "8px" }}>
-              This action is <strong style={{ color: "#E4572E" }}>permanent</strong> and cannot be undone.
-            </p>
-            <p style={{ textAlign: "center", color: "#444", fontSize: "14px", marginBottom: "16px" }}>
-              Type the project name exactly to confirm:
-            </p>
-
-            {/* Project name display */}
-            <div style={{
-              background: "#F8F7F4", border: "1.5px dashed #CBD0D8",
-              borderRadius: "10px", padding: "10px 16px",
-              textAlign: "center", marginBottom: "16px",
-              fontFamily: "monospace", fontSize: "15px",
-              fontWeight: "700", color: "#1F2A44",
-              userSelect: "all",
-            }}>
-              {modalProject.title}
-            </div>
-
-            {/* Input */}
-            <input
-              type="text"
-              value={inputName}
-              onChange={(e) => { setInputName(e.target.value); setError(""); }}
-              placeholder="Type project name here..."
-              disabled={deleting}
-              style={{
-                width: "100%", padding: "13px 16px",
-                borderRadius: "12px", boxSizing: "border-box",
-                border: `2px solid ${error ? "#E4572E" : inputName === modalProject.title && inputName ? "#22C55E" : "#E2E5EB"}`,
-                fontSize: "15px", color: "#1F2A44", outline: "none",
-                marginBottom: "8px",
-                background: deleting ? "#F8F7F4" : "#fff",
-              }}
-            />
-
-            {/* Live match hint */}
-            {inputName.length > 0 && !error && (
-              <p style={{
-                fontSize: "12px", fontWeight: "600", marginBottom: "8px",
-                color: inputName === modalProject.title ? "#22C55E" : "#E4572E",
-              }}>
-                {inputName === modalProject.title ? "✓ Name matches" : "✗ Name does not match yet"}
-              </p>
-            )}
-
-            {/* Error */}
-            {error && (
-              <div style={{
-                background: "#FFF1ED", border: "1px solid #F9C5B3",
-                borderRadius: "10px", padding: "10px 14px",
-                marginBottom: "12px", fontSize: "13px",
-                color: "#C0391B", fontWeight: "500",
-              }}>
-                {error}
-              </div>
-            )}
-
-            {/* Buttons */}
-            <div style={{ display: "flex", gap: "12px", marginTop: "16px" }}>
-              <button
-                onClick={closeModal}
-                disabled={deleting}
-                style={{
-                  flex: 1, padding: "14px", borderRadius: "12px",
-                  border: "2px solid #E2E5EB", background: "#fff",
-                  color: "#1F2A44", fontWeight: "600", fontSize: "15px",
-                  cursor: deleting ? "not-allowed" : "pointer",
-                  opacity: deleting ? 0.5 : 1,
-                }}
-              >
-                Cancel
-              </button>
-
-              <button
-                onClick={handleDelete}
-                disabled={deleting || !inputName}
-                style={{
-                  flex: 1, padding: "14px", borderRadius: "12px",
-                  border: "none",
-                  background: deleting || !inputName ? "#F3C4B8" : "#E4572E",
-                  color: "#fff", fontWeight: "700", fontSize: "15px",
-                  cursor: deleting || !inputName ? "not-allowed" : "pointer",
-                  display: "flex", alignItems: "center",
-                  justifyContent: "center", gap: "8px",
-                }}
-              >
-                {deleting ? (
-                  <>
-                    <span style={{
-                      width: "16px", height: "16px", border: "2.5px solid rgba(255,255,255,0.4)",
-                      borderTop: "2.5px solid #fff", borderRadius: "50%",
-                      display: "inline-block", animation: "spin 0.7s linear infinite",
-                    }} />
-                    Deleting...
-                  </>
-                ) : "Delete Project"}
-              </button>
-            </div>
-          </div>
-        </>
+        <DeleteModal
+          title="Delete Project"
+          itemName={modalProject.title}
+          inputName={inputName}
+          setInputName={(v) => { setInputName(v); setError(""); }}
+          error={error}
+          deleting={deleting}
+          onClose={closeModal}
+          onConfirm={handleDelete}
+        />
       )}
 
-      {/* ── Success Toast ── */}
-      {toast && (
-        <div style={{
-          position: "fixed", bottom: "28px", right: "28px", zIndex: 2000,
-          background: "#1F2A44", color: "#fff", padding: "14px 22px",
-          borderRadius: "14px", fontWeight: "600", fontSize: "14px",
-          boxShadow: "0 8px 32px rgba(0,0,0,0.18)",
-          display: "flex", alignItems: "center", gap: "10px",
-        }}>
-          ✓ {toast}
-        </div>
-      )}
-
-      {/* Spinner keyframe */}
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      <style>{`
+        @keyframes fadeUp {
+          from { opacity: 0; transform: translateY(16px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
     </div>
   );
 }

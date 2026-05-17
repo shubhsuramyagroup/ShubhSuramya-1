@@ -1,10 +1,11 @@
 import { useState, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { addProject } from "../../services/projectService";
+import { Toast, AdminSubmitBtn } from "../components/Adminshared ";
 
 // ─── CLOUDINARY CONFIG ────────────────────────────────────────────────────────
-// Replace these with your actual Cloudinary credentials
-const CLOUDINARY_CLOUD_NAME = "ddzsk54c2";       // e.g. "myapp123"
-const CLOUDINARY_UPLOAD_PRESET = "project_uploads"; // e.g. "ml_default" (unsigned preset)
+const CLOUDINARY_CLOUD_NAME = "ddzsk54c2";
+const CLOUDINARY_UPLOAD_PRESET = "project_uploads";
 
 // ─── Cloudinary Upload Helper ─────────────────────────────────────────────────
 async function uploadToCloudinary(file, folder = "projects", onProgress) {
@@ -15,145 +16,71 @@ async function uploadToCloudinary(file, folder = "projects", onProgress) {
 
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
-    xhr.open(
-      "POST",
-      `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`
-    );
-
+    xhr.open("POST", `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`);
     xhr.upload.onprogress = (e) => {
-      if (e.lengthComputable && onProgress) {
-        onProgress(Math.round((e.loaded / e.total) * 100));
-      }
+      if (e.lengthComputable && onProgress) onProgress(Math.round((e.loaded / e.total) * 100));
     };
-
     xhr.onload = () => {
-      if (xhr.status === 200) {
-        const data = JSON.parse(xhr.responseText);
-        resolve(data.secure_url);
-      } else {
-        reject(new Error("Cloudinary upload failed: " + xhr.responseText));
-      }
+      if (xhr.status === 200) resolve(JSON.parse(xhr.responseText).secure_url);
+      else reject(new Error("Cloudinary upload failed: " + xhr.responseText));
     };
-
     xhr.onerror = () => reject(new Error("Network error during upload"));
     xhr.send(formData);
   });
 }
 
-// ─── Reusable Image Upload Field ─────────────────────────────────────────────
-function ImageUploadField({ label, value, onChange, folder = "projects" }) {
-  const [uploading, setUploading] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [error, setError] = useState("");
-  const inputRef = useRef();
-
-  const handleFile = async (file) => {
-    if (!file) return;
-    if (!file.type.startsWith("image/")) {
-      setError("Please select a valid image file.");
-      return;
-    }
-    setError("");
-    setUploading(true);
-    setProgress(0);
-
-    try {
-      const url = await uploadToCloudinary(file, folder, (pct) => setProgress(pct));
-      onChange(url);
-    } catch (err) {
-      setError("Upload failed: " + err.message);
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  const handleDrop = (e) => {
-    e.preventDefault();
-    handleFile(e.dataTransfer.files[0]);
-  };
-
+// ─── Section Wrapper ──────────────────────────────────────────────────────────
+function Section({ title, children }) {
   return (
-    <div style={{ marginTop: "12px" }}>
-      {label && (
-        <label style={{ fontSize: "13px", fontWeight: "600", color: "#555", display: "block", marginBottom: "6px" }}>
-          {label}
-        </label>
-      )}
-
-      <div
-        onDrop={handleDrop}
-        onDragOver={(e) => e.preventDefault()}
-        onClick={() => !uploading && inputRef.current.click()}
-        style={{
-          border: "2px dashed #ddd",
-          borderRadius: "12px",
-          padding: "18px",
-          textAlign: "center",
-          cursor: uploading ? "not-allowed" : "pointer",
-          background: uploading ? "#fafafa" : "#fff",
-          transition: "border-color 0.2s",
-          position: "relative",
-          minHeight: "80px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-        onMouseEnter={(e) => { if (!uploading) e.currentTarget.style.borderColor = "#E4572E"; }}
-        onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#ddd"; }}
-      >
-        <input
-          ref={inputRef}
-          type="file"
-          accept="image/*"
-          style={{ display: "none" }}
-          onChange={(e) => { handleFile(e.target.files[0]); e.target.value = ""; }}
-        />
-
-        {value ? (
-          <div style={{ width: "100%" }}>
-            <img
-              src={value}
-              alt="preview"
-              style={{ maxHeight: "120px", maxWidth: "100%", borderRadius: "8px", objectFit: "cover", display: "block", margin: "0 auto" }}
-            />
-            <div style={{ marginTop: "8px", fontSize: "12px", color: "#888" }}>
-              {uploading ? `Uploading… ${progress}%` : "Click or drag to replace"}
-            </div>
-          </div>
-        ) : (
-          <div>
-            <div style={{ fontSize: "28px", marginBottom: "6px" }}>🖼️</div>
-            <div style={{ fontSize: "13px", color: "#888", fontWeight: "500" }}>
-              {uploading ? `Uploading… ${progress}%` : "Click or drag & drop an image"}
-            </div>
-          </div>
-        )}
-
-        {uploading && (
-          <div style={{
-            position: "absolute", bottom: 0, left: 0,
-            height: "4px", width: `${progress}%`,
-            background: "#E4572E", borderRadius: "0 0 10px 10px",
-            transition: "width 0.3s"
-          }} />
-        )}
-      </div>
-
-      {/* URL fallback */}
-      <input
-        type="text"
-        placeholder="Or paste image URL directly"
-        value={value || ""}
-        onChange={(e) => onChange(e.target.value)}
-        style={{
-          width: "100%", padding: "10px 14px", borderRadius: "10px",
-          border: "1px solid #eee", outline: "none", fontSize: "12px",
-          marginTop: "8px", color: "#555", boxSizing: "border-box"
-        }}
-      />
-
-      {error && <div style={{ fontSize: "12px", color: "#c0392b", marginTop: "4px" }}>{error}</div>}
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-8 mb-6">
+      <h2 className="text-[#1F2A44] font-bold text-lg mb-5 pb-3 border-b border-gray-100">{title}</h2>
+      {children}
     </div>
+  );
+}
+
+// ─── Field Label ──────────────────────────────────────────────────────────────
+function FieldLabel({ children }) {
+  return <p className="text-[10px] font-bold tracking-widest text-gray-400 uppercase mb-1.5">{children}</p>;
+}
+
+// ─── Input ────────────────────────────────────────────────────────────────────
+function Input({ className = "", ...props }) {
+  return (
+    <input
+      className={`w-full px-4 py-3 rounded-xl border border-gray-200 text-[#1F2A44] text-sm
+                  placeholder-gray-300 outline-none focus:border-[#E4572E] focus:ring-2
+                  focus:ring-[#E4572E]/10 transition-all duration-200 bg-white ${className}`}
+      {...props}
+    />
+  );
+}
+
+// ─── Textarea ─────────────────────────────────────────────────────────────────
+function Textarea({ className = "", ...props }) {
+  return (
+    <textarea
+      className={`w-full px-4 py-3 rounded-xl border border-gray-200 text-[#1F2A44] text-sm
+                  placeholder-gray-300 outline-none focus:border-[#E4572E] focus:ring-2
+                  focus:ring-[#E4572E]/10 transition-all duration-200 bg-white resize-vertical
+                  min-h-[120px] ${className}`}
+      {...props}
+    />
+  );
+}
+
+// ─── Add Button ───────────────────────────────────────────────────────────────
+function AddBtn({ onClick, children }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="mt-4 inline-flex items-center gap-1.5 bg-[#E4572E]/10 text-[#E4572E]
+                 px-4 py-2.5 rounded-full text-[12px] font-bold tracking-wide
+                 hover:bg-[#E4572E] hover:text-white transition-all duration-200 border border-[#E4572E]/20"
+    >
+      {children}
+    </button>
   );
 }
 
@@ -163,29 +90,101 @@ function DeleteBtn({ onClick, label = "Remove" }) {
     <button
       type="button"
       onClick={onClick}
-      style={{
-        padding: "6px 12px",
-        background: "#fff0ee",
-        border: "1px solid #f5c6c0",
-        color: "#c0392b",
-        borderRadius: "8px",
-        cursor: "pointer",
-        fontSize: "13px",
-        fontWeight: "600",
-        display: "flex",
-        alignItems: "center",
-        gap: "5px",
-        whiteSpace: "nowrap",
-        flexShrink: 0,
-      }}
+      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-red-50
+                 text-red-500 border border-red-100 text-[11px] font-bold
+                 hover:bg-red-500 hover:text-white hover:border-red-500
+                 transition-all duration-200 whitespace-nowrap flex-shrink-0"
     >
       {label}
     </button>
   );
 }
 
+// ─── Image Upload Field ───────────────────────────────────────────────────────
+function ImageUploadField({ label, value, onChange, folder = "projects" }) {
+  const [uploading, setUploading] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [error, setError] = useState("");
+  const inputRef = useRef();
+
+  const handleFile = async (file) => {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) { setError("Please select a valid image file."); return; }
+    setError(""); setUploading(true); setProgress(0);
+    try {
+      const url = await uploadToCloudinary(file, folder, (pct) => setProgress(pct));
+      onChange(url);
+    } catch (err) { setError("Upload failed: " + err.message); }
+    finally { setUploading(false); }
+  };
+
+  return (
+    <div className="mt-3">
+      {label && <FieldLabel>{label}</FieldLabel>}
+      <div
+        onDrop={(e) => { e.preventDefault(); handleFile(e.dataTransfer.files[0]); }}
+        onDragOver={(e) => e.preventDefault()}
+        onClick={() => !uploading && inputRef.current.click()}
+        className={`relative border-2 border-dashed rounded-xl p-5 text-center flex items-center
+                    justify-center min-h-[90px] transition-all duration-200 overflow-hidden
+                    ${uploading ? "border-[#E4572E]/40 bg-orange-50/50 cursor-not-allowed"
+                               : "border-gray-200 bg-white cursor-pointer hover:border-[#E4572E] hover:bg-orange-50/30"}`}
+      >
+        <input ref={inputRef} type="file" accept="image/*" className="hidden"
+          onChange={(e) => { handleFile(e.target.files[0]); e.target.value = ""; }} />
+
+        {value ? (
+          <div className="w-full">
+            <img src={value} alt="preview"
+              className="max-h-[110px] max-w-full rounded-lg object-cover mx-auto block" />
+            <p className="mt-2 text-[11px] text-gray-400">
+              {uploading ? `Uploading… ${progress}%` : "Click or drag to replace"}
+            </p>
+          </div>
+        ) : (
+          <div>
+            <div className="text-3xl mb-1.5">🖼️</div>
+            <p className="text-[12px] text-gray-400 font-medium">
+              {uploading ? `Uploading… ${progress}%` : "Click or drag & drop an image"}
+            </p>
+          </div>
+        )}
+
+        {uploading && (
+          <div className="absolute bottom-0 left-0 h-1 bg-[#E4572E] rounded-full transition-all duration-300"
+            style={{ width: `${progress}%` }} />
+        )}
+      </div>
+
+      <input type="text" placeholder="Or paste image URL directly" value={value || ""}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full mt-2 px-3 py-2 rounded-lg border border-gray-100 text-[12px]
+                   text-gray-500 outline-none focus:border-[#E4572E] transition-all" />
+
+      {error && <p className="text-[11px] text-red-500 mt-1">{error}</p>}
+    </div>
+  );
+}
+
+// ─── Item Card ────────────────────────────────────────────────────────────────
+function ItemCard({ label, onDelete, deleteLabel = "Remove", children }) {
+  return (
+    <div className="border border-gray-100 rounded-xl p-4 mb-3 bg-gray-50/50">
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">{label}</span>
+        <DeleteBtn onClick={onDelete} label={deleteLabel} />
+      </div>
+      {children}
+    </div>
+  );
+}
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function AddProject() {
+  const navigate = useNavigate();
+  const [toast, setToast] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+
   const [projectData, setProjectData] = useState({
     title: "",
     description: "",
@@ -210,50 +209,9 @@ export default function AddProject() {
     floors: [{ floorName: "", rooms: [{ name: "", image: "" }] }],
   });
 
-  // ── Styles ────────────────────────────────────────────────────────────────────
-  const inputStyle = {
-    width: "100%",
-    padding: "14px",
-    borderRadius: "12px",
-    border: "1px solid #ddd",
-    outline: "none",
-    fontSize: "14px",
-    marginTop: "10px",
-    boxSizing: "border-box",
-  };
-
-  const sectionStyle = {
-    background: "#fff",
-    padding: "25px",
-    borderRadius: "18px",
-    marginBottom: "25px",
-    boxShadow: "0 4px 20px rgba(0,0,0,0.06)",
-  };
-
-  const addBtnStyle = {
-    padding: "12px 18px",
-    background: "#E4572E",
-    border: "none",
-    color: "#fff",
-    borderRadius: "10px",
-    cursor: "pointer",
-    marginTop: "15px",
-    fontWeight: "600",
-    fontSize: "14px",
-  };
-
-  const itemHeaderStyle = {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: "6px",
-  };
-
   // ── Handlers ──────────────────────────────────────────────────────────────────
-  const handleChange = (e) =>
-    setProjectData({ ...projectData, [e.target.name]: e.target.value });
+  const handleChange = (e) => setProjectData({ ...projectData, [e.target.name]: e.target.value });
 
-  // YouTube
   const handleYoutubeChange = (i, val) => {
     const u = [...projectData.youtubeVideos]; u[i] = val;
     setProjectData({ ...projectData, youtubeVideos: u });
@@ -263,37 +221,15 @@ export default function AddProject() {
     setProjectData({ ...projectData, youtubeVideos: u.length ? u : [""] });
   };
 
-  const handleTagChange = (
-  i,
-  val
-) => {
-  const updated = [
-    ...projectData.projectTags,
-  ];
+  const handleTagChange = (i, val) => {
+    const updated = [...projectData.projectTags]; updated[i] = val;
+    setProjectData({ ...projectData, projectTags: updated });
+  };
+  const removeTag = (i) => {
+    const updated = projectData.projectTags.filter((_, idx) => idx !== i);
+    setProjectData({ ...projectData, projectTags: updated.length ? updated : [""] });
+  };
 
-  updated[i] = val;
-
-  setProjectData({
-    ...projectData,
-    projectTags: updated,
-  });
-};
-
-const removeTag = (i) => {
-  const updated =
-    projectData.projectTags.filter(
-      (_, idx) => idx !== i
-    );
-
-  setProjectData({
-    ...projectData,
-    projectTags: updated.length
-      ? updated
-      : [""],
-  });
-};
-
-  // Stats
   const handleStatsChange = (i, field, val) => {
     const u = [...projectData.stats]; u[i][field] = val;
     setProjectData({ ...projectData, stats: u });
@@ -303,7 +239,6 @@ const removeTag = (i) => {
     setProjectData({ ...projectData, stats: u.length ? u : [{ title: "", value: "" }] });
   };
 
-  // Amenities
   const handleAmenityChange = (i, field, val) => {
     const u = [...projectData.amenities]; u[i][field] = val;
     setProjectData({ ...projectData, amenities: u });
@@ -313,7 +248,6 @@ const removeTag = (i) => {
     setProjectData({ ...projectData, amenities: u.length ? u : [{ title: "", image: "" }] });
   };
 
-  // Gallery
   const handleGalleryChange = (i, val) => {
     const u = [...projectData.galleryImages]; u[i] = val;
     setProjectData({ ...projectData, galleryImages: u });
@@ -323,7 +257,6 @@ const removeTag = (i) => {
     setProjectData({ ...projectData, galleryImages: u.length ? u : [""] });
   };
 
-  // Nearby
   const handleNearbyChange = (i, field, val) => {
     const u = [...projectData.nearbyPlaces]; u[i][field] = val;
     setProjectData({ ...projectData, nearbyPlaces: u });
@@ -333,7 +266,6 @@ const removeTag = (i) => {
     setProjectData({ ...projectData, nearbyPlaces: u.length ? u : [{ name: "", type: "", distance: "" }] });
   };
 
-  // Floors
   const handleFloorName = (fi, val) => {
     const u = [...projectData.floors]; u[fi].floorName = val;
     setProjectData({ ...projectData, floors: u });
@@ -342,8 +274,6 @@ const removeTag = (i) => {
     const u = projectData.floors.filter((_, idx) => idx !== fi);
     setProjectData({ ...projectData, floors: u.length ? u : [{ floorName: "", rooms: [{ name: "", image: "" }] }] });
   };
-
-  // Rooms
   const handleRoomChange = (fi, ri, field, val) => {
     const u = [...projectData.floors]; u[fi].rooms[ri][field] = val;
     setProjectData({ ...projectData, floors: u });
@@ -355,347 +285,286 @@ const removeTag = (i) => {
     setProjectData({ ...projectData, floors: u });
   };
 
-  // Submit — only URLs are stored in Firebase (images already on Cloudinary)
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setSubmitting(true);
     try {
       await addProject({ ...projectData, createdAt: new Date() });
-      alert("Project Uploaded Successfully");
+      setToast({ type: "success", message: "Project uploaded successfully!" });
     } catch (error) {
       console.error(error);
-      alert("Error uploading project: " + error.message);
+      setToast({ type: "error", message: error.message || "Failed to upload project." });
+    } finally {
+      setSubmitting(false);
     }
   };
 
   // ── Render ────────────────────────────────────────────────────────────────────
   return (
-    <div style={{ background: "#F8F7F4", minHeight: "100vh", padding: "40px" }}>
-      <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
+    <div className="min-h-screen bg-[#F8F7F4]">
 
-        {/* Header */}
-        <div style={{ display: "flex", alignItems: "center", marginBottom: "30px", gap: "20px" }}>
-          <button
-            type="button"
-            onClick={() => (window.location.href = "/admin/dashboard")}
-            style={{ display: "flex", alignItems: "center", gap: "8px", background: "none", border: "none", cursor: "pointer", color: "#1F2A44", fontSize: "15px", fontWeight: "600", padding: "0" }}
-          >
-            ← Back
-          </button>
-          <h1 style={{ fontSize: "42px", color: "#1F2A44", margin: 0 }}>Add New Project</h1>
+      {/* ── Toast (shared) ── */}
+      <Toast show={toast} onClose={() => setToast(null)} />
+
+      {/* ── Top Bar ── */}
+      <div className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-gray-100
+                      px-4 sm:px-8 h-14 flex items-center gap-4">
+        <button
+          type="button"
+          onClick={() => navigate("/admin/dashboard")}
+          className="inline-flex items-center gap-1.5 text-[#1F2A44] text-sm font-semibold
+                     hover:text-[#E4572E] transition-colors duration-200"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5"
+               viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg>
+          Dashboard
+        </button>
+        <span className="text-gray-200 text-lg">|</span>
+        <span className="text-[#1F2A44] font-semibold text-sm">Add New Project</span>
+      </div>
+
+      <div className="max-w-4xl mx-auto px-4 sm:px-8 py-8 sm:py-12">
+
+        {/* ── Page Header ── */}
+        <div className="mb-8">
+          <p className="text-[10px] font-bold tracking-[3px] text-[#E4572E] uppercase mb-1">Portfolio</p>
+          <h1 className="text-3xl sm:text-4xl font-bold text-[#1F2A44]">Add New Project</h1>
+          <p className="text-gray-400 text-sm mt-1">Fill in the details below to publish a new project</p>
         </div>
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} className="space-y-6">
 
           {/* ── Basic Details ── */}
-          <div style={sectionStyle}>
-            <h2>Basic Details</h2>
-            <input style={inputStyle} type="text" name="title" placeholder="Project Title" onChange={handleChange} />
-            <textarea style={{ ...inputStyle, minHeight: "140px", resize: "vertical" }} name="description" placeholder="Project Description" onChange={handleChange} />
-            <input style={inputStyle} type="text" name="projectHeading" placeholder="Project Heading" onChange={handleChange} />
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(240px,1fr))", gap: "15px", marginTop: "10px" }}>
-              <input style={{ ...inputStyle, marginTop: 0 }} type="text" name="year" placeholder="Year (e.g. 2024)" onChange={handleChange} />
-              <input style={{ ...inputStyle, marginTop: 0 }} type="text" name="location" placeholder="Location" onChange={handleChange} />
-              <input style={{ ...inputStyle, marginTop: 0 }} type="text" name="type" placeholder="Project Type (e.g. Residential)" onChange={handleChange} />
-              <input style={{ ...inputStyle, marginTop: 0 }} type="text" name="status" placeholder="Status (e.g. Under Construction)" onChange={handleChange} />
-              <input style={{ ...inputStyle, marginTop: 0 }} type="text" name="area" placeholder="Area (e.g. 2500 sq.ft)" onChange={handleChange} />
-              <input style={{ ...inputStyle, marginTop: 0 }} type="text" name="units" placeholder="Units (e.g. 120 Units)" onChange={handleChange} />
-              <input style={{ ...inputStyle, marginTop: 0 }} type="text" name="possessionTiming" placeholder="Possession Timing (e.g. Dec 2026)" onChange={handleChange} />
-              <input style={{ ...inputStyle, marginTop: 0 }} type="text" name="startingPrice" placeholder="Starting Price (e.g. ₹45 Lakh)" onChange={handleChange} />
-            </div>
-          </div>
-
-          {/* ── Project Tags ── */}
-
-<div style={sectionStyle}>
-  <h2>Project Tags</h2>
-
-  <p
-    style={{
-      fontSize: "13px",
-      color: "#888",
-      margin: "0 0 4px",
-    }}
-  >
-    Example: Luxury, Premium,
-    Smart Home, River View,
-    3BHK, Modern Living
-  </p>
-
-  {projectData.projectTags.map(
-    (tag, i) => (
-      <div
-        key={i}
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "10px",
-          marginTop: "12px",
-        }}
-      >
-        <input
-          style={{
-            ...inputStyle,
-            marginTop: 0,
-            flex: 1,
-          }}
-          type="text"
-          placeholder="Project Tag"
-          value={tag}
-          onChange={(e) =>
-            handleTagChange(
-              i,
-              e.target.value
-            )
-          }
-        />
-
-        <DeleteBtn
-          onClick={() =>
-            removeTag(i)
-          }
-        />
-      </div>
-    )
-  )}
-
-  <button
-    type="button"
-    style={addBtnStyle}
-    onClick={() =>
-      setProjectData({
-        ...projectData,
-        projectTags: [
-          ...projectData.projectTags,
-          "",
-        ],
-      })
-    }
-  >
-    + Add Project Tag
-  </button>
-</div>
-
-          {/* ── Main Image ── */}
-          <div style={sectionStyle}>
-            <h2>Main Image</h2>
-            <p style={{ fontSize: "13px", color: "#888", margin: "0 0 4px" }}>
-              This image will be uploaded to Cloudinary. Only the URL is saved to Firebase.
-            </p>
-            <ImageUploadField
-              label="Project Main Image"
-              value={projectData.mainImage}
-              onChange={(url) => setProjectData({ ...projectData, mainImage: url })}
-              folder="projects/main"
-            />
-          </div>
-
-          {/* ── YouTube Videos ── */}
-          <div style={sectionStyle}>
-            <h2>YouTube Videos</h2>
-            {projectData.youtubeVideos.map((video, i) => (
-              <div key={i} style={{ display: "flex", alignItems: "center", gap: "10px", marginTop: "10px" }}>
-                <input
-                  style={{ ...inputStyle, marginTop: 0, flex: 1 }}
-                  type="text"
-                  placeholder="YouTube Video URL (e.g. https://youtu.be/xxxx)"
-                  value={video}
-                  onChange={(e) => handleYoutubeChange(i, e.target.value)}
-                />
-                <DeleteBtn onClick={() => removeYoutube(i)} />
+          <Section title="Basic Details">
+            <div className="space-y-4">
+              <div>
+                <FieldLabel>Project Title</FieldLabel>
+                <Input type="text" name="title" placeholder="e.g. Skyline Heights" onChange={handleChange} />
               </div>
-            ))}
-            <button type="button" style={addBtnStyle}
-              onClick={() => setProjectData({ ...projectData, youtubeVideos: [...projectData.youtubeVideos, ""] })}>
-              + Add Video Link
-            </button>
-          </div>
-
-          {/* ── Stats ── */}
-          <div style={sectionStyle}>
-            <h2>Project Stats</h2>
-            <p style={{ fontSize: "13px", color: "#888", margin: "0 0 4px" }}>
-              e.g. Title: "Total Area" → Value: "5 Acres"
-            </p>
-            {projectData.stats.map((stat, i) => (
-              <div key={i} style={{ background: "#fafafa", border: "1px solid #f0f0f0", borderRadius: "12px", padding: "14px", marginTop: "12px" }}>
-                <div style={itemHeaderStyle}>
-                  <span style={{ fontSize: "13px", fontWeight: "700", color: "#888" }}>Stat {i + 1}</span>
-                  <DeleteBtn onClick={() => removeStat(i)} />
-                </div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "15px" }}>
-                  <input style={{ ...inputStyle, marginTop: 0 }} type="text" placeholder="Stat Title (e.g. Total Floors)" value={stat.title}
-                    onChange={(e) => handleStatsChange(i, "title", e.target.value)} />
-                  <input style={{ ...inputStyle, marginTop: 0 }} type="text" placeholder="Stat Value (e.g. 22)" value={stat.value}
-                    onChange={(e) => handleStatsChange(i, "value", e.target.value)} />
-                </div>
+              <div>
+                <FieldLabel>Description</FieldLabel>
+                <Textarea name="description" placeholder="Project Description" onChange={handleChange} />
               </div>
-            ))}
-            <button type="button" style={addBtnStyle}
-              onClick={() => setProjectData({ ...projectData, stats: [...projectData.stats, { title: "", value: "" }] })}>
-              + Add Stat
-            </button>
-          </div>
-
-          {/* ── Amenities ── */}
-          <div style={sectionStyle}>
-            <h2>Amenities</h2>
-            {projectData.amenities.map((amenity, i) => (
-              <div key={i} style={{ border: "1px solid #f0f0f0", borderRadius: "12px", padding: "16px", marginBottom: "14px" }}>
-                <div style={itemHeaderStyle}>
-                  <span style={{ fontSize: "13px", fontWeight: "700", color: "#888" }}>Amenity {i + 1}</span>
-                  <DeleteBtn onClick={() => removeAmenity(i)} />
-                </div>
-                <input
-                  style={inputStyle}
-                  type="text"
-                  placeholder="Amenity Title (e.g. Swimming Pool)"
-                  value={amenity.title}
-                  onChange={(e) => handleAmenityChange(i, "title", e.target.value)}
-                />
-                <ImageUploadField
-                  label="Amenity Icon / Image"
-                  value={amenity.image}
-                  onChange={(url) => handleAmenityChange(i, "image", url)}
-                  folder="projects/amenities"
-                />
+              <div>
+                <FieldLabel>Project Heading</FieldLabel>
+                <Input type="text" name="projectHeading" placeholder="Project Heading" onChange={handleChange} />
               </div>
-            ))}
-            <button type="button" style={addBtnStyle}
-              onClick={() => setProjectData({ ...projectData, amenities: [...projectData.amenities, { title: "", image: "" }] })}>
-              + Add Amenity
-            </button>
-          </div>
-
-          {/* ── PDFs ── */}
-          <div style={sectionStyle}>
-            <h2>Project Documents</h2>
-            <p style={{ fontSize: "13px", color: "#888", margin: "0 0 4px" }}>
-              Paste your PDF links directly (Google Drive, Cloudinary raw upload, etc.)
-            </p>
-            <input style={inputStyle} type="text" name="brochurePdf" placeholder="Brochure PDF URL" onChange={handleChange} />
-            <input style={inputStyle} type="text" name="floorPlanPdf" placeholder="Floor Plan PDF URL" onChange={handleChange} />
-          </div>
-
-          {/* ── Floors ── */}
-          <div style={sectionStyle}>
-            <h2>Floor Details</h2>
-            <p style={{ fontSize: "13px", color: "#888", margin: "0 0 4px" }}>
-              Add each floor with its rooms (e.g. Kitchen, Master Bedroom, Drawing Room) and room images.
-            </p>
-            {projectData.floors.map((floor, fi) => (
-              <div key={fi} style={{ border: "1px solid #ddd", padding: "20px", borderRadius: "14px", marginTop: "20px" }}>
-                <div style={itemHeaderStyle}>
-                  <span style={{ fontSize: "14px", fontWeight: "700", color: "#1F2A44" }}>Floor {fi + 1}</span>
-                  <DeleteBtn onClick={() => removeFloor(fi)} label="Delete Floor" />
-                </div>
-                <input
-                  style={inputStyle}
-                  type="text"
-                  placeholder="Floor Name (e.g. Ground Floor, First Floor)"
-                  value={floor.floorName}
-                  onChange={(e) => handleFloorName(fi, e.target.value)}
-                />
-
-                {floor.rooms.map((room, ri) => (
-                  <div key={ri} style={{ marginTop: "16px", paddingTop: "16px", borderTop: "1px dashed #eee" }}>
-                    <div style={itemHeaderStyle}>
-                      <span style={{ fontSize: "13px", fontWeight: "600", color: "#888" }}>Room {ri + 1}</span>
-                      <DeleteBtn onClick={() => removeRoom(fi, ri)} label="Delete Room" />
-                    </div>
-                    <input
-                      style={inputStyle}
-                      type="text"
-                      placeholder="Room Name (e.g. Kitchen, Master Bedroom, Drawing Room)"
-                      value={room.name}
-                      onChange={(e) => handleRoomChange(fi, ri, "name", e.target.value)}
-                    />
-                    <ImageUploadField
-                      label="Room Image"
-                      value={room.image}
-                      onChange={(url) => handleRoomChange(fi, ri, "image", url)}
-                      folder="projects/rooms"
-                    />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {[
+                  { name: "year", placeholder: "Year (e.g. 2024)" },
+                  { name: "location", placeholder: "Location" },
+                  { name: "type", placeholder: "Project Type (e.g. Residential)" },
+                  { name: "status", placeholder: "Status (e.g. Under Construction)" },
+                  { name: "area", placeholder: "Area (e.g. 2500 sq.ft)" },
+                  { name: "units", placeholder: "Units (e.g. 120 Units)" },
+                  { name: "possessionTiming", placeholder: "Possession Timing (e.g. Dec 2026)" },
+                  { name: "startingPrice", placeholder: "Starting Price (e.g. ₹45 Lakh)" },
+                ].map(({ name, placeholder }) => (
+                  <div key={name}>
+                    <FieldLabel>{placeholder}</FieldLabel>
+                    <Input type="text" name={name} placeholder={placeholder} onChange={handleChange} />
                   </div>
                 ))}
-
-                <button type="button" style={addBtnStyle}
-                  onClick={() => {
-                    const u = [...projectData.floors];
-                    u[fi].rooms.push({ name: "", image: "" });
-                    setProjectData({ ...projectData, floors: u });
-                  }}>
-                  + Add Room
-                </button>
               </div>
-            ))}
-            <button type="button" style={addBtnStyle}
-              onClick={() => setProjectData({
-                ...projectData,
-                floors: [...projectData.floors, { floorName: "", rooms: [{ name: "", image: "" }] }],
-              })}>
-              + Add Floor
-            </button>
-          </div>
+            </div>
+          </Section>
 
-          {/* ── Gallery ── */}
-          <div style={sectionStyle}>
-            <h2>Gallery Images</h2>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: "16px" }}>
-              {projectData.galleryImages.map((image, i) => (
-                <div key={i} style={{ border: "1px solid #f0f0f0", borderRadius: "12px", padding: "12px" }}>
-                  <div style={itemHeaderStyle}>
-                    <span style={{ fontSize: "13px", fontWeight: "600", color: "#888" }}>Image {i + 1}</span>
-                    <DeleteBtn onClick={() => removeGallery(i)} />
-                  </div>
-                  <ImageUploadField
-                    value={image}
-                    onChange={(url) => handleGalleryChange(i, url)}
-                    folder="projects/gallery"
-                  />
+          {/* ── Project Tags ── */}
+          <Section title="Project Tags">
+            <p className="text-[11px] text-gray-400 mb-3">Example: Luxury, Premium, Smart Home, River View, 3BHK, Modern Living</p>
+            <div className="space-y-2">
+              {projectData.projectTags.map((tag, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <Input type="text" placeholder="Project Tag" value={tag}
+                    onChange={(e) => handleTagChange(i, e.target.value)} />
+                  <DeleteBtn onClick={() => removeTag(i)} />
                 </div>
               ))}
             </div>
-            <button type="button" style={addBtnStyle}
-              onClick={() => setProjectData({ ...projectData, galleryImages: [...projectData.galleryImages, ""] })}>
-              + Add Gallery Image
-            </button>
-          </div>
+            <AddBtn onClick={() => setProjectData({ ...projectData, projectTags: [...projectData.projectTags, ""] })}>
+              + Add Tag
+            </AddBtn>
+          </Section>
 
-          {/* ── Nearby Places ── */}
-          <div style={sectionStyle}>
-            <h2>Nearby Places</h2>
-            <p style={{ fontSize: "13px", color: "#888", margin: "0 0 4px" }}>
-              e.g. Name: "Ayush Hospital" → Type: "Hospital" → Distance: "2 km"
-            </p>
-            {projectData.nearbyPlaces.map((place, i) => (
-              <div key={i} style={{ background: "#fafafa", border: "1px solid #f0f0f0", borderRadius: "12px", padding: "14px", marginTop: "12px" }}>
-                <div style={itemHeaderStyle}>
-                  <span style={{ fontSize: "13px", fontWeight: "700", color: "#888" }}>Place {i + 1}</span>
-                  <DeleteBtn onClick={() => removeNearby(i)} />
+          {/* ── Main Image ── */}
+          <Section title="Main Image">
+            <p className="text-[11px] text-gray-400 mb-2">Uploaded to Cloudinary — only the URL is saved to Firebase.</p>
+            <ImageUploadField label="Project Main Image" value={projectData.mainImage}
+              onChange={(url) => setProjectData({ ...projectData, mainImage: url })}
+              folder="projects/main" />
+          </Section>
+
+          {/* ── YouTube Videos ── */}
+          <Section title="YouTube Videos">
+            <div className="space-y-2">
+              {projectData.youtubeVideos.map((video, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <Input type="text" placeholder="YouTube Video URL (e.g. https://youtu.be/xxxx)"
+                    value={video} onChange={(e) => handleYoutubeChange(i, e.target.value)} />
+                  <DeleteBtn onClick={() => removeYoutube(i)} />
                 </div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "15px" }}>
-                  <input style={{ ...inputStyle, marginTop: 0 }} type="text" placeholder="Name (e.g. Ayush Hospital)" value={place.name}
-                    onChange={(e) => handleNearbyChange(i, "name", e.target.value)} />
-                  <input style={{ ...inputStyle, marginTop: 0 }} type="text" placeholder="Type (e.g. Hospital)" value={place.type}
-                    onChange={(e) => handleNearbyChange(i, "type", e.target.value)} />
-                  <input style={{ ...inputStyle, marginTop: 0 }} type="text" placeholder="Distance (e.g. 2 km)" value={place.distance}
-                    onChange={(e) => handleNearbyChange(i, "distance", e.target.value)} />
+              ))}
+            </div>
+            <AddBtn onClick={() => setProjectData({ ...projectData, youtubeVideos: [...projectData.youtubeVideos, ""] })}>
+              + Add Video Link
+            </AddBtn>
+          </Section>
+
+          {/* ── Stats ── */}
+          <Section title="Project Stats">
+            <p className="text-[11px] text-gray-400 mb-3">e.g. Title: "Total Area" → Value: "5 Acres"</p>
+            {projectData.stats.map((stat, i) => (
+              <ItemCard key={i} label={`Stat ${i + 1}`} onDelete={() => removeStat(i)}>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <FieldLabel>Title</FieldLabel>
+                    <Input type="text" placeholder="Stat Title (e.g. Total Floors)" value={stat.title}
+                      onChange={(e) => handleStatsChange(i, "title", e.target.value)} />
+                  </div>
+                  <div>
+                    <FieldLabel>Value</FieldLabel>
+                    <Input type="text" placeholder="Stat Value (e.g. 22)" value={stat.value}
+                      onChange={(e) => handleStatsChange(i, "value", e.target.value)} />
+                  </div>
                 </div>
+              </ItemCard>
+            ))}
+            <AddBtn onClick={() => setProjectData({ ...projectData, stats: [...projectData.stats, { title: "", value: "" }] })}>
+              + Add Stat
+            </AddBtn>
+          </Section>
+
+          {/* ── Amenities ── */}
+          <Section title="Amenities">
+            {projectData.amenities.map((amenity, i) => (
+              <ItemCard key={i} label={`Amenity ${i + 1}`} onDelete={() => removeAmenity(i)}>
+                <FieldLabel>Title</FieldLabel>
+                <Input type="text" placeholder="Amenity Title (e.g. Swimming Pool)" value={amenity.title}
+                  onChange={(e) => handleAmenityChange(i, "title", e.target.value)} />
+                <ImageUploadField label="Amenity Icon / Image" value={amenity.image}
+                  onChange={(url) => handleAmenityChange(i, "image", url)} folder="projects/amenities" />
+              </ItemCard>
+            ))}
+            <AddBtn onClick={() => setProjectData({ ...projectData, amenities: [...projectData.amenities, { title: "", image: "" }] })}>
+              + Add Amenity
+            </AddBtn>
+          </Section>
+
+          {/* ── PDFs ── */}
+          <Section title="Project Documents">
+            <p className="text-[11px] text-gray-400 mb-3">Paste your PDF links directly (Google Drive, Cloudinary raw upload, etc.)</p>
+            <div className="space-y-3">
+              <div>
+                <FieldLabel>Brochure PDF URL</FieldLabel>
+                <Input type="text" name="brochurePdf" placeholder="Brochure PDF URL" onChange={handleChange} />
+              </div>
+              <div>
+                <FieldLabel>Floor Plan PDF URL</FieldLabel>
+                <Input type="text" name="floorPlanPdf" placeholder="Floor Plan PDF URL" onChange={handleChange} />
+              </div>
+            </div>
+          </Section>
+
+          {/* ── Floors ── */}
+          <Section title="Floor Details">
+            <p className="text-[11px] text-gray-400 mb-3">Add each floor with its rooms (e.g. Kitchen, Master Bedroom) and room images.</p>
+            {projectData.floors.map((floor, fi) => (
+              <div key={fi} className="border border-gray-200 rounded-xl p-4 sm:p-5 mb-4">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-sm font-bold text-[#1F2A44]">Floor {fi + 1}</span>
+                  <DeleteBtn onClick={() => removeFloor(fi)} label="Delete Floor" />
+                </div>
+                <FieldLabel>Floor Name</FieldLabel>
+                <Input type="text" placeholder="Floor Name (e.g. Ground Floor, First Floor)"
+                  value={floor.floorName} onChange={(e) => handleFloorName(fi, e.target.value)} />
+
+                <div className="mt-3 pl-2 sm:pl-4 border-l-2 border-[#E4572E]/20 space-y-4">
+                  {floor.rooms.map((room, ri) => (
+                    <div key={ri}>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Room {ri + 1}</span>
+                        <DeleteBtn onClick={() => removeRoom(fi, ri)} label="Delete Room" />
+                      </div>
+                      <FieldLabel>Room Name</FieldLabel>
+                      <Input type="text" placeholder="Room Name (e.g. Kitchen, Master Bedroom)"
+                        value={room.name} onChange={(e) => handleRoomChange(fi, ri, "name", e.target.value)} />
+                      <ImageUploadField label="Room Image" value={room.image}
+                        onChange={(url) => handleRoomChange(fi, ri, "image", url)} folder="projects/rooms" />
+                    </div>
+                  ))}
+                </div>
+
+                <AddBtn onClick={() => {
+                  const u = [...projectData.floors];
+                  u[fi].rooms.push({ name: "", image: "" });
+                  setProjectData({ ...projectData, floors: u });
+                }}>
+                  + Add Room
+                </AddBtn>
               </div>
             ))}
-            <button type="button" style={addBtnStyle}
-              onClick={() => setProjectData({ ...projectData, nearbyPlaces: [...projectData.nearbyPlaces, { name: "", type: "", distance: "" }] })}>
-              + Add Nearby Place
-            </button>
-          </div>
+            <AddBtn onClick={() => setProjectData({
+              ...projectData,
+              floors: [...projectData.floors, { floorName: "", rooms: [{ name: "", image: "" }] }],
+            })}>
+              + Add Floor
+            </AddBtn>
+          </Section>
 
-          {/* ── Submit ── */}
-          <button
-            type="submit"
-            style={{ width: "100%", padding: "18px", border: "none", borderRadius: "14px", background: "#1F2A44", color: "#fff", fontSize: "16px", fontWeight: "600", cursor: "pointer" }}
-          >
-            Upload Project
-          </button>
+          {/* ── Gallery ── */}
+          <Section title="Gallery Images">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {projectData.galleryImages.map((image, i) => (
+                <div key={i} className="border border-gray-100 rounded-xl p-3 bg-gray-50/50">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Image {i + 1}</span>
+                    <DeleteBtn onClick={() => removeGallery(i)} />
+                  </div>
+                  <ImageUploadField value={image}
+                    onChange={(url) => handleGalleryChange(i, url)} folder="projects/gallery" />
+                </div>
+              ))}
+            </div>
+            <AddBtn onClick={() => setProjectData({ ...projectData, galleryImages: [...projectData.galleryImages, ""] })}>
+              + Add Gallery Image
+            </AddBtn>
+          </Section>
+
+          {/* ── Nearby Places ── */}
+          <Section title="Nearby Places">
+            <p className="text-[11px] text-gray-400 mb-3">e.g. Name: "Ayush Hospital" → Type: "Hospital" → Distance: "2 km"</p>
+            {projectData.nearbyPlaces.map((place, i) => (
+              <ItemCard key={i} label={`Place ${i + 1}`} onDelete={() => removeNearby(i)}>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <FieldLabel>Name</FieldLabel>
+                    <Input type="text" placeholder="e.g. Ayush Hospital" value={place.name}
+                      onChange={(e) => handleNearbyChange(i, "name", e.target.value)} />
+                  </div>
+                  <div>
+                    <FieldLabel>Type</FieldLabel>
+                    <Input type="text" placeholder="e.g. Hospital" value={place.type}
+                      onChange={(e) => handleNearbyChange(i, "type", e.target.value)} />
+                  </div>
+                  <div>
+                    <FieldLabel>Distance</FieldLabel>
+                    <Input type="text" placeholder="e.g. 2 km" value={place.distance}
+                      onChange={(e) => handleNearbyChange(i, "distance", e.target.value)} />
+                  </div>
+                </div>
+              </ItemCard>
+            ))}
+            <AddBtn onClick={() => setProjectData({ ...projectData, nearbyPlaces: [...projectData.nearbyPlaces, { name: "", type: "", distance: "" }] })}>
+              + Add Nearby Place
+            </AddBtn>
+          </Section>
+
+          {/* ── Submit (shared) ── */}
+          <AdminSubmitBtn
+            loading={submitting}
+            label="Upload Project"
+            loadingLabel="Uploading…"
+          />
 
         </form>
       </div>

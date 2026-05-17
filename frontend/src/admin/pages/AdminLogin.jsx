@@ -10,24 +10,19 @@ export default function AdminLogin() {
   const navigate = useNavigate();
 
   const [email, setEmail] = useState("");
-  const [password, setPassword] =
-    useState("");
+  const [password, setPassword] = useState("");
 
-  const [loading, setLoading] =
-    useState(false);
+  const [loading, setLoading] = useState(false);
 
   const [error, setError] = useState("");
 
   // Auto Login Check
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(
-      auth,
-      (user) => {
-        if (user) {
-          navigate("/admin/dashboard");
-        }
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        navigate("/admin/dashboard");
       }
-    );
+    });
 
     return () => unsubscribe();
   }, [navigate]);
@@ -39,14 +34,10 @@ export default function AdminLogin() {
     setError("");
 
     try {
-      const userCredential =
-        await loginAdmin(email, password);
+      const userCredential = await loginAdmin(email, password);
 
       if (userCredential.user) {
-        localStorage.setItem(
-          "admin",
-          JSON.stringify(userCredential.user)
-        );
+        localStorage.setItem("admin", JSON.stringify(userCredential.user));
 
         navigate("/admin/dashboard");
       }
@@ -78,8 +69,7 @@ export default function AdminLogin() {
           background: "#fff",
           padding: "40px",
           borderRadius: "20px",
-          boxShadow:
-            "0 10px 40px rgba(0,0,0,0.08)",
+          boxShadow: "0 10px 40px rgba(0,0,0,0.08)",
         }}
       >
         <h1
@@ -105,9 +95,7 @@ export default function AdminLogin() {
           type="email"
           placeholder="Enter Email"
           value={email}
-          onChange={(e) =>
-            setEmail(e.target.value)
-          }
+          onChange={(e) => setEmail(e.target.value)}
           required
           style={{
             width: "100%",
@@ -124,9 +112,7 @@ export default function AdminLogin() {
           type="password"
           placeholder="Enter Password"
           value={password}
-          onChange={(e) =>
-            setPassword(e.target.value)
-          }
+          onChange={(e) => setPassword(e.target.value)}
           required
           style={{
             width: "100%",
@@ -166,9 +152,7 @@ export default function AdminLogin() {
             cursor: "pointer",
           }}
         >
-          {loading
-            ? "Logging in..."
-            : "Login"}
+          {loading ? "Logging in..." : "Login"}
         </button>
       </form>
     </div>

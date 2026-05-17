@@ -1,35 +1,39 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { getArticles, deleteArticle } from "../../services/articleService";
+import { Toast, BackButton, PageHeader, DeleteModal } from "../components/Adminshared ";
 
 export default function Articles() {
-  const [articles,     setArticles]     = useState([]);
-  const [loading,      setLoading]      = useState(true);
-  const [modalArticle, setModalArticle] = useState(null); // article to delete
-  const [inputName,    setInputName]    = useState("");
-  const [error,        setError]        = useState("");
-  const [deleting,     setDeleting]     = useState(false);
-  const [toast,        setToast]        = useState("");
+  const navigate = useNavigate();
+  const [articles, setArticles] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [toast, setToast] = useState(null);
 
-  // ── Fetch ────────────────────────────────────────────────────────────────
+  // Delete modal state
+  const [modalArticle, setModalArticle] = useState(null);
+  const [inputName, setInputName] = useState("");
+  const [error, setError] = useState("");
+  const [deleting, setDeleting] = useState(false);
+
   useEffect(() => {
-    const fetchArticles = async () => {
-      try {
-        const data = await getArticles();
-        const sortedData = data.sort(
-          (a, b) => b.createdAt?.seconds - a.createdAt?.seconds
-        );
-        setArticles(sortedData);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchArticles();
   }, []);
 
-  // ── Modal helpers ────────────────────────────────────────────────────────
+  const fetchArticles = async () => {
+    try {
+      const data = await getArticles();
+      const sortedData = data.sort(
+        (a, b) => b.createdAt?.seconds - a.createdAt?.seconds
+      );
+      setArticles(sortedData);
+    } catch (err) {
+      console.error(err);
+      setToast({ type: "error", message: "Failed to load articles." });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const openModal = (article) => {
     setModalArticle(article);
     setInputName("");
@@ -43,26 +47,18 @@ export default function Articles() {
     setError("");
   };
 
-  const showToast = (msg) => {
-    setToast(msg);
-    setTimeout(() => setToast(""), 3000);
-  };
-
-  // ── Delete handler ───────────────────────────────────────────────────────
   const handleDelete = async () => {
-    // Exact, case-sensitive match
     if (inputName !== modalArticle.heading) {
       setError("Article name does not match. Deletion cancelled.");
       return;
     }
-
     setDeleting(true);
     setError("");
     try {
       await deleteArticle(modalArticle.id);
       setArticles((prev) => prev.filter((a) => a.id !== modalArticle.id));
       setModalArticle(null);
-      showToast("Article deleted successfully");
+      setToast({ type: "success", message: "Article deleted successfully." });
     } catch (err) {
       console.error(err);
       setError(err?.message || "Deletion failed. Please try again.");
@@ -71,118 +67,115 @@ export default function Articles() {
     }
   };
 
-  // ── Loading ──────────────────────────────────────────────────────────────
+  /* ── Loading ── */
   if (loading) {
     return (
-      <div style={{
-        minHeight: "100vh", display: "flex",
-        justifyContent: "center", alignItems: "center",
-        fontSize: "25px", background: "#F8F7F4",
-      }}>
-        Loading Articles...
+      <div className="min-h-screen bg-[#F8F7F4] flex flex-col items-center justify-center gap-4">
+        <div className="w-9 h-9 rounded-full border-[3px] border-[#E4572E]/20 border-t-[#E4572E]"
+             style={{ animation: "spin 0.8s linear infinite" }} />
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        <p className="text-[#1F2A44] font-semibold text-sm">Loading articles…</p>
       </div>
     );
   }
 
-  // ── Main render ──────────────────────────────────────────────────────────
   return (
-    <div style={{ minHeight: "100vh", background: "#F8F7F4", padding: "40px 20px" }}>
-      <div style={{ maxWidth: "1400px", margin: "0 auto" }}>
+    <div className="min-h-screen bg-[#F8F7F4]">
+      <Toast show={toast} onClose={() => setToast(null)} />
 
-        {/* Header */}
-        <div style={{
-          display: "flex", justifyContent: "space-between",
-          alignItems: "center", flexWrap: "wrap",
-          gap: "20px", marginBottom: "40px",
-        }}>
-          <div>
-            <h1 style={{ fontSize: "42px", color: "#1F2A44", marginBottom: "10px" }}>
-              All Articles
-            </h1>
-            <p style={{ color: "#777" }}>Manage your uploaded articles</p>
-          </div>
+      {/* Top bar */}
+      <div className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-gray-100
+                      px-4 sm:px-8 h-14 flex items-center gap-4">
+        <BackButton onClick={() => navigate("/admin/dashboard")} label="Dashboard" />
+        <span className="text-gray-200 text-lg">|</span>
+        <span className="text-[#1F2A44] font-semibold text-sm">All Articles</span>
+      </div>
 
-          <Link to="/admin/add-article" style={{ textDecoration: "none" }}>
-            <button style={{
-              background: "#E4572E", color: "#fff", border: "none",
-              padding: "14px 22px", borderRadius: "14px",
-              fontWeight: "600", cursor: "pointer",
-            }}>
-              + Add Article
-            </button>
-          </Link>
-        </div>
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-8 py-8 sm:py-12">
+        <PageHeader
+          eyebrow="Content"
+          title="All Articles"
+          subtitle="Manage your uploaded articles"
+          actions={
+            <Link to="/admin/add-article">
+              <button className="inline-flex items-center gap-1.5 bg-[#E4572E] text-white
+                                 px-5 py-2.5 rounded-full text-[12px] font-semibold tracking-wide
+                                 hover:bg-[#c93d1e] hover:scale-[1.03] transition-all duration-200">
+                + Add Article
+              </button>
+            </Link>
+          }
+        />
 
-        {/* Empty */}
+        {/* Empty state */}
         {articles.length === 0 ? (
-          <div style={{
-            background: "#fff", borderRadius: "30px",
-            padding: "80px", textAlign: "center",
-          }}>
-            <h2 style={{ color: "#1F2A44" }}>No Articles Found</h2>
-            <p style={{ color: "#777" }}>Start adding your first article</p>
+          <div className="bg-white rounded-3xl border border-gray-100 shadow-sm
+                          flex flex-col items-center justify-center py-20 px-8 text-center">
+            <div className="w-16 h-16 rounded-full bg-[#FFF0EC] flex items-center justify-center mb-4">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#E4572E" strokeWidth="1.5"
+                   strokeLinecap="round" strokeLinejoin="round" className="w-7 h-7">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                <polyline points="14 2 14 8 20 8" />
+              </svg>
+            </div>
+            <h2 className="text-[#1F2A44] font-semibold text-xl mb-2">No Articles Found</h2>
+            <p className="text-gray-400 text-sm mb-6">Start by adding your first article</p>
+            <Link to="/admin/add-article">
+              <button className="inline-flex items-center gap-1.5 bg-[#E4572E] text-white
+                                 px-6 py-3 rounded-full text-sm font-semibold
+                                 hover:bg-[#c93d1e] transition-all duration-200">
+                + Add Article
+              </button>
+            </Link>
           </div>
         ) : (
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit,minmax(300px,1fr))",
-            gap: "25px",
-          }}>
-            {articles.map((article) => (
-              <div key={article.id} style={{
-                background: "#fff", borderRadius: "24px",
-                overflow: "hidden", boxShadow: "0 5px 25px rgba(0,0,0,.06)",
-              }}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">
+            {articles.map((article, i) => (
+              <div
+                key={article.id}
+                className="group bg-white border border-gray-100 rounded-2xl overflow-hidden
+                           shadow-sm hover:shadow-lg hover:border-purple-200 transition-all duration-300"
+                style={{ animation: `fadeUp 0.45s ease ${i * 50}ms both` }}
+              >
                 {/* Image */}
-                <img
-                  src={article.image}
-                  alt={article.heading}
-                  style={{ width: "100%", height: "220px", objectFit: "cover" }}
-                />
-
-                {/* Content */}
-                <div style={{ padding: "20px" }}>
-                  <div style={{
-                    display: "flex", justifyContent: "space-between", marginBottom: "15px",
-                  }}>
-                    <span style={{
-                      background: "rgba(228,87,46,.1)", color: "#E4572E",
-                      padding: "6px 12px", borderRadius: "50px",
-                      fontSize: "13px", fontWeight: "600",
-                    }}>
+                <div className="relative overflow-hidden h-[200px]">
+                  <img
+                    src={article.image}
+                    alt={article.heading}
+                    className="w-full h-full object-cover transition-transform duration-700
+                               group-hover:scale-105"
+                  />
+                  <div className="absolute top-3 left-3 flex items-center gap-2">
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full
+                                     bg-white/90 backdrop-blur-sm text-purple-600
+                                     text-[10px] font-bold tracking-[1px] uppercase shadow-sm">
                       {article.type}
                     </span>
-                    <span style={{ color: "#777", fontSize: "13px" }}>
-                      {article.date}
-                    </span>
                   </div>
+                </div>
 
-                  <h2 style={{
-                    color: "#1F2A44", fontSize: "20px",
-                    marginBottom: "20px", lineHeight: "30px",
-                  }}>
+                {/* Content */}
+                <div className="p-4 sm:p-5">
+                  <p className="text-gray-400 text-[11px] mb-2">{article.date}</p>
+                  <h2 className="text-[#1F2A44] font-bold text-[14px] leading-snug
+                                 line-clamp-2 mb-4 group-hover:text-[#E4572E] transition-colors duration-200">
                     {article.heading}
                   </h2>
 
-                  {/* Buttons */}
-                  <div style={{ display: "flex", gap: "10px" }}>
-                    <Link to={`/admin/edit-article/${article.id}`} style={{ flex: 1 }}>
-                      <button style={{
-                        width: "100%", background: "#2563EB", color: "#fff",
-                        border: "none", padding: "12px", borderRadius: "12px",
-                        cursor: "pointer", fontWeight: "600",
-                      }}>
+                  {/* Actions */}
+                  <div className="flex gap-2">
+                    <Link to={`/admin/edit-article/${article.id}`} className="flex-1">
+                      <button className="w-full py-2.5 rounded-full bg-[#1F2A44] text-white
+                                         text-[12px] font-semibold hover:bg-[#E4572E]
+                                         transition-all duration-200">
                         Edit
                       </button>
                     </Link>
-
                     <button
                       onClick={() => openModal(article)}
-                      style={{
-                        flex: 1, background: "#DC2626", color: "#fff",
-                        border: "none", padding: "12px", borderRadius: "12px",
-                        cursor: "pointer", fontWeight: "600",
-                      }}
+                      className="flex-1 py-2.5 rounded-full border-2 border-red-200 text-red-500
+                                 text-[12px] font-semibold hover:bg-red-500 hover:text-white
+                                 hover:border-red-500 transition-all duration-200"
                     >
                       Delete
                     </button>
@@ -194,175 +187,26 @@ export default function Articles() {
         )}
       </div>
 
-      {/* ── Delete Confirmation Modal ── */}
+      {/* Delete modal */}
       {modalArticle && (
-        <>
-          {/* Backdrop */}
-          <div
-            onClick={closeModal}
-            style={{
-              position: "fixed", inset: 0,
-              background: "rgba(31,42,68,0.5)",
-              backdropFilter: "blur(3px)",
-              zIndex: 1000,
-            }}
-          />
-
-          {/* Modal box */}
-          <div style={{
-            position: "fixed", top: "50%", left: "50%",
-            transform: "translate(-50%, -50%)",
-            zIndex: 1001, width: "min(90vw, 460px)",
-            background: "#fff", borderRadius: "24px",
-            boxShadow: "0 24px 80px rgba(31,42,68,0.2)",
-            padding: "36px 32px 28px",
-          }}>
-            {/* Warning icon */}
-            <div style={{ textAlign: "center", marginBottom: "16px", fontSize: "40px" }}>
-              ⚠️
-            </div>
-
-            {/* Title */}
-            <h2 style={{
-              textAlign: "center", fontSize: "22px",
-              fontWeight: "700", color: "#1F2A44", marginBottom: "10px",
-            }}>
-              Delete Article
-            </h2>
-
-            {/* Info */}
-            <p style={{
-              textAlign: "center", color: "#666",
-              fontSize: "14px", lineHeight: "1.6", marginBottom: "8px",
-            }}>
-              This action is <strong style={{ color: "#DC2626" }}>permanent</strong> and cannot be undone.
-            </p>
-            <p style={{
-              textAlign: "center", color: "#444",
-              fontSize: "14px", marginBottom: "16px",
-            }}>
-              Type the article name exactly to confirm:
-            </p>
-
-            {/* Article name display */}
-            <div style={{
-              background: "#F8F7F4", border: "1.5px dashed #CBD0D8",
-              borderRadius: "10px", padding: "10px 16px",
-              textAlign: "center", marginBottom: "16px",
-              fontFamily: "monospace", fontSize: "14px",
-              fontWeight: "700", color: "#1F2A44",
-              userSelect: "all", lineHeight: "1.5",
-            }}>
-              {modalArticle.heading}
-            </div>
-
-            {/* Input */}
-            <input
-              type="text"
-              value={inputName}
-              onChange={(e) => { setInputName(e.target.value); setError(""); }}
-              placeholder="Type article name here..."
-              disabled={deleting}
-              style={{
-                width: "100%", padding: "13px 16px",
-                borderRadius: "12px", boxSizing: "border-box",
-                border: `2px solid ${
-                  error ? "#DC2626"
-                  : inputName === modalArticle.heading && inputName ? "#22C55E"
-                  : "#E2E5EB"
-                }`,
-                fontSize: "15px", color: "#1F2A44",
-                outline: "none", marginBottom: "8px",
-                background: deleting ? "#F8F7F4" : "#fff",
-              }}
-            />
-
-            {/* Live match hint */}
-            {inputName.length > 0 && !error && (
-              <p style={{
-                fontSize: "12px", fontWeight: "600", marginBottom: "8px",
-                color: inputName === modalArticle.heading ? "#22C55E" : "#DC2626",
-              }}>
-                {inputName === modalArticle.heading
-                  ? "✓ Name matches"
-                  : "✗ Name does not match yet"}
-              </p>
-            )}
-
-            {/* Error */}
-            {error && (
-              <div style={{
-                background: "#FEF2F2", border: "1px solid #FECACA",
-                borderRadius: "10px", padding: "10px 14px",
-                marginBottom: "12px", fontSize: "13px",
-                color: "#B91C1C", fontWeight: "500",
-              }}>
-                {error}
-              </div>
-            )}
-
-            {/* Buttons */}
-            <div style={{ display: "flex", gap: "12px", marginTop: "16px" }}>
-              <button
-                onClick={closeModal}
-                disabled={deleting}
-                style={{
-                  flex: 1, padding: "14px", borderRadius: "12px",
-                  border: "2px solid #E2E5EB", background: "#fff",
-                  color: "#1F2A44", fontWeight: "600", fontSize: "15px",
-                  cursor: deleting ? "not-allowed" : "pointer",
-                  opacity: deleting ? 0.5 : 1,
-                }}
-              >
-                Cancel
-              </button>
-
-              <button
-                onClick={handleDelete}
-                disabled={deleting || !inputName}
-                style={{
-                  flex: 1, padding: "14px", borderRadius: "12px",
-                  border: "none",
-                  background: deleting || !inputName ? "#FCA5A5" : "#DC2626",
-                  color: "#fff", fontWeight: "700", fontSize: "15px",
-                  cursor: deleting || !inputName ? "not-allowed" : "pointer",
-                  display: "flex", alignItems: "center",
-                  justifyContent: "center", gap: "8px",
-                }}
-              >
-                {deleting ? (
-                  <>
-                    <span style={{
-                      width: "16px", height: "16px",
-                      border: "2.5px solid rgba(255,255,255,0.4)",
-                      borderTop: "2.5px solid #fff",
-                      borderRadius: "50%", display: "inline-block",
-                      animation: "spin 0.7s linear infinite",
-                    }} />
-                    Deleting...
-                  </>
-                ) : "Delete Article"}
-              </button>
-            </div>
-          </div>
-        </>
+        <DeleteModal
+          title="Delete Article"
+          itemName={modalArticle.heading}
+          inputName={inputName}
+          setInputName={(v) => { setInputName(v); setError(""); }}
+          error={error}
+          deleting={deleting}
+          onClose={closeModal}
+          onConfirm={handleDelete}
+        />
       )}
 
-      {/* ── Success Toast ── */}
-      {toast && (
-        <div style={{
-          position: "fixed", bottom: "28px", right: "28px", zIndex: 2000,
-          background: "#1F2A44", color: "#fff", padding: "14px 22px",
-          borderRadius: "14px", fontWeight: "600", fontSize: "14px",
-          boxShadow: "0 8px 32px rgba(0,0,0,0.18)",
-          display: "flex", alignItems: "center", gap: "10px",
-        }}>
-          ✓ {toast}
-        </div>
-      )}
-
-      {/* Spinner keyframe */}
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      <style>{`
+        @keyframes fadeUp {
+          from { opacity: 0; transform: translateY(16px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
     </div>
   );
 }
