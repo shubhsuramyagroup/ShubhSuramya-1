@@ -85,7 +85,7 @@ export default function Dashboard() {
       "admin"
     );
 
-    navigate("/admin");
+    navigate("/");
   };
 
   const dashboardCards = [
