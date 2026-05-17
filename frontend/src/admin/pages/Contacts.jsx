@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import * as XLSX from "xlsx";
-
 import { getContacts } from "../../services/contactService";
 
 export default function Contacts() {
@@ -15,20 +14,35 @@ export default function Contacts() {
     try {
       const data = await getContacts();
 
-      setContacts(data);
+      // Sort newest first
+      const sortedData = data.sort((a, b) => {
+        const dateA = a.createdAt?.seconds || 0;
+        const dateB = b.createdAt?.seconds || 0;
+
+        return dateB - dateA;
+      });
+
+      setContacts(sortedData);
     } catch (error) {
       console.log(error);
     }
   };
 
+  const formatDate = (timestamp) => {
+    if (!timestamp) return "N/A";
+
+    return new Date(timestamp.seconds * 1000).toLocaleString();
+  };
+
   const exportExcel = () => {
     const data = contacts.map((item) => ({
-      FullName: item.fullName,
-      Email: item.email,
-      Phone: item.phone,
-      DateOfBirth: item.dob,
-      Subject: item.subject,
-      Message: item.message,
+      FullName: item.fullName || "",
+      Email: item.email || "",
+      Phone: item.phone || "",
+      DateOfBirth: item.dob || "",
+      Subject: item.subject || "",
+      Message: item.message || "",
+      CreatedDate: formatDate(item.createdAt),
     }));
 
     const worksheet = XLSX.utils.json_to_sheet(data);
@@ -66,7 +80,7 @@ export default function Contacts() {
           </button>
         </div>
 
-        {/* Cards */}
+        {/* Statistics */}
 
         <div className="grid md:grid-cols-3 gap-5 mb-8">
           <div className="bg-[#1F2A44] text-white p-8 rounded-3xl">
@@ -91,7 +105,7 @@ export default function Contacts() {
         {/* Table */}
 
         <div className="bg-white rounded-3xl p-6 shadow overflow-auto">
-          <table className="w-full min-w-[1200px]">
+          <table className="w-full min-w-[1400px]">
             <thead>
               <tr className="bg-gray-100">
                 <th className="p-4 text-left">Full Name</th>
@@ -105,13 +119,15 @@ export default function Contacts() {
                 <th className="p-4 text-left">Subject</th>
 
                 <th className="p-4 text-left">Message</th>
+
+                <th className="p-4 text-left">Created Date</th>
               </tr>
             </thead>
 
             <tbody>
               {filteredContacts.length === 0 ? (
                 <tr>
-                  <td colSpan="6" className="text-center py-10 text-gray-500">
+                  <td colSpan="7" className="text-center py-10 text-gray-500">
                     No Contacts Found
                   </td>
                 </tr>
@@ -130,6 +146,10 @@ export default function Contacts() {
 
                     <td className="p-4 max-w-[300px]">
                       <p className="line-clamp-2">{contact.message}</p>
+                    </td>
+
+                    <td className="p-4 whitespace-nowrap">
+                      {formatDate(contact.createdAt)}
                     </td>
                   </tr>
                 ))
