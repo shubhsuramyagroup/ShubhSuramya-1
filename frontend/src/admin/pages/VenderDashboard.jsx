@@ -4,6 +4,8 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, PieChart, Pie, Cell, Legend, AreaChart, Area
 } from "recharts";
+import logo from "../../../public/logo.png";
+import logo1 from "../../../public/logo1.png";
 
 /* ─── Firebase Config ─────────────────────────────────────────────────────── */
 const FB = {
@@ -87,9 +89,10 @@ function openRazorpayCheckout({ amount, vendorName, description, onSuccess, onFa
 const T = {
   navy: "#1E2A5A", coral: "#E34A2F", cream: "#FDFAF6", cream2: "#F5F0E8",
   gold: "#f5a623", white: "#ffffff", muted: "#6B7194", hint: "#9CA3B8",
-  border: "rgba(30,42,90,0.10)", border2: "rgba(30,42,90,0.16)",
+  border: "rgba(30,42,90,0.08)", border2: "rgba(30,42,90,0.14)",
   success: "#1D9E75", danger: "#E34A2F", amber: "#EF9F27", blue: "#378ADD",
   purple: "#8B5CF6", teal: "#0D9488",
+  bg: "#F7F5F2",
 };
 const CHART_COLORS = [T.coral, T.blue, T.success, T.amber, T.purple, T.teal, T.navy, T.gold];
 
@@ -100,7 +103,98 @@ function formatMonthLabel(key) { if (!key) return ""; const [y, m] = key.split("
 function isToday(d) { return d === today(); }
 function isThisMonth(d) { return d && getMonthKey(d) === getMonthKey(today()); }
 
+/* ─── Global Styles ──────────────────────────────────────────────────────── */
+const GLOBAL_CSS = `
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 14px; }
+  body { font-family: 'DM Sans', sans-serif; background: ${T.bg}; color: ${T.navy}; }
+  input:focus, select:focus, textarea:focus { outline: none; }
+  button:disabled { opacity: 0.5; cursor: not-allowed; pointer-events: none; }
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(30,42,90,0.15); border-radius: 99px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes slideDown { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes modalIn { from { opacity: 0; transform: scale(0.97) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+  @keyframes toastIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.45; } }
+  @media (max-width: 768px) { .desktop-nav { display: none !important; } .hamburger { display: flex !important; } }
+  @media (max-width: 540px) { .user-pill { display: none !important; } }
+  @media (max-width: 620px) { .pay-table { display: none !important; } .pay-mobile { display: flex !important; } }
+`;
+
 /* ─── Style Helpers ──────────────────────────────────────────────────────── */
+const inp = {
+  width: "100%", boxSizing: "border-box",
+  padding: "10px 14px", borderRadius: 8,
+  border: `1.5px solid ${T.border2}`,
+  background: "#fff", color: T.navy,
+  fontSize: 13.5, fontFamily: "'DM Sans', sans-serif",
+  transition: "border-color 0.2s, box-shadow 0.2s",
+  appearance: "none",
+};
+const focusOn = (e) => { e.target.style.borderColor = T.coral; e.target.style.boxShadow = `0 0 0 3px rgba(227,74,47,0.10)`; };
+const focusOff = (e) => { e.target.style.borderColor = T.border2; e.target.style.boxShadow = "none"; };
+
+const card = {
+  background: "#fff", borderRadius: 12,
+  border: `1px solid ${T.border}`,
+  boxShadow: "0 1px 4px rgba(30,42,90,0.05)",
+};
+
+function btn(variant = "default", extra = {}) {
+  const base = {
+    display: "inline-flex", alignItems: "center", gap: 6,
+    cursor: "pointer", fontSize: 13, fontWeight: 600,
+    padding: "9px 18px", borderRadius: 8,
+    border: "none", transition: "all 0.18s",
+    fontFamily: "'DM Sans', sans-serif", letterSpacing: "0.1px",
+    whiteSpace: "nowrap",
+  };
+  const variants = {
+    primary: { background: T.coral, color: "#fff", boxShadow: "0 2px 8px rgba(227,74,47,0.25)" },
+    navy: { background: T.navy, color: "#fff", boxShadow: "0 2px 8px rgba(30,42,90,0.22)" },
+    success: { background: T.success, color: "#fff", boxShadow: "0 2px 8px rgba(29,158,117,0.22)" },
+    danger: { background: "#fff", color: T.coral, border: `1.5px solid rgba(227,74,47,0.30)`, boxShadow: "none" },
+    razorpay: { background: "#3395FF", color: "#fff", boxShadow: "0 2px 8px rgba(51,149,255,0.28)" },
+    outline: { background: "#fff", color: T.navy, border: `1.5px solid ${T.border2}`, boxShadow: "none" },
+    ghost: { background: "transparent", color: T.muted, border: "none", boxShadow: "none" },
+    default: { background: "#fff", color: T.navy, border: `1.5px solid ${T.border2}`, boxShadow: "none" },
+  };
+  return { ...base, ...(variants[variant] || variants.default), ...extra };
+}
+
+/* ─── Badge ──────────────────────────────────────────────────────────────── */
+function Badge({ children, color = "navy" }) {
+  const map = {
+    navy: { bg: "rgba(30,42,90,0.07)", text: T.navy },
+    coral: { bg: "rgba(227,74,47,0.08)", text: T.coral },
+    green: { bg: "rgba(29,158,117,0.08)", text: T.success },
+    red: { bg: "rgba(227,74,47,0.08)", text: T.coral },
+    amber: { bg: "rgba(239,159,39,0.10)", text: "#9a620a" },
+    blue: { bg: "rgba(55,138,221,0.08)", text: T.blue },
+    purple: { bg: "rgba(139,92,246,0.08)", text: T.purple },
+  };
+  const t = map[color] || map.navy;
+  return (
+    <span style={{ background: t.bg, color: t.text, fontSize: 11, fontWeight: 600, padding: "3px 9px", borderRadius: 6, fontFamily: "'DM Sans', sans-serif" }}>
+      {children}
+    </span>
+  );
+}
+
+/* ─── ProgressBar ────────────────────────────────────────────────────────── */
+function ProgressBar({ pct, color }) {
+  const c = color || (pct >= 100 ? T.success : T.coral);
+  return (
+    <div style={{ height: 3, background: "rgba(30,42,90,0.07)", borderRadius: 99, overflow: "hidden" }}>
+      <div style={{ height: "100%", width: `${Math.min(100, pct || 0)}%`, background: c, borderRadius: 99, transition: "width 0.5s ease" }} />
+    </div>
+  );
+}
+
 const makeBtn = (variant = "default", extra = {}) => ({
   display: "inline-flex", alignItems: "center", gap: 6, cursor: "pointer",
   fontSize: 13, fontWeight: 600, letterSpacing: "0.3px", padding: "9px 18px", borderRadius: 50,
@@ -110,44 +204,31 @@ const makeBtn = (variant = "default", extra = {}) => ({
   boxShadow: variant === "primary" ? "0 3px 12px rgba(227,74,47,0.30)" : variant === "navy" ? "0 3px 12px rgba(30,42,90,0.30)" : variant === "razorpay" ? "0 3px 12px rgba(51,149,255,0.30)" : "none",
   transition: "all 0.2s", fontFamily: "'Plus Jakarta Sans', sans-serif", ...extra,
 });
-const inp = { width: "100%", boxSizing: "border-box", padding: "10px 13px", borderRadius: 10, border: `1.5px solid ${T.border2}`, background: "#fff", color: T.navy, fontSize: 13, outline: "none", transition: "border-color 0.2s, box-shadow 0.2s", fontFamily: "'Plus Jakarta Sans', sans-serif" };
-const card = { background: "#fff", borderRadius: 16, border: `1px solid ${T.border}`, padding: "20px", boxShadow: "0 1px 12px rgba(30,42,90,0.06)" };
-const focusOn = (e) => { e.target.style.borderColor = T.coral; e.target.style.boxShadow = `0 0 0 3px ${T.coral}20`; };
-const focusOff = (e) => { e.target.style.borderColor = T.border2; e.target.style.boxShadow = "none"; };
 
-/* ─── Micro Components ───────────────────────────────────────────────────── */
-function Badge({ children, color = "navy" }) {
-  const map = { navy: { bg: "rgba(30,42,90,0.08)", text: T.navy }, coral: { bg: "rgba(227,74,47,0.10)", text: T.coral }, green: { bg: "rgba(29,158,117,0.10)", text: "#0e7a5a" }, red: { bg: "rgba(227,74,47,0.10)", text: T.coral }, amber: { bg: "rgba(239,159,39,0.12)", text: "#9a620a" }, blue: { bg: "rgba(55,138,221,0.10)", text: "#1a5a9e" }, purple: { bg: "rgba(139,92,246,0.10)", text: "#6d28d9" } };
-  const t = map[color] || map.navy;
-  return <span style={{ background: t.bg, color: t.text, fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 99, letterSpacing: "0.5px", textTransform: "uppercase", whiteSpace: "nowrap", fontFamily: "'Plus Jakarta Sans',sans-serif" }}>{children}</span>;
-}
-function ProgressBar({ pct, color }) {
-  const c = color || (pct >= 100 ? T.success : T.amber);
-  return <div style={{ height: 4, background: "rgba(30,42,90,0.07)", borderRadius: 99, overflow: "hidden" }}><div style={{ height: "100%", width: `${Math.min(100, pct || 0)}%`, background: c, borderRadius: 99, transition: "width 0.6s ease" }} /></div>;
-}
+/* ─── Spinner ────────────────────────────────────────────────────────────── */
 function Spinner() {
-  return <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "5rem 0", gap: 14 }}><div style={{ width: 36, height: 36, border: `3px solid rgba(30,42,90,0.1)`, borderTopColor: T.coral, borderRadius: "50%", animation: "spin 0.7s linear infinite" }} /><p style={{ color: T.muted, fontSize: 13, fontFamily: "'Plus Jakarta Sans',sans-serif", margin: 0 }}>Loading…</p></div>;
-}
-function SkeletonCard() { return <div style={{ ...card, animation: "pulse 1.5s ease-in-out infinite" }}><div style={{ height: 12, background: "rgba(30,42,90,0.07)", borderRadius: 6, marginBottom: 10, width: "60%" }} /><div style={{ height: 24, background: "rgba(30,42,90,0.05)", borderRadius: 6, width: "40%" }} /></div>; }
-function Empty({ icon, text }) { return <div style={{ ...card, textAlign: "center", padding: "3rem 2rem" }}><div style={{ fontSize: 40, marginBottom: 10 }}>{icon}</div><p style={{ margin: 0, color: T.muted, fontSize: 13, fontFamily: "'Plus Jakarta Sans',sans-serif" }}>{text}</p></div>; }
-
-/* ─── Modal ──────────────────────────────────────────────────────────────── */
-function Modal({ title, subtitle, onClose, children, width = 540 }) {
   return (
-    <div onClick={(e) => e.target === e.currentTarget && onClose()} style={{ position: "fixed", inset: 0, background: "rgba(10,14,30,0.55)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: 16 }}>
-      <div style={{ background: T.cream, borderRadius: 24, width: "100%", maxWidth: width, maxHeight: "94vh", display: "flex", flexDirection: "column", boxShadow: "0 32px 80px rgba(10,14,30,0.22)", border: `1px solid ${T.border}`, animation: "modalIn 0.28s cubic-bezier(.22,1,.36,1) both", overflow: "hidden" }}>
-        <div style={{ flexShrink: 0 }}>
-          <div style={{ height: 3, background: `linear-gradient(90deg,${T.coral},${T.gold})`, borderRadius: "24px 24px 0 0" }} />
-          <div style={{ padding: "20px 24px 16px", display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-            <div><h3 style={{ margin: 0, fontSize: 17, fontWeight: 700, color: T.navy, fontFamily: "'Plus Jakarta Sans',sans-serif", letterSpacing: "-0.3px" }}>{title}</h3>{subtitle && <p style={{ margin: "3px 0 0", fontSize: 12, color: T.muted, fontFamily: "'Plus Jakarta Sans',sans-serif" }}>{subtitle}</p>}</div>
-            <button onClick={onClose} style={{ width: 30, height: 30, borderRadius: 10, background: "rgba(31,42,68,0.07)", border: `1px solid ${T.border}`, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginLeft: 12, transition: "background 0.15s" }} onMouseEnter={e => e.currentTarget.style.background = "rgba(227,74,47,0.10)"} onMouseLeave={e => e.currentTarget.style.background = "rgba(31,42,68,0.07)"}>
-              <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M1 1l12 12M13 1L1 13" stroke={T.navy} strokeWidth="2" strokeLinecap="round" /></svg>
-            </button>
-          </div>
-          <div style={{ height: 1, background: T.border, margin: "0 24px" }} />
-        </div>
-        <div style={{ padding: "20px 24px 24px", overflowY: "auto", flex: 1 }}>{children}</div>
-      </div>
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "5rem 0", gap: 14 }}>
+      <div style={{ width: 32, height: 32, border: `2.5px solid rgba(30,42,90,0.08)`, borderTopColor: T.coral, borderRadius: "50%", animation: "spin 0.7s linear infinite" }} />
+      <p style={{ color: T.hint, fontSize: 13, fontFamily: "'DM Sans', sans-serif" }}>Loading…</p>
+    </div>
+  );
+}
+
+function SkeletonCard() {
+  return (
+    <div style={{ ...card, padding: 18, animation: "pulse 1.4s ease-in-out infinite" }}>
+      <div style={{ height: 11, background: "rgba(30,42,90,0.06)", borderRadius: 6, marginBottom: 12, width: "55%" }} />
+      <div style={{ height: 22, background: "rgba(30,42,90,0.04)", borderRadius: 6, width: "38%" }} />
+    </div>
+  );
+}
+
+function Empty({ icon, text }) {
+  return (
+    <div style={{ ...card, textAlign: "center", padding: "3rem 2rem" }}>
+      <div style={{ fontSize: 36, marginBottom: 12, opacity: 0.5 }}>{icon}</div>
+      <p style={{ color: T.hint, fontSize: 13, fontFamily: "'DM Sans', sans-serif" }}>{text}</p>
     </div>
   );
 }
@@ -155,22 +236,62 @@ function Modal({ title, subtitle, onClose, children, width = 540 }) {
 /* ─── Field ──────────────────────────────────────────────────────────────── */
 function Field({ label, children, hint }) {
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
-      <label style={{ fontSize: 10.5, color: T.muted, fontWeight: 700, letterSpacing: "0.7px", textTransform: "uppercase", fontFamily: "'Plus Jakarta Sans',sans-serif" }}>{label}</label>
+    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+      <label style={{ fontSize: 12, fontWeight: 600, color: T.navy, fontFamily: "'DM Sans', sans-serif", letterSpacing: "0.1px" }}>
+        {label}
+      </label>
       {children}
-      {hint && <p style={{ margin: 0, fontSize: 11, color: T.hint, fontFamily: "'Plus Jakarta Sans',sans-serif" }}>{hint}</p>}
+      {hint && <p style={{ fontSize: 11.5, color: T.hint, fontFamily: "'DM Sans', sans-serif" }}>{hint}</p>}
     </div>
   );
 }
 
-/* ─── Section Header ─────────────────────────────────────────────────────── */
+/* ─── Divider ────────────────────────────────────────────────────────────── */
+function Divider({ label }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "4px 0" }}>
+      <div style={{ flex: 1, height: 1, background: T.border }} />
+      {label && <span style={{ fontSize: 11, color: T.hint, fontFamily: "'DM Sans', sans-serif", fontWeight: 600, whiteSpace: "nowrap" }}>{label}</span>}
+      <div style={{ flex: 1, height: 1, background: T.border }} />
+    </div>
+  );
+}
+
+/* ─── Modal ──────────────────────────────────────────────────────────────── */
+function Modal({ title, subtitle, onClose, children, width = 540 }) {
+  return (
+    <div
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+      style={{ position: "fixed", inset: 0, background: "rgba(10,14,30,0.45)", backdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: 16 }}
+    >
+      <div style={{ background: "#fff", borderRadius: 14, width: "100%", maxWidth: width, maxHeight: "92vh", display: "flex", flexDirection: "column", boxShadow: "0 20px 60px rgba(10,14,30,0.18)", border: `1px solid ${T.border}`, animation: "modalIn 0.25s cubic-bezier(.22,1,.36,1) both", overflow: "hidden" }}>
+        {/* Header */}
+        <div style={{ padding: "18px 22px 16px", display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: `1px solid ${T.border}`, flexShrink: 0 }}>
+          <div>
+            <h3 style={{ fontSize: 15, fontWeight: 700, color: T.navy, fontFamily: "'DM Sans', sans-serif" }}>{title}</h3>
+            {subtitle && <p style={{ fontSize: 12, color: T.hint, fontFamily: "'DM Sans', sans-serif", marginTop: 2 }}>{subtitle}</p>}
+          </div>
+          <button
+            onClick={onClose}
+            style={{ width: 28, height: 28, borderRadius: 7, background: "rgba(30,42,90,0.05)", border: `1px solid ${T.border}`, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "background 0.15s" }}
+            onMouseEnter={e => e.currentTarget.style.background = "rgba(227,74,47,0.08)"}
+            onMouseLeave={e => e.currentTarget.style.background = "rgba(30,42,90,0.05)"}
+          >
+            <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M1 1l10 10M11 1L1 11" stroke={T.navy} strokeWidth="1.8" strokeLinecap="round" /></svg>
+          </button>
+        </div>
+        {/* Body */}
+        <div style={{ padding: "20px 22px 22px", overflowY: "auto", flex: 1 }}>{children}</div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── SectionHeader ──────────────────────────────────────────────────────── */
 function SectionHeader({ title, action }) {
   return (
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24, flexWrap: "wrap", gap: 12 }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-        <div style={{ width: 3, height: 22, borderRadius: 2, background: `linear-gradient(180deg,${T.coral},${T.gold})` }} />
-        <h2 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: T.navy, fontFamily: "'Plus Jakarta Sans',sans-serif", letterSpacing: "-0.4px" }}>{title}</h2>
-      </div>
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20, flexWrap: "wrap", gap: 10 }}>
+      <h2 style={{ fontSize: 18, fontWeight: 700, color: T.navy, fontFamily: "'DM Sans', sans-serif" }}>{title}</h2>
       {action}
     </div>
   );
@@ -183,32 +304,77 @@ function DeleteConfirmModal({ type, name, invoiceNo, onConfirm, onCancel, loadin
   const matches = input === matchValue;
   const [mismatch, setMismatch] = useState(false);
   const typeLabel = type === "company" ? "Company" : type === "vendor" ? "Vendor" : "Bill";
-  const cascadeMsg = type === "company" ? "This will permanently delete the company, all its vendors, and all their bills." : type === "vendor" ? "This will permanently delete the vendor and all its bills." : "This will permanently delete this bill.";
-  function handleDelete() { if (!matches) { setMismatch(true); setTimeout(() => setMismatch(false), 3000); return; } onConfirm(); }
+  const cascadeMsg = type === "company" ? "All vendors and bills under this company will be permanently deleted." : type === "vendor" ? "All bills under this vendor will be permanently deleted." : "This bill will be permanently deleted.";
+
+  function handleDelete() {
+    if (!matches) { setMismatch(true); setTimeout(() => setMismatch(false), 2500); return; }
+    onConfirm();
+  }
+
   return (
-    <div style={{ position: "fixed", inset: 0, background: "rgba(10,14,30,0.65)", backdropFilter: "blur(10px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1500, padding: 16 }}>
-      <div style={{ background: T.cream, borderRadius: 24, maxWidth: 440, width: "100%", boxShadow: "0 32px 80px rgba(10,14,30,0.26)", border: `1px solid ${T.border}`, animation: "modalIn 0.28s cubic-bezier(.22,1,.36,1) both", overflow: "hidden" }}>
-        <div style={{ height: 3, background: `linear-gradient(90deg,${T.coral},#f5743a)` }} />
-        <div style={{ padding: "24px 26px 26px" }}>
-          <div style={{ width: 50, height: 50, borderRadius: 14, background: "rgba(227,74,47,0.09)", border: "1.5px solid rgba(227,74,47,0.20)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 18 }}>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" stroke={T.coral} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /><line x1="12" y1="9" x2="12" y2="13" stroke={T.coral} strokeWidth="2" strokeLinecap="round" /><line x1="12" y1="17" x2="12.01" y2="17" stroke={T.coral} strokeWidth="2" strokeLinecap="round" /></svg>
+    <div style={{ position: "fixed", inset: 0, background: "rgba(10,14,30,0.5)", backdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1500, padding: 16 }}>
+      <div style={{ background: "#fff", borderRadius: 14, maxWidth: 420, width: "100%", boxShadow: "0 20px 60px rgba(10,14,30,0.20)", border: `1px solid ${T.border}`, animation: "modalIn 0.25s cubic-bezier(.22,1,.36,1) both", overflow: "hidden" }}>
+        <div style={{ height: 3, background: T.coral }} />
+        <div style={{ padding: "22px 24px 24px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
+            <div style={{ width: 40, height: 40, borderRadius: 10, background: "rgba(227,74,47,0.07)", border: `1px solid rgba(227,74,47,0.15)`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><polyline points="3 6 5 6 21 6" stroke={T.coral} strokeWidth="2" strokeLinecap="round" /><path d="M19 6l-1 14H6L5 6M10 11v6M14 11v6M9 6V4h6v2" stroke={T.coral} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+            </div>
+            <div>
+              <h3 style={{ fontSize: 15, fontWeight: 700, color: T.navy, fontFamily: "'DM Sans', sans-serif" }}>Delete {typeLabel}</h3>
+              <p style={{ fontSize: 12.5, color: T.hint, fontFamily: "'DM Sans', sans-serif", marginTop: 2 }}>{cascadeMsg}</p>
+            </div>
           </div>
-          <h3 style={{ margin: "0 0 6px", fontSize: 18, fontWeight: 700, color: T.navy, fontFamily: "'Plus Jakarta Sans',sans-serif" }}>Delete {typeLabel}</h3>
-          <p style={{ margin: "0 0 18px", fontSize: 13, color: T.muted, lineHeight: 1.65, fontFamily: "'Plus Jakarta Sans',sans-serif" }}>{cascadeMsg}</p>
-          <div style={{ background: "rgba(227,74,47,0.05)", borderRadius: 12, padding: "11px 15px", marginBottom: 18, border: "1px solid rgba(227,74,47,0.14)" }}>
-            <p style={{ margin: 0, fontSize: 10, color: T.muted, textTransform: "uppercase", letterSpacing: "0.8px", fontWeight: 700, fontFamily: "'Plus Jakarta Sans',sans-serif" }}>{type === "bill" ? "Invoice / Bill ID" : `${typeLabel} Name`}</p>
-            <p style={{ margin: "4px 0 0", fontSize: 14, fontWeight: 700, color: T.coral, fontFamily: "'Plus Jakarta Sans',sans-serif" }}>{matchValue}</p>
+
+          <div style={{ background: "rgba(227,74,47,0.04)", borderRadius: 8, padding: "10px 14px", marginBottom: 16, border: `1px solid rgba(227,74,47,0.12)` }}>
+            <p style={{ fontSize: 11, color: T.hint, fontFamily: "'DM Sans', sans-serif", marginBottom: 2 }}>{type === "bill" ? "Invoice" : `${typeLabel} name`}</p>
+            <p style={{ fontSize: 13.5, fontWeight: 700, color: T.coral, fontFamily: "'DM Mono', monospace" }}>{matchValue}</p>
           </div>
-          <Field label={`Type "${matchValue}" to confirm`}>
-            <input style={{ ...inp, borderColor: mismatch ? T.coral : T.border2, boxShadow: mismatch ? `0 0 0 3px ${T.coral}20` : "none" }} value={input} onChange={(e) => { setInput(e.target.value); setMismatch(false); }} placeholder={`Type exact ${type === "bill" ? "invoice no." : "name"}…`} onFocus={focusOn} onBlur={focusOff} onKeyDown={(e) => e.key === "Enter" && handleDelete()} autoFocus />
+
+          <Field label={`Type "${matchValue}" to confirm deletion`}>
+            <input
+              style={{ ...inp, borderColor: mismatch ? T.coral : T.border2, boxShadow: mismatch ? `0 0 0 3px rgba(227,74,47,0.10)` : "none" }}
+              value={input}
+              onChange={(e) => { setInput(e.target.value); setMismatch(false); }}
+              placeholder="Type to confirm…"
+              onFocus={focusOn} onBlur={focusOff}
+              onKeyDown={(e) => e.key === "Enter" && handleDelete()}
+              autoFocus
+            />
           </Field>
-          {mismatch && <div style={{ marginTop: 10, background: "rgba(227,74,47,0.07)", borderRadius: 10, padding: "9px 13px", border: "1px solid rgba(227,74,47,0.18)", display: "flex", alignItems: "center", gap: 8 }}><p style={{ margin: 0, fontSize: 12, color: T.coral, fontFamily: "'Plus Jakarta Sans',sans-serif" }}>Entered value does not match.</p></div>}
-          <div style={{ display: "flex", gap: 8, marginTop: 22, justifyContent: "flex-end" }}>
-            <button style={makeBtn("default")} onClick={onCancel} disabled={loading}>Cancel</button>
-            <button style={makeBtn("danger", { opacity: matches ? 1 : 0.45 })} onClick={handleDelete} disabled={loading || !matches}>{loading ? "Deleting…" : `Delete ${typeLabel}`}</button>
+          {mismatch && <p style={{ fontSize: 12, color: T.coral, fontFamily: "'DM Sans', sans-serif", marginTop: 8 }}>Text doesn't match. Try again.</p>}
+
+          <div style={{ display: "flex", gap: 8, marginTop: 20, justifyContent: "flex-end" }}>
+            <button style={btn("default")} onClick={onCancel} disabled={loading}>Cancel</button>
+            <button style={btn("primary", { opacity: matches ? 1 : 0.4 })} onClick={handleDelete} disabled={loading || !matches}>
+              {loading ? "Deleting…" : `Delete ${typeLabel}`}
+            </button>
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+/* ─── FormActions ────────────────────────────────────────────────────────── */
+function FormActions({ onClose, saving, saveLabel = "Save" }) {
+  return (
+    <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", paddingTop: 16, borderTop: `1px solid ${T.border}`, marginTop: 4 }}>
+      <button style={btn("default")} onClick={onClose}>Cancel</button>
+      <button style={btn("primary")} disabled={saving}>{saving ? "Saving…" : saveLabel}</button>
+    </div>
+  );
+}
+
+/* ─── InfoBanner ─────────────────────────────────────────────────────────── */
+function InfoBanner({ name, sub, right }) {
+  return (
+    <div style={{ background: T.navy, borderRadius: 10, padding: "14px 16px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap", marginBottom: 16 }}>
+      <div>
+        <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: "#fff", fontFamily: "'DM Sans', sans-serif" }}>{name}</p>
+        {sub && <p style={{ margin: "2px 0 0", fontSize: 11.5, color: "rgba(255,255,255,0.50)", fontFamily: "'DM Sans', sans-serif" }}>{sub}</p>}
+      </div>
+      {right}
     </div>
   );
 }
@@ -218,115 +384,193 @@ function CompanyForm({ initial, onSave, onClose, saving }) {
   const [f, setF] = useState(initial || { name: "", gstin: "", pan: "", stateCode: "24", msmeNo: "", address: "", phone: "", email: "", totalBudget: "" });
   const set = (k) => (e) => setF((p) => ({ ...p, [k]: e.target.value }));
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-      <Field label="Company Name *"><input style={inp} type="text" value={f.name} onChange={set("name")} onFocus={focusOn} onBlur={focusOff} /></Field>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(180px,1fr))", gap: 12 }}>
-        {[["GSTIN","gstin"],["PAN","pan"],["State Code","stateCode"],["MSME No.","msmeNo"]].map(([l,k]) => (<Field key={k} label={l}><input style={inp} type="text" value={f[k]} onChange={set(k)} onFocus={focusOn} onBlur={focusOff} /></Field>))}
+    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+      <Field label="Company Name *">
+        <input style={inp} type="text" value={f.name} onChange={set("name")} onFocus={focusOn} onBlur={focusOff} placeholder="Enter company name" autoFocus />
+      </Field>
+      <Divider label="Registration Details" />
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(170px,1fr))", gap: 12 }}>
+        {[["GSTIN", "gstin", "text"], ["PAN", "pan", "text"], ["State Code", "stateCode", "text"], ["MSME No.", "msmeNo", "text"]].map(([l, k]) => (
+          <Field key={k} label={l}><input style={inp} type="text" value={f[k]} onChange={set(k)} onFocus={focusOn} onBlur={focusOff} placeholder={`Enter ${l}`} /></Field>
+        ))}
       </div>
-      <Field label="Address"><input style={inp} type="text" value={f.address} onChange={set("address")} onFocus={focusOn} onBlur={focusOff} /></Field>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(180px,1fr))", gap: 12 }}>
-        {[["Phone","phone","tel"],["Email","email","email"],["Total Budget (₹)","totalBudget","number"]].map(([l,k,t]) => (<Field key={k} label={l}><input style={inp} type={t} value={f[k]} onChange={set(k)} onFocus={focusOn} onBlur={focusOff} /></Field>))}
+      <Divider label="Contact & Budget" />
+      <Field label="Address">
+        <input style={inp} type="text" value={f.address} onChange={set("address")} onFocus={focusOn} onBlur={focusOff} placeholder="Enter address" />
+      </Field>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(170px,1fr))", gap: 12 }}>
+        {[["Phone", "phone", "tel"], ["Email", "email", "email"], ["Total Budget (₹)", "totalBudget", "number"]].map(([l, k, t]) => (
+          <Field key={k} label={l}><input style={inp} type={t} value={f[k]} onChange={set(k)} onFocus={focusOn} onBlur={focusOff} placeholder={`Enter ${l}`} /></Field>
+        ))}
       </div>
-      <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", paddingTop: 12, borderTop: `1px solid ${T.border}` }}>
-        <button style={makeBtn("default")} onClick={onClose}>Cancel</button>
-        <button style={makeBtn("primary")} onClick={() => onSave(f)} disabled={saving}>{saving ? "Saving…" : initial ? "Update Company" : "Add Company"}</button>
+      <FormActions onClose={onClose} saving={saving} saveLabel={initial ? "Update Company" : "Add Company"} onClick={() => onSave(f)} />
+      {/* Wrap button click */}
+      <style>{`.form-save-btn { display:none; }`}</style>
+    </div>
+  );
+}
+
+/* Note: Wrapping FormActions to pass onSave */
+function CompanyFormWrapped({ initial, onSave, onClose, saving }) {
+  const [f, setF] = useState(initial || { name: "", gstin: "", pan: "", stateCode: "24", msmeNo: "", address: "", phone: "", email: "", totalBudget: "" });
+  const set = (k) => (e) => setF((p) => ({ ...p, [k]: e.target.value }));
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+      <Field label="Company Name *">
+        <input style={inp} type="text" value={f.name} onChange={set("name")} onFocus={focusOn} onBlur={focusOff} placeholder="Enter company name" autoFocus />
+      </Field>
+      <Divider label="Registration Details" />
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(170px,1fr))", gap: 12 }}>
+        {[["GSTIN", "gstin"], ["PAN", "pan"], ["State Code", "stateCode"], ["MSME No.", "msmeNo"]].map(([l, k]) => (
+          <Field key={k} label={l}><input style={inp} type="text" value={f[k]} onChange={set(k)} onFocus={focusOn} onBlur={focusOff} placeholder={`Enter ${l}`} /></Field>
+        ))}
+      </div>
+      <Divider label="Contact & Budget" />
+      <Field label="Address">
+        <input style={inp} type="text" value={f.address} onChange={set("address")} onFocus={focusOn} onBlur={focusOff} placeholder="Full address" />
+      </Field>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(170px,1fr))", gap: 12 }}>
+        {[["Phone", "phone", "tel"], ["Email", "email", "email"], ["Total Budget (₹)", "totalBudget", "number"]].map(([l, k, t]) => (
+          <Field key={k} label={l}><input style={inp} type={t} value={f[k]} onChange={set(k)} onFocus={focusOn} onBlur={focusOff} placeholder={`Enter ${l}`} /></Field>
+        ))}
+      </div>
+      <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", paddingTop: 16, borderTop: `1px solid ${T.border}` }}>
+        <button style={btn("default")} onClick={onClose}>Cancel</button>
+        <button style={btn("primary")} onClick={() => onSave(f)} disabled={saving}>{saving ? "Saving…" : initial ? "Update Company" : "Add Company"}</button>
       </div>
     </div>
   );
 }
 
 /* ─── Vendor Form ────────────────────────────────────────────────────────── */
-function VendorForm({ initial, companies, onSave, onClose, saving }) {
+function VendorFormWrapped({ initial, companies, onSave, onClose, saving }) {
   const [f, setF] = useState(initial || { name: "", companyId: companies[0]?.id || "", gstin: "", pan: "", phone: "", email: "", address: "", description: "" });
   const set = (k) => (e) => setF((p) => ({ ...p, [k]: e.target.value }));
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-      <Field label="Company *"><select style={inp} value={f.companyId} onChange={set("companyId")} onFocus={focusOn} onBlur={focusOff}>{companies.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></Field>
-      <Field label="Vendor Name *"><input style={inp} type="text" value={f.name} onChange={set("name")} onFocus={focusOn} onBlur={focusOff} /></Field>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(180px,1fr))", gap: 12 }}>
-        {[["GSTIN","gstin","text"],["PAN","pan","text"],["Phone","phone","tel"],["Email","email","email"]].map(([l,k,t]) => (<Field key={k} label={l}><input style={inp} type={t} value={f[k]} onChange={set(k)} onFocus={focusOn} onBlur={focusOff} /></Field>))}
+    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+      <Field label="Company *">
+        <select style={inp} value={f.companyId} onChange={set("companyId")} onFocus={focusOn} onBlur={focusOff}>
+          {companies.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+        </select>
+      </Field>
+      <Field label="Vendor Name *">
+        <input style={inp} type="text" value={f.name} onChange={set("name")} onFocus={focusOn} onBlur={focusOff} placeholder="Enter vendor name" autoFocus />
+      </Field>
+      <Divider label="Registration & Contact" />
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(170px,1fr))", gap: 12 }}>
+        {[["GSTIN", "gstin", "text"], ["PAN", "pan", "text"], ["Phone", "phone", "tel"], ["Email", "email", "email"]].map(([l, k, t]) => (
+          <Field key={k} label={l}><input style={inp} type={t} value={f[k]} onChange={set(k)} onFocus={focusOn} onBlur={focusOff} placeholder={`Enter ${l}`} /></Field>
+        ))}
       </div>
-      <Field label="Address"><input style={inp} type="text" value={f.address} onChange={set("address")} onFocus={focusOn} onBlur={focusOff} /></Field>
-      <Field label="Description / Work"><input style={inp} type="text" value={f.description} onChange={set("description")} onFocus={focusOn} onBlur={focusOff} /></Field>
-      <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", paddingTop: 12, borderTop: `1px solid ${T.border}` }}>
-        <button style={makeBtn("default")} onClick={onClose}>Cancel</button>
-        <button style={makeBtn("primary")} onClick={() => onSave(f)} disabled={saving}>{saving ? "Saving…" : initial ? "Update Vendor" : "Add Vendor"}</button>
+      <Field label="Address">
+        <input style={inp} type="text" value={f.address} onChange={set("address")} onFocus={focusOn} onBlur={focusOff} placeholder="Full address" />
+      </Field>
+      <Field label="Work Description">
+        <input style={inp} type="text" value={f.description} onChange={set("description")} onFocus={focusOn} onBlur={focusOff} placeholder="Describe the work or services" />
+      </Field>
+      <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", paddingTop: 16, borderTop: `1px solid ${T.border}` }}>
+        <button style={btn("default")} onClick={onClose}>Cancel</button>
+        <button style={btn("primary")} onClick={() => onSave(f)} disabled={saving}>{saving ? "Saving…" : initial ? "Update Vendor" : "Add Vendor"}</button>
       </div>
     </div>
   );
 }
 
 /* ─── Bill Form ──────────────────────────────────────────────────────────── */
-function BillForm({ initial, vendor, companies, onSave, onClose, saving }) {
+function BillFormWrapped({ initial, vendor, companies, onSave, onClose, saving }) {
   const [f, setF] = useState(initial || { hsnCode: "", invoiceNo: "", invoiceDate: today(), totalBill: "", cgst: "", sgst: "", tds: "", description: "" });
   const set = (k) => (e) => setF((p) => ({ ...p, [k]: e.target.value }));
   const subTotal = Number(f.totalBill || 0), cgstAmt = Number(f.cgst || 0), sgstAmt = Number(f.sgst || 0);
   const billWithGST = subTotal + cgstAmt + sgstAmt, tdsAmt = Number(f.tds || 0), netAmount = billWithGST - tdsAmt;
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-      <div style={{ background: `linear-gradient(135deg,${T.navy} 0%,#2d3d7a 100%)`, borderRadius: 14, padding: "16px 18px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
-        <div><p style={{ margin: 0, fontSize: 15, fontWeight: 700, color: "#fff", fontFamily: "'Plus Jakarta Sans',sans-serif" }}>{vendor.name}</p><p style={{ margin: "2px 0 0", fontSize: 11, color: "rgba(255,255,255,0.55)", fontFamily: "'Plus Jakarta Sans',sans-serif" }}>{companies.find(c => c.id === vendor.companyId)?.name || ""}</p></div>
-        <Badge color="coral">{initial ? "Edit Bill" : "New Bill"}</Badge>
+    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+      <InfoBanner
+        name={vendor.name}
+        sub={companies.find(c => c.id === vendor.companyId)?.name || ""}
+        right={<Badge color="coral">{initial ? "Edit Bill" : "New Bill"}</Badge>}
+      />
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(160px,1fr))", gap: 12 }}>
+        {[["Description", "description", "text"], ["HSN Code", "hsnCode", "text"], ["Invoice No.", "invoiceNo", "text"], ["Invoice Date", "invoiceDate", "date"]].map(([l, k, t]) => (
+          <Field key={k} label={l}><input style={inp} type={t} value={f[k]} onChange={set(k)} onFocus={focusOn} onBlur={focusOff} /></Field>
+        ))}
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(180px,1fr))", gap: 12 }}>
-        {[["Description","description","text"],["HSN Code","hsnCode","text"],["Invoice No.","invoiceNo","text"],["Invoice Date","invoiceDate","date"]].map(([l,k,t]) => (<Field key={k} label={l}><input style={inp} type={t} value={f[k]} onChange={set(k)} onFocus={focusOn} onBlur={focusOff} /></Field>))}
+      <Divider label="Bill Breakdown" />
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(130px,1fr))", gap: 10 }}>
+        {[["Sub Total (₹)", "totalBill"], ["CGST (₹)", "cgst"], ["SGST (₹)", "sgst"], ["TDS (₹)", "tds"]].map(([l, k]) => (
+          <Field key={k} label={l}><input style={inp} type="number" value={f[k]} onChange={set(k)} onFocus={focusOn} onBlur={focusOff} placeholder="0.00" /></Field>
+        ))}
       </div>
-      <div style={{ background: "rgba(31,42,68,0.03)", borderRadius: 14, padding: 18, border: `1px solid ${T.border}` }}>
-        <p style={{ margin: "0 0 14px", fontSize: 10.5, fontWeight: 700, color: T.navy, letterSpacing: "1px", textTransform: "uppercase", fontFamily: "'Plus Jakarta Sans',sans-serif" }}>Bill Breakdown</p>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(130px,1fr))", gap: 10 }}>
-          {[["Sub Total (₹)","totalBill"],["CGST (₹)","cgst"],["SGST (₹)","sgst"],["TDS (₹)","tds"]].map(([l,k]) => (<Field key={k} label={l}><input style={inp} type="number" value={f[k]} onChange={set(k)} onFocus={focusOn} onBlur={focusOff} /></Field>))}
+      {/* Net summary */}
+      <div style={{ background: T.bg, borderRadius: 10, padding: "14px 16px", border: `1px solid ${T.border}`, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
+        <div style={{ fontSize: 12.5, color: T.muted, fontFamily: "'DM Sans', sans-serif", lineHeight: 2 }}>
+          <p>GST Total: <strong style={{ color: T.navy }}>{fmtINR(billWithGST)}</strong></p>
+          <p>TDS Deduction: <strong style={{ color: T.coral }}>−{fmtINR(tdsAmt)}</strong></p>
         </div>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 16, paddingTop: 14, borderTop: `1px solid ${T.border}`, flexWrap: "wrap", gap: 12 }}>
-          <div style={{ fontSize: 12.5, color: T.muted, fontFamily: "'Plus Jakarta Sans',sans-serif", lineHeight: 1.8 }}>
-            <p style={{ margin: 0 }}>GST Total: <strong style={{ color: T.navy }}>{fmtINR(billWithGST)}</strong></p>
-            <p style={{ margin: 0 }}>TDS: <strong style={{ color: T.coral }}>−{fmtINR(tdsAmt)}</strong></p>
-          </div>
-          <div style={{ textAlign: "right" }}>
-            <p style={{ margin: 0, fontSize: 11, color: T.muted, fontFamily: "'Plus Jakarta Sans',sans-serif" }}>Net Payable</p>
-            <p style={{ margin: 0, fontSize: 26, fontWeight: 700, color: T.coral, fontFamily: "'Plus Jakarta Sans',sans-serif" }}>{fmtINR(netAmount)}</p>
-          </div>
+        <div style={{ textAlign: "right" }}>
+          <p style={{ fontSize: 11, color: T.hint, fontFamily: "'DM Sans', sans-serif" }}>Net Payable</p>
+          <p style={{ fontSize: 24, fontWeight: 700, color: T.coral, fontFamily: "'DM Sans', sans-serif" }}>{fmtINR(netAmount)}</p>
         </div>
       </div>
-      <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", paddingTop: 12, borderTop: `1px solid ${T.border}` }}>
-        <button style={makeBtn("default")} onClick={onClose}>Cancel</button>
-        <button style={makeBtn("primary")} onClick={() => onSave({ ...f, billWithGST, netAmount })} disabled={saving}>{saving ? "Saving…" : initial ? "Update Bill" : "Add Bill"}</button>
+      <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", paddingTop: 16, borderTop: `1px solid ${T.border}` }}>
+        <button style={btn("default")} onClick={onClose}>Cancel</button>
+        <button style={btn("primary")} onClick={() => onSave({ ...f, billWithGST, netAmount })} disabled={saving}>{saving ? "Saving…" : initial ? "Update Bill" : "Add Bill"}</button>
       </div>
     </div>
   );
 }
 
 /* ─── Payment Form ───────────────────────────────────────────────────────── */
-function PaymentForm({ bill, vendor, onSave, onClose, saving }) {
+function PaymentFormWrapped({ bill, vendor, onSave, onClose, saving }) {
   const due = Number(bill.netAmount || 0) - Number(bill.amountPaid || 0);
   const [f, setF] = useState({ date: today(), particulars: "", chequeNo: "", amountPaid: String(due > 0 ? due.toFixed(2) : ""), paymentMode: "Razorpay X" });
   const set = (k) => (e) => setF((p) => ({ ...p, [k]: e.target.value }));
   const isRazorpay = f.paymentMode === "Razorpay X";
+  const pct = Number(bill.netAmount) > 0 ? (Number(bill.amountPaid) / Number(bill.netAmount)) * 100 : 0;
+
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-      <div style={{ background: `linear-gradient(135deg,${T.navy} 0%,#2d3d7a 100%)`, borderRadius: 14, padding: "18px 20px" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, flexWrap: "wrap" }}>
-          <div><p style={{ margin: 0, fontSize: 15, fontWeight: 700, color: "#fff", fontFamily: "'Plus Jakarta Sans',sans-serif" }}>{vendor.name}</p>{bill.invoiceNo && <p style={{ margin: "3px 0 0", fontSize: 11, color: "rgba(255,255,255,0.55)", fontFamily: "'Plus Jakarta Sans',sans-serif" }}>Invoice #{bill.invoiceNo} · {bill.invoiceDate}</p>}</div>
-          <div style={{ textAlign: "right" }}><p style={{ margin: 0, fontSize: 10, color: "rgba(255,255,255,0.55)", fontFamily: "'Plus Jakarta Sans',sans-serif" }}>Outstanding</p><p style={{ margin: 0, fontSize: 22, fontWeight: 700, color: "#ff8070", fontFamily: "'Plus Jakarta Sans',sans-serif" }}>{fmtINR(due)}</p></div>
+    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+      {/* Bill summary */}
+      <div style={{ background: T.navy, borderRadius: 10, padding: "16px 18px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, flexWrap: "wrap", marginBottom: 12 }}>
+          <div>
+            <p style={{ fontSize: 14, fontWeight: 700, color: "#fff", fontFamily: "'DM Sans', sans-serif" }}>{vendor.name}</p>
+            {bill.invoiceNo && <p style={{ fontSize: 11.5, color: "rgba(255,255,255,0.45)", fontFamily: "'DM Sans', sans-serif", marginTop: 2 }}>Invoice #{bill.invoiceNo} · {bill.invoiceDate}</p>}
+          </div>
+          <div style={{ textAlign: "right" }}>
+            <p style={{ fontSize: 10.5, color: "rgba(255,255,255,0.45)", fontFamily: "'DM Sans', sans-serif" }}>Outstanding</p>
+            <p style={{ fontSize: 20, fontWeight: 700, color: "#ff8a75", fontFamily: "'DM Sans', sans-serif" }}>{fmtINR(due)}</p>
+          </div>
         </div>
-        <div style={{ marginTop: 12 }}><ProgressBar pct={Number(bill.netAmount) > 0 ? (Number(bill.amountPaid) / Number(bill.netAmount)) * 100 : 0} color="#6ee7c0" /></div>
+        <ProgressBar pct={pct} color="rgba(255,255,255,0.35)" />
+        <p style={{ fontSize: 10.5, color: "rgba(255,255,255,0.35)", marginTop: 5, fontFamily: "'DM Sans', sans-serif" }}>{pct.toFixed(1)}% settled</p>
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(180px,1fr))", gap: 12 }}>
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(170px,1fr))", gap: 12 }}>
         <Field label="Payment Date"><input style={inp} type="date" value={f.date} onChange={set("date")} onFocus={focusOn} onBlur={focusOff} /></Field>
-        <Field label="Amount (₹) *"><input style={inp} type="number" value={f.amountPaid} onChange={set("amountPaid")} onFocus={focusOn} onBlur={focusOff} /></Field>
-        <Field label="Particulars"><input style={inp} type="text" value={f.particulars} onChange={set("particulars")} placeholder="Reference…" onFocus={focusOn} onBlur={focusOff} /></Field>
+        <Field label="Amount (₹) *"><input style={inp} type="number" value={f.amountPaid} onChange={set("amountPaid")} onFocus={focusOn} onBlur={focusOff} placeholder="0.00" /></Field>
+        <Field label="Particulars"><input style={inp} type="text" value={f.particulars} onChange={set("particulars")} placeholder="Reference / note" onFocus={focusOn} onBlur={focusOff} /></Field>
         <Field label="Cheque / UTR No."><input style={inp} type="text" value={f.chequeNo} onChange={set("chequeNo")} placeholder="Optional" onFocus={focusOn} onBlur={focusOff} /></Field>
       </div>
+
       <Field label="Payment Mode">
-        <div style={{ display: "flex", gap: 7, flexWrap: "wrap", marginTop: 2 }}>
-          {["Cash","Cheque","NEFT","RTGS","UPI","Razorpay X"].map((m) => {
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 2 }}>
+          {["Cash", "Cheque", "NEFT", "RTGS", "UPI", "Razorpay X"].map((m) => {
             const active = f.paymentMode === m;
-            return <button key={m} onClick={() => setF((p) => ({ ...p, paymentMode: m }))} style={{ padding: "7px 15px", borderRadius: 50, fontSize: 12, fontWeight: 600, cursor: "pointer", transition: "all 0.18s", fontFamily: "'Plus Jakarta Sans',sans-serif", border: active ? "none" : `1.5px solid ${T.border2}`, background: active ? (m === "Razorpay X" ? "linear-gradient(135deg,#3395FF,#1a7de8)" : `linear-gradient(135deg,${T.coral},#f5743a)`) : T.cream, color: active ? "#fff" : T.muted, boxShadow: active ? "0 3px 10px rgba(227,74,47,0.22)" : "none" }}>{m}</button>;
+            return (
+              <button key={m} onClick={() => setF((p) => ({ ...p, paymentMode: m }))} style={{ padding: "7px 14px", borderRadius: 7, fontSize: 12.5, fontWeight: 600, cursor: "pointer", transition: "all 0.15s", fontFamily: "'DM Sans', sans-serif", border: active ? "none" : `1.5px solid ${T.border2}`, background: active ? (m === "Razorpay X" ? "#3395FF" : T.coral) : "#fff", color: active ? "#fff" : T.muted }}>
+                {m}
+              </button>
+            );
           })}
         </div>
       </Field>
-      <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", paddingTop: 12, borderTop: `1px solid ${T.border}` }}>
-        <button style={makeBtn("default")} onClick={onClose}>Cancel</button>
-        {isRazorpay ? <button style={makeBtn("razorpay")} onClick={() => onSave(f, true)} disabled={saving || !f.amountPaid}>{saving ? "Processing…" : `⚡ Pay ${fmtINR(f.amountPaid)}`}</button> : <button style={makeBtn("primary")} onClick={() => onSave(f, false)} disabled={saving || !f.amountPaid}>{saving ? "Recording…" : "✓ Record Payment"}</button>}
+
+      <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", paddingTop: 16, borderTop: `1px solid ${T.border}` }}>
+        <button style={btn("default")} onClick={onClose}>Cancel</button>
+        {isRazorpay
+          ? <button style={btn("razorpay")} onClick={() => onSave(f, true)} disabled={saving || !f.amountPaid}>{saving ? "Processing…" : `Pay ${fmtINR(f.amountPaid)}`}</button>
+          : <button style={btn("primary")} onClick={() => onSave(f, false)} disabled={saving || !f.amountPaid}>{saving ? "Recording…" : "Record Payment"}</button>
+        }
       </div>
     </div>
   );
@@ -335,16 +579,21 @@ function PaymentForm({ bill, vendor, onSave, onClose, saving }) {
 /* ─── Payment Success ────────────────────────────────────────────────────── */
 function PaymentSuccess({ amount, vendor, paymentId, onClose }) {
   return (
-    <div style={{ position: "fixed", inset: 0, background: "rgba(10,14,30,0.65)", backdropFilter: "blur(10px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2000, padding: 16 }}>
-      <div style={{ background: T.cream, borderRadius: 24, maxWidth: 380, width: "100%", padding: "2.5rem 2rem", textAlign: "center", boxShadow: "0 32px 80px rgba(10,14,30,0.24)", animation: "modalIn 0.35s cubic-bezier(.34,1.56,.64,1) both", border: `1px solid ${T.border}`, overflow: "hidden", position: "relative" }}>
-        <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: `linear-gradient(90deg,${T.success},#25c492)` }} />
-        <div style={{ width: 68, height: 68, borderRadius: "50%", background: `linear-gradient(135deg,${T.success},#25c492)`, display: "inline-flex", alignItems: "center", justifyContent: "center", marginBottom: 20, boxShadow: `0 8px 24px rgba(29,158,117,0.28)` }}>
-          <svg width="28" height="28" viewBox="0 0 30 30" fill="none"><path d="M6 15l7 7 11-13" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+    <div style={{ position: "fixed", inset: 0, background: "rgba(10,14,30,0.50)", backdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2000, padding: 16 }}>
+      <div style={{ background: "#fff", borderRadius: 14, maxWidth: 360, width: "100%", padding: "2rem 2rem 2rem", textAlign: "center", boxShadow: "0 20px 60px rgba(10,14,30,0.20)", animation: "modalIn 0.3s cubic-bezier(.34,1.4,.64,1) both", border: `1px solid ${T.border}`, overflow: "hidden", position: "relative" }}>
+        <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: T.success }} />
+        <div style={{ width: 56, height: 56, borderRadius: "50%", background: `rgba(29,158,117,0.09)`, border: `2px solid rgba(29,158,117,0.20)`, display: "inline-flex", alignItems: "center", justifyContent: "center", marginBottom: 16 }}>
+          <svg width="24" height="24" viewBox="0 0 30 30" fill="none"><path d="M6 15l7 7 11-13" stroke={T.success} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
         </div>
-        <h2 style={{ margin: "0 0 8px", fontSize: 21, fontWeight: 700, color: T.navy, fontFamily: "'Plus Jakarta Sans',sans-serif" }}>Payment Successful!</h2>
-        <p style={{ margin: "0 0 22px", color: T.muted, fontSize: 13.5, fontFamily: "'Plus Jakarta Sans',sans-serif", lineHeight: 1.6 }}>{fmtINR(amount)} recorded for <strong style={{ color: T.navy }}>{vendor}</strong></p>
-        {paymentId && <div style={{ background: "rgba(31,42,68,0.05)", borderRadius: 12, padding: "12px 16px", marginBottom: 22, border: `1px solid ${T.border}` }}><p style={{ margin: 0, fontSize: 10, color: T.muted, textTransform: "uppercase", letterSpacing: "1px", fontFamily: "'Plus Jakarta Sans',sans-serif" }}>Razorpay ID</p><p style={{ margin: "4px 0 0", fontSize: 12.5, fontWeight: 600, color: T.blue, fontFamily: "monospace" }}>{paymentId}</p></div>}
-        <button style={{ ...makeBtn("primary", { width: "100%", justifyContent: "center", padding: "12px 20px" }) }} onClick={onClose}>Done</button>
+        <h2 style={{ fontSize: 18, fontWeight: 700, color: T.navy, fontFamily: "'DM Sans', sans-serif", marginBottom: 6 }}>Payment Recorded</h2>
+        <p style={{ color: T.muted, fontSize: 13.5, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.6, marginBottom: 20 }}>{fmtINR(amount)} recorded for <strong style={{ color: T.navy }}>{vendor}</strong></p>
+        {paymentId && (
+          <div style={{ background: T.bg, borderRadius: 8, padding: "10px 14px", marginBottom: 18, border: `1px solid ${T.border}`, textAlign: "left" }}>
+            <p style={{ fontSize: 11, color: T.hint, fontFamily: "'DM Sans', sans-serif" }}>Razorpay ID</p>
+            <p style={{ fontSize: 12, fontWeight: 600, color: T.blue, fontFamily: "'DM Mono', monospace", marginTop: 2 }}>{paymentId}</p>
+          </div>
+        )}
+        <button style={{ ...btn("success"), width: "100%", justifyContent: "center", padding: "11px 20px" }} onClick={onClose}>Done</button>
       </div>
     </div>
   );
@@ -353,13 +602,13 @@ function PaymentSuccess({ amount, vendor, paymentId, onClose }) {
 /* ─── Session Expired ────────────────────────────────────────────────────── */
 function SessionExpiredBanner({ onLogin }) {
   return (
-    <div style={{ position: "fixed", inset: 0, background: "rgba(10,14,30,0.72)", backdropFilter: "blur(10px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 3000, padding: 16 }}>
-      <div style={{ background: T.cream, borderRadius: 24, maxWidth: 380, width: "100%", padding: "2.5rem 2rem", textAlign: "center", boxShadow: "0 32px 80px rgba(10,14,30,0.24)", border: `1px solid ${T.border}`, overflow: "hidden", position: "relative" }}>
-        <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: `linear-gradient(90deg,${T.coral},${T.gold})` }} />
-        <div style={{ fontSize: 40, marginBottom: 16 }}>⏱️</div>
-        <h2 style={{ margin: "0 0 8px", fontSize: 21, fontWeight: 700, color: T.navy, fontFamily: "'Plus Jakarta Sans',sans-serif" }}>Session Expired</h2>
-        <p style={{ margin: "0 0 24px", color: T.muted, fontSize: 13.5, fontFamily: "'Plus Jakarta Sans',sans-serif", lineHeight: 1.6 }}>Your session has expired. Please sign in again.</p>
-        <button style={{ ...makeBtn("primary", { width: "100%", justifyContent: "center", padding: "12px 20px" }) }} onClick={onLogin}>Sign In Again</button>
+    <div style={{ position: "fixed", inset: 0, background: "rgba(10,14,30,0.60)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 3000, padding: 16 }}>
+      <div style={{ background: "#fff", borderRadius: 14, maxWidth: 360, width: "100%", padding: "2rem", textAlign: "center", boxShadow: "0 20px 60px rgba(10,14,30,0.22)", border: `1px solid ${T.border}`, overflow: "hidden", position: "relative" }}>
+        <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: T.coral }} />
+        <div style={{ fontSize: 36, marginBottom: 14 }}>⏱</div>
+        <h2 style={{ fontSize: 18, fontWeight: 700, color: T.navy, fontFamily: "'DM Sans', sans-serif", marginBottom: 8 }}>Session Expired</h2>
+        <p style={{ color: T.hint, fontSize: 13.5, fontFamily: "'DM Sans', sans-serif", lineHeight: 1.6, marginBottom: 22 }}>Please sign in again to continue.</p>
+        <button style={{ ...btn("primary"), width: "100%", justifyContent: "center", padding: "11px 20px" }} onClick={onLogin}>Sign In Again</button>
       </div>
     </div>
   );
@@ -369,53 +618,72 @@ function SessionExpiredBanner({ onLogin }) {
 function Navbar({ user, tab, setTab, onLogout }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const navItems = [
-    { key: "dashboard", label: "Dashboard", emoji: "⊞" },
-    { key: "companies", label: "Companies", emoji: "🏢" },
-    { key: "vendors",   label: "Vendors",   emoji: "👥" },
-    { key: "payments",  label: "Payments",  emoji: "💳" },
+    { key: "dashboard", label: "Dashboard", icon: "⊞" },
+    { key: "companies", label: "Companies", icon: "🏢" },
+    { key: "vendors", label: "Vendors", icon: "👥" },
+    { key: "payments", label: "Payments", icon: "💳" },
   ];
+
   return (
-    <header style={{ background: T.navy, position: "sticky", top: 0, zIndex: 500, boxShadow: "0 2px 24px rgba(10,14,30,0.25)" }}>
+    <header style={{ background: "#fff", borderBottom: `1px solid ${T.border}`, position: "sticky", top: 0, zIndex: 500 }}>
       <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 20px" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", height: 60 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
-            <div style={{ width: 34, height: 34, borderRadius: 10, background: `linear-gradient(135deg,${T.coral},${T.gold})`, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 3px 12px rgba(227,74,47,0.38)" }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" stroke="#fff" strokeWidth="2" strokeLinejoin="round" /><polyline points="9 22 9 12 15 12 15 22" stroke="#fff" strokeWidth="2" strokeLinejoin="round" /></svg>
-            </div>
-            <div>
-              <p style={{ margin: 0, color: "#fff", fontWeight: 700, fontSize: 14, fontFamily: "'Plus Jakarta Sans',sans-serif" }}>Shubh Infracon</p>
-              <p style={{ margin: 0, color: "rgba(255,255,255,0.40)", fontSize: 9.5, fontFamily: "'Plus Jakarta Sans',sans-serif", textTransform: "uppercase", letterSpacing: "0.9px" }}>Vendor Management</p>
-            </div>
-          </div>
-          <nav style={{ display: "flex", gap: 2 }} className="desktop-nav">
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", height: 56 }}>
+          {/* Logo */}
+          <div className="flex items-center gap-3 flex-shrink-0">
+                      <div className="flex items-center justify-center flex-shrink-0">
+                        <img
+                          src={logo}
+                          alt="logo"
+                          className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 object-contain"
+                        />
+                      </div>
+          
+                      <div className="flex items-center justify-center flex-shrink-0">
+                        <img
+                          src={logo1}
+                          alt="logo text"
+                          className="h-8 w-12 sm:h-10 sm:w-14 md:h-11 md:w-16 lg:h-12 lg:w-20 object-contain"
+                        />
+                      </div>
+                    </div>
+
+          {/* Desktop Nav */}
+          <nav style={{ display: "flex", gap: 1 }} className="desktop-nav">
             {navItems.map((n) => (
-              <button key={n.key} onClick={() => setTab(n.key)} style={{ background: tab === n.key ? "rgba(255,255,255,0.13)" : "transparent", border: tab === n.key ? "1px solid rgba(255,255,255,0.16)" : "1px solid transparent", borderRadius: 50, padding: "7px 15px", color: tab === n.key ? "#fff" : "rgba(255,255,255,0.48)", fontWeight: tab === n.key ? 700 : 500, fontSize: 12.5, cursor: "pointer", fontFamily: "'Plus Jakarta Sans',sans-serif", transition: "all 0.18s", display: "flex", alignItems: "center", gap: 6 }}>
-                <span style={{ fontSize: 12 }}>{n.emoji}</span>{n.label}
+              <button key={n.key} onClick={() => setTab(n.key)} style={{ background: tab === n.key ? T.bg : "transparent", border: "none", borderRadius: 8, padding: "7px 14px", color: tab === n.key ? T.navy : T.muted, fontWeight: tab === n.key ? 600 : 500, fontSize: 13, cursor: "pointer", fontFamily: "'DM Sans', sans-serif", transition: "all 0.15s", display: "flex", alignItems: "center", gap: 6 }}>
+                <span style={{ fontSize: 12 }}>{n.icon}</span>{n.label}
               </button>
             ))}
           </nav>
+
+          {/* Right */}
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 7, background: "rgba(255,255,255,0.09)", borderRadius: 50, padding: "5px 12px 5px 6px", border: "1px solid rgba(255,255,255,0.11)" }} className="user-pill">
-              <div style={{ width: 24, height: 24, borderRadius: "50%", background: `linear-gradient(135deg,${T.coral},${T.gold})`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="#fff" strokeWidth="2" /><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="#fff" strokeWidth="2" strokeLinecap="round" /></svg>
+            <div className="user-pill" style={{ display: "flex", alignItems: "center", gap: 7, background: T.bg, borderRadius: 8, padding: "5px 10px 5px 7px", border: `1px solid ${T.border}` }}>
+              <div style={{ width: 22, height: 22, borderRadius: "50%", background: T.navy, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="#fff" strokeWidth="2" /><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="#fff" strokeWidth="2" strokeLinecap="round" /></svg>
               </div>
-              <span style={{ fontSize: 11, color: "rgba(255,255,255,0.68)", fontFamily: "'Plus Jakarta Sans',sans-serif", maxWidth: 130, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user.email}</span>
+              <span style={{ fontSize: 12, color: T.muted, fontFamily: "'DM Sans', sans-serif", maxWidth: 150, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user.email}</span>
             </div>
-            <button onClick={onLogout} title="Logout" style={{ width: 34, height: 34, borderRadius: "50%", background: "rgba(227,74,47,0.14)", border: "1px solid rgba(227,74,47,0.28)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", transition: "all 0.2s" }} onMouseEnter={e => e.currentTarget.style.background = "rgba(227,74,47,0.28)"} onMouseLeave={e => e.currentTarget.style.background = "rgba(227,74,47,0.14)"}>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" stroke="#ff6b5a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+            <button onClick={onLogout} title="Logout" style={{ width: 32, height: 32, borderRadius: 8, background: "rgba(227,74,47,0.06)", border: `1px solid rgba(227,74,47,0.18)`, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", transition: "all 0.15s" }} onMouseEnter={e => e.currentTarget.style.background = "rgba(227,74,47,0.12)"} onMouseLeave={e => e.currentTarget.style.background = "rgba(227,74,47,0.06)"}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" stroke={T.coral} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
             </button>
-            <button onClick={() => setMobileOpen(o => !o)} style={{ width: 34, height: 34, borderRadius: 9, background: "rgba(255,255,255,0.10)", border: "1px solid rgba(255,255,255,0.14)", display: "none", alignItems: "center", justifyContent: "center", cursor: "pointer" }} className="hamburger">
-              <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" width="16" height="16">{mobileOpen ? <><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></> : <><line x1="3" y1="7" x2="21" y2="7" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="17" x2="21" y2="17" /></>}</svg>
+            <button onClick={() => setMobileOpen(o => !o)} className="hamburger" style={{ width: 32, height: 32, borderRadius: 8, background: T.bg, border: `1px solid ${T.border}`, display: "none", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+              <svg viewBox="0 0 24 24" fill="none" stroke={T.navy} strokeWidth="2" width="14" height="14">{mobileOpen ? <><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></> : <><line x1="3" y1="7" x2="21" y2="7" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="17" x2="21" y2="17" /></>}</svg>
             </button>
           </div>
         </div>
+
+        {/* Mobile menu */}
         {mobileOpen && (
-          <div style={{ borderTop: "1px solid rgba(255,255,255,0.10)", padding: "12px 0 16px", display: "flex", flexDirection: "column", gap: 4 }}>
-            {navItems.map((n) => (<button key={n.key} onClick={() => { setTab(n.key); setMobileOpen(false); }} style={{ background: tab === n.key ? "rgba(255,255,255,0.13)" : "transparent", border: "none", borderRadius: 10, padding: "11px 14px", color: tab === n.key ? "#fff" : "rgba(255,255,255,0.60)", fontWeight: tab === n.key ? 700 : 500, fontSize: 13, cursor: "pointer", fontFamily: "'Plus Jakarta Sans',sans-serif", display: "flex", alignItems: "center", gap: 9, width: "100%" }}><span>{n.emoji}</span>{n.label}</button>))}
+          <div style={{ borderTop: `1px solid ${T.border}`, padding: "10px 0 14px", display: "flex", flexDirection: "column", gap: 2 }}>
+            {navItems.map((n) => (
+              <button key={n.key} onClick={() => { setTab(n.key); setMobileOpen(false); }} style={{ background: tab === n.key ? T.bg : "transparent", border: "none", borderRadius: 8, padding: "10px 12px", color: tab === n.key ? T.navy : T.muted, fontWeight: tab === n.key ? 600 : 500, fontSize: 13.5, cursor: "pointer", fontFamily: "'DM Sans', sans-serif", display: "flex", alignItems: "center", gap: 9, width: "100%" }}>
+                <span>{n.icon}</span>{n.label}
+              </button>
+            ))}
           </div>
         )}
       </div>
-      <style>{`@media(max-width:768px){.desktop-nav{display:none!important}.hamburger{display:flex!important}}@media(max-width:520px){.user-pill{display:none!important}}`}</style>
     </header>
   );
 }
@@ -423,34 +691,53 @@ function Navbar({ user, tab, setTab, onLogout }) {
 /* ─── StatCard ───────────────────────────────────────────────────────────── */
 function StatCard({ label, value, icon, accent, delay = 0, sub }) {
   return (
-    <div style={{ ...card, position: "relative", overflow: "hidden", animation: `fadeUp 0.5s ease ${delay}ms both`, padding: "16px 18px", borderTop: `3px solid ${accent || T.navy}` }}>
-      <div style={{ position: "absolute", top: -18, right: -18, width: 64, height: 64, borderRadius: "50%", background: accent ? `${accent}10` : "rgba(31,42,68,0.05)", pointerEvents: "none" }} />
+    <div style={{ ...card, padding: "16px 18px", animation: `fadeUp 0.4s ease ${delay}ms both`, borderTop: `2.5px solid ${accent || T.border2}` }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10 }}>
-        <p style={{ margin: 0, fontSize: 10, color: T.muted, textTransform: "uppercase", letterSpacing: "0.9px", fontWeight: 700, fontFamily: "'Plus Jakarta Sans',sans-serif" }}>{label}</p>
-        {icon && <div style={{ width: 30, height: 30, borderRadius: 9, background: accent ? `${accent}14` : "rgba(31,42,68,0.06)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>{icon}</div>}
+        <p style={{ fontSize: 11, color: T.hint, fontWeight: 600, fontFamily: "'DM Sans', sans-serif", textTransform: "uppercase", letterSpacing: "0.4px" }}>{label}</p>
+        {icon && <span style={{ fontSize: 16 }}>{icon}</span>}
       </div>
-      <p style={{ margin: 0, fontSize: 22, fontWeight: 700, color: accent || T.navy, fontFamily: "'Plus Jakarta Sans',sans-serif", letterSpacing: "-0.3px" }}>{value}</p>
-      {sub && <p style={{ margin: "3px 0 0", fontSize: 11, color: T.muted, fontFamily: "'Plus Jakarta Sans',sans-serif" }}>{sub}</p>}
+      <p style={{ fontSize: 20, fontWeight: 700, color: accent || T.navy, fontFamily: "'DM Sans', sans-serif" }}>{value}</p>
+      {sub && <p style={{ fontSize: 11.5, color: T.hint, fontFamily: "'DM Sans', sans-serif", marginTop: 3 }}>{sub}</p>}
     </div>
   );
 }
 
-/* ─── Chart Tooltip ──────────────────────────────────────────────────────── */
+/* ─── ChartTooltip ───────────────────────────────────────────────────────── */
 function ChartTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null;
   return (
-    <div style={{ background: T.navy, borderRadius: 12, padding: "10px 15px", boxShadow: "0 10px 28px rgba(10,14,30,0.28)", border: "1px solid rgba(255,255,255,0.09)" }}>
-      {label && <p style={{ margin: "0 0 6px", fontSize: 11, color: "rgba(255,255,255,0.55)", fontFamily: "'Plus Jakarta Sans',sans-serif" }}>{label}</p>}
-      {payload.map((p, i) => (<p key={i} style={{ margin: 0, fontSize: 13, fontWeight: 700, color: "#fff", fontFamily: "'Plus Jakarta Sans',sans-serif" }}><span style={{ color: p.color || T.coral }}>{p.name}: </span>₹{Number(p.value || 0).toLocaleString("en-IN")}</p>))}
+    <div style={{ background: T.navy, borderRadius: 10, padding: "9px 14px", boxShadow: "0 8px 24px rgba(10,14,30,0.22)", border: `1px solid rgba(255,255,255,0.07)` }}>
+      {label && <p style={{ fontSize: 11, color: "rgba(255,255,255,0.50)", fontFamily: "'DM Sans', sans-serif", marginBottom: 5 }}>{label}</p>}
+      {payload.map((p, i) => (
+        <p key={i} style={{ fontSize: 13, fontWeight: 600, color: "#fff", fontFamily: "'DM Sans', sans-serif" }}>
+          <span style={{ color: p.color || T.coral }}>{p.name}: </span>₹{Number(p.value || 0).toLocaleString("en-IN")}
+        </p>
+      ))}
+    </div>
+  );
+}
+
+/* ─── ChartCard ──────────────────────────────────────────────────────────── */
+function ChartCard({ title, accent, children }) {
+  return (
+    <div style={{ ...card, padding: "18px 20px" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
+        <div style={{ width: 3, height: 16, borderRadius: 2, background: accent || T.coral }} />
+        <h3 style={{ fontSize: 13.5, fontWeight: 700, color: T.navy, fontFamily: "'DM Sans', sans-serif" }}>{title}</h3>
+      </div>
+      {children}
     </div>
   );
 }
 
 /* ─── Activity Icon ──────────────────────────────────────────────────────── */
 function ActivityIcon({ type }) {
-  const map = { company_added: { icon: "🏢", bg: "rgba(31,42,68,0.08)" }, vendor_added: { icon: "👥", bg: "rgba(55,138,221,0.10)" }, bill_added: { icon: "📋", bg: "rgba(245,166,35,0.10)" }, payment_made: { icon: "💳", bg: "rgba(29,158,117,0.10)" }, bill_deleted: { icon: "🗑️", bg: "rgba(227,74,47,0.08)" }, vendor_deleted: { icon: "🗑️", bg: "rgba(227,74,47,0.08)" }, company_deleted: { icon: "🗑️", bg: "rgba(227,74,47,0.08)" } };
-  const { icon, bg } = map[type] || { icon: "📌", bg: "rgba(31,42,68,0.06)" };
-  return <div style={{ width: 36, height: 36, borderRadius: 10, background: bg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, flexShrink: 0, border: `1px solid ${T.border}` }}>{icon}</div>;
+  const map = { company_added: "🏢", vendor_added: "👥", bill_added: "📋", payment_made: "💳", bill_deleted: "🗑️", vendor_deleted: "🗑️", company_deleted: "🗑️" };
+  return (
+    <div style={{ width: 32, height: 32, borderRadius: 8, background: T.bg, border: `1px solid ${T.border}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, flexShrink: 0 }}>
+      {map[type] || "📌"}
+    </div>
+  );
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -464,91 +751,349 @@ function LoginPage({ onLogin }) {
   const [show, setShow] = useState(false);
 
   async function handleSubmit() {
-    if (!email || !password) { setError("Please enter your email and password."); return; }
-    setError(""); setLoading(true);
-    try { const u = await signIn(email, password); onLogin(u); }
-    catch (e) { setError(e.message.replace("INVALID_LOGIN_CREDENTIALS", "Invalid email or password.").replace("TOO_MANY_ATTEMPTS_TRY_LATER", "Too many attempts. Try later.")); }
-    finally { setLoading(false); }
+    if (!email || !password) {
+      setError("Please enter your email and password.");
+      return;
+    }
+
+    setError("");
+    setLoading(true);
+
+    try {
+      const u = await signIn(email, password);
+      onLogin(u);
+    } catch (e) {
+      setError(
+        e.message
+          .replace(
+            "INVALID_LOGIN_CREDENTIALS",
+            "Invalid email or password."
+          )
+          .replace(
+            "TOO_MANY_ATTEMPTS_TRY_LATER",
+            "Too many attempts. Try later."
+          )
+      );
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
-    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: T.cream, padding: "1.5rem", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+    <div
+      style={{
+        minHeight: "100vh",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background: T.cream,
+        padding: "1.5rem",
+        fontFamily: "'Plus Jakarta Sans', sans-serif",
+      }}
+    >
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-        *,*::before,*::after{box-sizing:border-box;}
-        @keyframes spin{to{transform:rotate(360deg)}}
-        @keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
-        @keyframes modalIn{from{opacity:0;transform:scale(0.94) translateY(14px)}to{opacity:1;transform:scale(1) translateY(0)}}
-        input:focus,select:focus{outline:none;}
-        button:disabled{opacity:0.55;cursor:not-allowed;}
+
+        *,*::before,*::after{
+          box-sizing:border-box;
+        }
+
+        @keyframes spin{
+          to{transform:rotate(360deg)}
+        }
+
+        @keyframes fadeUp{
+          from{
+            opacity:0;
+            transform:translateY(24px)
+          }
+          to{
+            opacity:1;
+            transform:translateY(0)
+          }
+        }
+
+        input:focus{
+          outline:none;
+        }
+
+        button:disabled{
+          opacity:.55;
+          cursor:not-allowed;
+        }
+
+        /* Small + Medium screens */
+        @media(max-width:1024px){
+
+          .login-grid{
+            grid-template-columns:1fr !important;
+            max-width:520px !important;
+          }
+
+          .login-left{
+            display:none !important;
+          }
+
+        }
+
+        @media(max-width:640px){
+
+          .login-grid{
+            width:100% !important;
+          }
+
+        }
+
       `}</style>
 
-      <div style={{ width: "100%", maxWidth: 960, display: "grid", gridTemplateColumns: "1fr 1fr", borderRadius: 28, overflow: "hidden", boxShadow: "0 32px 80px rgba(10,14,30,0.18)", border: `1px solid ${T.border}`, animation: "fadeUp 0.5s ease 0.1s both", minHeight: 520 }} className="login-grid">
+      <div
+        className="login-grid"
+        style={{
+          width: "100%",
+          maxWidth: 960,
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr",
+          borderRadius: 28,
+          overflow: "hidden",
+          boxShadow: "0 32px 80px rgba(10,14,30,0.18)",
+          border: `1px solid ${T.border}`,
+          animation: "fadeUp .5s ease .1s both",
+          minHeight: 520,
+        }}
+      >
+        {/* Left panel */}
+        <div
+  className="login-left"
+  style={{
+    background: `linear-gradient(145deg, ${T.navy} 0%, #162048 60%, #0e1530 100%)`,
+    padding: "48px 44px",
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "flex-end",
+    position: "relative",
+    overflow: "hidden",
+  }}
+>
+  {/* Decorative circles */}
+  <div
+    style={{
+      position: "absolute",
+      top: -60,
+      right: -60,
+      width: 220,
+      height: 220,
+      borderRadius: "50%",
+      background: "rgba(227,74,47,0.10)",
+      pointerEvents: "none",
+    }}
+  />
 
-        {/* Left — brand panel */}
-        <div style={{ background: `linear-gradient(145deg, ${T.navy} 0%, #162048 60%, #0e1530 100%)`, padding: "48px 44px", display: "flex", flexDirection: "column", justifyContent: "space-between", position: "relative", overflow: "hidden" }}>
-          {/* Decorative circles */}
-          <div style={{ position: "absolute", top: -60, right: -60, width: 220, height: 220, borderRadius: "50%", background: "rgba(227,74,47,0.10)", pointerEvents: "none" }} />
-          <div style={{ position: "absolute", bottom: -40, left: -40, width: 160, height: 160, borderRadius: "50%", background: "rgba(245,166,35,0.08)", pointerEvents: "none" }} />
+  <div
+    style={{
+      position: "absolute",
+      bottom: -40,
+      left: -40,
+      width: 160,
+      height: 160,
+      borderRadius: "50%",
+      background: "rgba(245,166,35,0.08)",
+      pointerEvents: "none",
+    }}
+  />
 
-          <div>
-            <div style={{ width: 52, height: 52, borderRadius: 16, background: `linear-gradient(135deg,${T.coral},${T.gold})`, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 8px 24px rgba(227,74,47,0.35)", marginBottom: 28 }}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" stroke="#fff" strokeWidth="2" strokeLinejoin="round" /><polyline points="9 22 9 12 15 12 15 22" stroke="#fff" strokeWidth="2" strokeLinejoin="round" /></svg>
-            </div>
-            <h1 style={{ margin: "0 0 10px", fontSize: 30, fontWeight: 800, color: "#fff", letterSpacing: "-0.6px", lineHeight: 1.2 }}>Shubh<br />Infracon</h1>
-            <p style={{ margin: 0, fontSize: 14, color: "rgba(255,255,255,0.50)", lineHeight: 1.7, maxWidth: 260 }}>Vendor & payment management portal for authorised administrators.</p>
-          </div>
-
-          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-            {[["🏢","Manage Companies & Vendors"],["📋","Track Bills & Invoices"],["💳","Record Payments via Razorpay"]].map(([icon, text]) => (
-              <div key={text} style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                <div style={{ width: 32, height: 32, borderRadius: 9, background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.10)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, flexShrink: 0 }}>{icon}</div>
-                <span style={{ fontSize: 12.5, color: "rgba(255,255,255,0.65)", fontFamily: "'Plus Jakarta Sans',sans-serif" }}>{text}</span>
-              </div>
-            ))}
-          </div>
-
-          <p style={{ margin: "24px 0 0", fontSize: 11, color: "rgba(255,255,255,0.25)", fontFamily: "'Plus Jakarta Sans',sans-serif" }}>Shubh Infracon · Sanand, Gujarat</p>
+  {/* Bottom content */}
+  <div
+    style={{
+      display: "flex",
+      flexDirection: "column",
+      gap: 24,
+      zIndex: 2,
+    }}
+  >
+    {/* Logo + Title */}
+    <div>
+      <div className="flex items-center gap-3 mb-4">
+        <div className="flex items-center justify-center flex-shrink-0">
+          <img
+            src={logo}
+            alt="logo"
+            className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 object-contain"
+          />
         </div>
 
-        {/* Right — form panel */}
-        <div style={{ background: "#fff", padding: "48px 44px", display: "flex", flexDirection: "column", justifyContent: "center" }}>
-          <div style={{ marginBottom: 32 }}>
-            <h2 style={{ margin: "0 0 6px", fontSize: 24, fontWeight: 700, color: T.navy, letterSpacing: "-0.4px" }}>Welcome back</h2>
-            <p style={{ margin: 0, fontSize: 13.5, color: T.muted }}>Sign in to your admin account</p>
+        <h1
+          style={{
+            margin: 0,
+            fontSize: 30,
+            fontWeight: 800,
+            color: "#fff",
+            letterSpacing: "-0.6px",
+          }}
+        >
+          Shubh{" "}
+          <span style={{ color: "#E34A2F" }}>
+            Sauramya
+          </span>
+        </h1>
+      </div>
+
+      <p
+        style={{
+          margin: 0,
+          fontSize: 14,
+          color: "rgba(255,255,255,0.50)",
+          lineHeight: 1.7,
+          maxWidth: 280,
+        }}
+      >
+        Vendor & payment management portal for authorised administrators.
+      </p>
+    </div>
+
+    {/* Features */}
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: 14,
+      }}
+    >
+      {[
+        ["🏢", "Manage Companies & Vendors"],
+        ["📋", "Track Bills & Invoices"],
+        ["💳", "Record Payments via Razorpay"],
+      ].map(([icon, text]) => (
+        <div
+          key={text}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+          }}
+        >
+          <div
+            style={{
+              width: 32,
+              height: 32,
+              borderRadius: 9,
+              background: "rgba(255,255,255,0.07)",
+              border: "1px solid rgba(255,255,255,0.10)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: 14,
+              flexShrink: 0,
+            }}
+          >
+            {icon}
           </div>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+          <span
+            style={{
+              fontSize: 12.5,
+              color: "rgba(255,255,255,0.65)",
+            }}
+          >
+            {text}
+          </span>
+        </div>
+      ))}
+    </div>
+
+    {/* Footer */}
+    <p
+      style={{
+        margin: 0,
+        fontSize: 11,
+        color: "rgba(255,255,255,0.25)",
+      }}
+    >
+      Shubh Sauramya · Sanand, Gujarat
+    </p>
+  </div>
+</div>
+
+        {/* Right form */}
+        <div
+          style={{
+            background: "#fff",
+            padding: "48px 44px",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+          }}
+        >
+          <h2
+            style={{
+              marginBottom: 6,
+              color: T.navy,
+            }}
+          >
+            Welcome back
+          </h2>
+
+          <p
+            style={{
+              color: T.muted,
+              marginBottom: 30,
+            }}
+          >
+            Sign in to your admin account
+          </p>
+
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 18,
+            }}
+          >
             <Field label="Email Address">
-              <input style={inp} type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="admin@shubhinfra.com" onFocus={focusOn} onBlur={focusOff} onKeyDown={(e) => e.key === "Enter" && handleSubmit()} autoFocus />
+              <input
+                style={inp}
+                type="email"
+                value={email}
+                onChange={(e)=>setEmail(e.target.value)}
+                placeholder="admin@shubhinfra.com"
+              />
             </Field>
 
             <Field label="Password">
-              <div style={{ position: "relative" }}>
-                <input style={{ ...inp, paddingRight: 42 }} type={show ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" onFocus={focusOn} onBlur={focusOff} onKeyDown={(e) => e.key === "Enter" && handleSubmit()} />
-                <button onClick={() => setShow(s => !s)} style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: T.muted, padding: 4, display: "flex", alignItems: "center" }}>
-                  {show ? <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24" stroke={T.muted} strokeWidth="2" strokeLinecap="round" /><line x1="1" y1="1" x2="23" y2="23" stroke={T.muted} strokeWidth="2" strokeLinecap="round" /></svg> : <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke={T.muted} strokeWidth="2" /><circle cx="12" cy="12" r="3" stroke={T.muted} strokeWidth="2" /></svg>}
-                </button>
-              </div>
+              <input
+                style={inp}
+                type={show ? "text":"password"}
+                value={password}
+                onChange={(e)=>setPassword(e.target.value)}
+                placeholder="••••••••"
+              />
             </Field>
 
             {error && (
-              <div style={{ background: "rgba(227,74,47,0.07)", border: "1px solid rgba(227,74,47,0.22)", borderRadius: 12, padding: "10px 14px", display: "flex", gap: 9, alignItems: "center" }}>
-                <span style={{ fontSize: 15, flexShrink: 0 }}>⚠️</span>
-                <p style={{ margin: 0, fontSize: 12.5, color: T.coral, fontFamily: "'Plus Jakarta Sans',sans-serif" }}>{error}</p>
+              <div
+                style={{
+                  color:T.coral,
+                  fontSize:13,
+                }}
+              >
+                {error}
               </div>
             )}
 
-            <button style={{ ...makeBtn("primary", { justifyContent: "center", padding: "13px 20px", fontSize: 14, width: "100%", marginTop: 4, borderRadius: 12 }) }} onClick={handleSubmit} disabled={loading}>
-              {loading ? <><span style={{ width: 14, height: 14, border: "2px solid rgba(255,255,255,0.35)", borderTopColor: "#fff", borderRadius: "50%", display: "inline-block", animation: "spin 0.6s linear infinite" }} /> Signing in…</> : "Sign In →"}
+            <button
+              onClick={handleSubmit}
+              disabled={loading}
+              style={{
+                ...makeBtn("primary",{
+                  width:"100%",
+                  justifyContent:"center"
+                })
+              }}
+            >
+              {loading ? "Signing in..." : "Sign In →"}
             </button>
           </div>
-
-          <p style={{ margin: "28px 0 0", fontSize: 11, color: T.hint, textAlign: "center" }}>Restricted to authorised administrators only.</p>
         </div>
       </div>
-
-      <style>{`@media(max-width:640px){.login-grid{grid-template-columns:1fr!important}.login-left{display:none!important}}`}</style>
     </div>
   );
 }
@@ -602,133 +1147,120 @@ function DashboardTab({ companies, vendors, bills, payments, activityLog, setTab
   const recentActivity = [...activityLog].sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || "")).slice(0, 8);
   const recentPayments = [...filteredPayments].sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || "")).slice(0, 5);
 
-  if (loading) return <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(160px,1fr))", gap: 12 }}>{Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i} />)}</div>;
+  if (loading) return <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(160px,1fr))", gap: 10 }}>{Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i} />)}</div>;
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
       {/* Filter bar */}
-      <div style={{ ...card, padding: "14px 18px" }}>
+      <div style={{ ...card, padding: "14px 16px" }}>
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
-          <span style={{ fontSize: 11, fontWeight: 700, color: T.muted, fontFamily: "'Plus Jakarta Sans',sans-serif", textTransform: "uppercase", letterSpacing: "0.6px", flexShrink: 0 }}>📅 Filter</span>
+          <span style={{ fontSize: 11.5, fontWeight: 600, color: T.hint, flexShrink: 0 }}>Filter payments</span>
           <input style={{ ...inp, width: "auto", flex: "1 1 130px" }} type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} onFocus={focusOn} onBlur={focusOff} />
-          <span style={{ color: T.muted, fontSize: 12 }}>to</span>
+          <span style={{ color: T.hint, fontSize: 12 }}>to</span>
           <input style={{ ...inp, width: "auto", flex: "1 1 130px" }} type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} onFocus={focusOn} onBlur={focusOff} />
-          <div style={{ position: "relative", flex: "2 1 180px" }}>
-            <input style={{ ...inp, paddingLeft: 33 }} placeholder="Search payments…" value={search} onChange={e => setSearch(e.target.value)} onFocus={focusOn} onBlur={focusOff} />
-          </div>
-          {(dateFrom || dateTo || search) && <button style={makeBtn("default", { fontSize: 12, padding: "8px 14px" })} onClick={() => { setDateFrom(""); setDateTo(""); setSearch(""); }}>Clear ×</button>}
+          <input style={{ ...inp, flex: "2 1 180px" }} placeholder="Search by vendor or particulars…" value={search} onChange={e => setSearch(e.target.value)} onFocus={focusOn} onBlur={focusOff} />
+          {(dateFrom || dateTo || search) && <button style={btn("ghost", { padding: "8px 12px", color: T.coral, fontSize: 12 })} onClick={() => { setDateFrom(""); setDateTo(""); setSearch(""); }}>Clear ×</button>}
         </div>
       </div>
 
-      {/* Stats */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(148px,1fr))", gap: 12 }}>
+      {/* Stats grid */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", gap: 10 }}>
         <StatCard label="Companies"       value={companies.length}  icon="🏢" delay={0} />
-        <StatCard label="Vendors"         value={vendors.length}    icon="👥" delay={50} />
-        <StatCard label="Total Bills"     value={bills.length}      icon="📋" delay={100} />
-        <StatCard label="Paid Bills"      value={paidBillCnt}       icon="✅" accent={T.success} delay={150} />
-        <StatCard label="Pending Bills"   value={pendBillCnt}       icon="⏳" accent={T.amber}   delay={200} />
-        <StatCard label="Net Payable"     value={fmtINR(totalNet)}  icon="💼" accent={T.navy}    delay={250} />
-        <StatCard label="Amount Paid"     value={fmtINR(totalPaid)} icon="💚" accent={T.success} delay={300} />
-        <StatCard label="Outstanding"     value={fmtINR(totalDue)}  accent={totalDue > 0 ? T.coral : T.success} icon={totalDue > 0 ? "⚠️" : "🎉"} delay={350} />
-        <StatCard label="Today Revenue"   value={fmtINR(todayRev)}  icon="📅" accent={T.blue}    delay={400} />
-        <StatCard label="Monthly Revenue" value={fmtINR(monthRev)}  icon="📆" accent={T.purple}  delay={450} />
+        <StatCard label="Vendors"         value={vendors.length}    icon="👥" delay={40} />
+        <StatCard label="Total Bills"     value={bills.length}      icon="📋" delay={80} />
+        <StatCard label="Paid Bills"      value={paidBillCnt}       icon="✅" accent={T.success} delay={120} />
+        <StatCard label="Pending Bills"   value={pendBillCnt}       icon="⏳" accent={T.amber} delay={160} />
+        <StatCard label="Net Payable"     value={fmtINR(totalNet)}  icon="💼" accent={T.navy} delay={200} />
+        <StatCard label="Amount Paid"     value={fmtINR(totalPaid)} icon="💚" accent={T.success} delay={240} />
+        <StatCard label="Outstanding"     value={fmtINR(totalDue)}  accent={totalDue > 0 ? T.coral : T.success} icon={totalDue > 0 ? "⚠️" : "🎉"} delay={280} />
+        <StatCard label="Today's Revenue" value={fmtINR(todayRev)}  icon="📅" accent={T.blue} delay={320} />
+        <StatCard label="This Month"      value={fmtINR(monthRev)}  icon="📆" accent={T.purple} delay={360} />
       </div>
 
-      {/* Charts Row */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(300px,1fr))", gap: 20 }}>
-        <div style={{ ...card }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
-            <div style={{ width: 3, height: 16, borderRadius: 2, background: `linear-gradient(180deg,${T.coral},${T.gold})` }} />
-            <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: T.navy, fontFamily: "'Plus Jakarta Sans',sans-serif" }}>Company-wise Bills</h3>
-          </div>
+      {/* Charts row */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(300px,1fr))", gap: 16 }}>
+        <ChartCard title="Company-wise Bills" accent={T.coral}>
           {companyBarData.length === 0 ? <Empty icon="📊" text="No data yet." /> : (
-            <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={companyBarData} barSize={18} barGap={4}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(30,42,90,0.06)" vertical={false} />
-                <XAxis dataKey="name" tick={{ fontSize: 10, fill: T.muted, fontFamily: "'Plus Jakarta Sans',sans-serif" }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 10, fill: T.muted }} axisLine={false} tickLine={false} tickFormatter={v => `₹${(v/1000).toFixed(0)}k`} />
-                <Tooltip content={<ChartTooltip />} cursor={{ fill: "rgba(30,42,90,0.04)" }} />
-                <Legend wrapperStyle={{ fontSize: 11, fontFamily: "'Plus Jakarta Sans',sans-serif" }} />
-                <Bar dataKey="total" name="Total" fill={T.coral}   radius={[4,4,0,0]} />
-                <Bar dataKey="paid"  name="Paid"  fill={T.success} radius={[4,4,0,0]} />
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={companyBarData} barSize={16} barGap={3}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(30,42,90,0.05)" vertical={false} />
+                <XAxis dataKey="name" tick={{ fontSize: 10, fill: T.hint, fontFamily: "'DM Sans', sans-serif" }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 10, fill: T.hint }} axisLine={false} tickLine={false} tickFormatter={v => `₹${(v / 1000).toFixed(0)}k`} />
+                <Tooltip content={<ChartTooltip />} cursor={{ fill: "rgba(30,42,90,0.03)" }} />
+                <Legend wrapperStyle={{ fontSize: 11, fontFamily: "'DM Sans', sans-serif" }} />
+                <Bar dataKey="total" name="Total" fill={T.coral} radius={[4, 4, 0, 0]} />
+                <Bar dataKey="paid" name="Paid" fill={T.success} radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           )}
-        </div>
-        <div style={{ ...card }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
-            <div style={{ width: 3, height: 16, borderRadius: 2, background: `linear-gradient(180deg,${T.success},#25c492)` }} />
-            <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: T.navy, fontFamily: "'Plus Jakarta Sans',sans-serif" }}>Paid vs Pending</h3>
-          </div>
+        </ChartCard>
+
+        <ChartCard title="Paid vs Pending" accent={T.success}>
           {totalNet <= 0 ? <Empty icon="🥧" text="No billing data yet." /> : (
             <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
-              <ResponsiveContainer width="55%" height={200} style={{ minWidth: 140 }}>
+              <ResponsiveContainer width="55%" height={180} style={{ minWidth: 130 }}>
                 <PieChart>
-                  <Pie data={paidVsPendingData} cx="50%" cy="50%" innerRadius={50} outerRadius={78} paddingAngle={4} dataKey="value">
+                  <Pie data={paidVsPendingData} cx="50%" cy="50%" innerRadius={46} outerRadius={72} paddingAngle={4} dataKey="value">
                     <Cell fill={T.success} /><Cell fill={T.coral} />
                   </Pie>
                   <Tooltip content={<ChartTooltip />} />
                 </PieChart>
               </ResponsiveContainer>
-              <div style={{ display: "flex", flexDirection: "column", gap: 14, flex: 1 }}>
+              <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 14 }}>
                 {paidVsPendingData.map((d, i) => (
                   <div key={d.name}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 7 }}><div style={{ width: 9, height: 9, borderRadius: "50%", background: i === 0 ? T.success : T.coral }} /><span style={{ fontSize: 12, color: T.muted, fontFamily: "'Plus Jakarta Sans',sans-serif" }}>{d.name}</span></div>
-                    <p style={{ margin: "2px 0 0 16px", fontSize: 14, fontWeight: 700, color: i === 0 ? T.success : T.coral, fontFamily: "'Plus Jakarta Sans',sans-serif" }}>{fmtINR(d.value)}</p>
-                    <p style={{ margin: 0, fontSize: 10.5, color: T.hint, marginLeft: 16 }}>{totalNet > 0 ? ((d.value / totalNet) * 100).toFixed(1) : 0}%</p>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      <div style={{ width: 8, height: 8, borderRadius: "50%", background: i === 0 ? T.success : T.coral }} />
+                      <span style={{ fontSize: 12, color: T.hint, fontFamily: "'DM Sans', sans-serif" }}>{d.name}</span>
+                    </div>
+                    <p style={{ fontSize: 14, fontWeight: 700, color: i === 0 ? T.success : T.coral, fontFamily: "'DM Sans', sans-serif", marginLeft: 14, marginTop: 2 }}>{fmtINR(d.value)}</p>
+                    <p style={{ fontSize: 10.5, color: T.hint, marginLeft: 14 }}>{totalNet > 0 ? ((d.value / totalNet) * 100).toFixed(1) : 0}%</p>
                   </div>
                 ))}
               </div>
             </div>
           )}
-        </div>
+        </ChartCard>
       </div>
 
-      {/* Monthly Area Chart */}
+      {/* Monthly area chart */}
       {monthlyData.length > 1 && (
-        <div style={{ ...card }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
-            <div style={{ width: 3, height: 16, borderRadius: 2, background: `linear-gradient(180deg,${T.blue},#3395FF)` }} />
-            <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: T.navy, fontFamily: "'Plus Jakarta Sans',sans-serif" }}>Monthly Payments</h3>
-          </div>
-          <ResponsiveContainer width="100%" height={180}>
+        <ChartCard title="Monthly Payments" accent={T.blue}>
+          <ResponsiveContainer width="100%" height={170}>
             <AreaChart data={monthlyData}>
-              <defs><linearGradient id="payGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor={T.blue} stopOpacity={0.15}/><stop offset="95%" stopColor={T.blue} stopOpacity={0}/></linearGradient></defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(30,42,90,0.06)" vertical={false} />
-              <XAxis dataKey="month" tick={{ fontSize: 10, fill: T.muted }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 10, fill: T.muted }} axisLine={false} tickLine={false} tickFormatter={v => `₹${(v/1000).toFixed(0)}k`} />
+              <defs><linearGradient id="payGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor={T.blue} stopOpacity={0.12} /><stop offset="95%" stopColor={T.blue} stopOpacity={0} /></linearGradient></defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(30,42,90,0.05)" vertical={false} />
+              <XAxis dataKey="month" tick={{ fontSize: 10, fill: T.hint }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontSize: 10, fill: T.hint }} axisLine={false} tickLine={false} tickFormatter={v => `₹${(v / 1000).toFixed(0)}k`} />
               <Tooltip content={<ChartTooltip />} />
               <Area type="monotone" dataKey="revenue" name="Revenue" stroke={T.blue} strokeWidth={2} fill="url(#payGrad)" />
             </AreaChart>
           </ResponsiveContainer>
-        </div>
+        </ChartCard>
       )}
 
-      {/* Top Companies + Top Vendors */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(280px,1fr))", gap: 20 }}>
-        <div style={{ ...card }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <div style={{ width: 3, height: 16, borderRadius: 2, background: `linear-gradient(180deg,${T.coral},${T.gold})` }} />
-              <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: T.navy, fontFamily: "'Plus Jakarta Sans',sans-serif" }}>🏆 Top Companies</h3>
-            </div>
-            <button style={makeBtn("default", { fontSize: 11, padding: "5px 12px", background: T.cream, border: `1.5px solid ${T.border2}` })} onClick={() => setTab("companies")}>View All →</button>
+      {/* Top companies + vendors */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(280px,1fr))", gap: 16 }}>
+        <div style={{ ...card, padding: "18px 20px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+            <h3 style={{ fontSize: 13.5, fontWeight: 700, color: T.navy, fontFamily: "'DM Sans', sans-serif" }}>Top Companies</h3>
+            <button style={btn("default", { fontSize: 11.5, padding: "5px 12px" })} onClick={() => setTab("companies")}>View all →</button>
           </div>
-          {top5Companies.length === 0 ? <p style={{ color: T.muted, fontSize: 12, textAlign: "center", padding: "1rem 0", fontFamily: "'Plus Jakarta Sans',sans-serif" }}>No data.</p> : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {top5Companies.length === 0 ? <p style={{ color: T.hint, fontSize: 12, textAlign: "center", padding: "1rem 0" }}>No data.</p> : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {top5Companies.map((c, i) => {
                 const pct = c.total > 0 ? (c.paid / c.total) * 100 : 0;
                 return (
-                  <div key={c.name} style={{ padding: "11px 13px", borderRadius: 11, background: "rgba(31,42,68,0.03)", border: `1px solid ${T.border}`, borderLeft: `3px solid ${CHART_COLORS[i]}` }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 7 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
-                        <span style={{ width: 20, height: 20, borderRadius: "50%", background: CHART_COLORS[i], display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 700, color: "#fff", flexShrink: 0 }}>{i + 1}</span>
-                        <span style={{ fontSize: 12, fontWeight: 600, color: T.navy, fontFamily: "'Plus Jakarta Sans',sans-serif" }}>{c.name}</span>
+                  <div key={c.name} style={{ padding: "11px 13px", borderRadius: 9, background: T.bg, border: `1px solid ${T.border}`, borderLeft: `3px solid ${CHART_COLORS[i]}` }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <span style={{ width: 18, height: 18, borderRadius: "50%", background: CHART_COLORS[i], display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 700, color: "#fff", flexShrink: 0 }}>{i + 1}</span>
+                        <span style={{ fontSize: 12.5, fontWeight: 600, color: T.navy, fontFamily: "'DM Sans', sans-serif" }}>{c.name}</span>
                       </div>
-                      <span style={{ fontSize: 12, fontWeight: 700, color: T.coral, fontFamily: "'Plus Jakarta Sans',sans-serif" }}>{fmtINR(c.total)}</span>
+                      <span style={{ fontSize: 12.5, fontWeight: 700, color: T.navy, fontFamily: "'DM Sans', sans-serif" }}>{fmtINR(c.total)}</span>
                     </div>
                     <ProgressBar pct={pct} color={CHART_COLORS[i]} />
-                    <p style={{ margin: "3px 0 0", fontSize: 10, color: T.hint, fontFamily: "'Plus Jakarta Sans',sans-serif" }}>{pct.toFixed(1)}% settled</p>
+                    <p style={{ fontSize: 10.5, color: T.hint, marginTop: 4 }}>{pct.toFixed(1)}% settled</p>
                   </div>
                 );
               })}
@@ -736,36 +1268,34 @@ function DashboardTab({ companies, vendors, bills, payments, activityLog, setTab
           )}
           {billAmounts.length > 0 && (
             <div style={{ marginTop: 14, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-              {[["🔺 Highest Bill", maxBill, T.coral],["🔻 Lowest Bill", minBill, T.success]].map(([l, v, c]) => (
-                <div key={l} style={{ background: "rgba(31,42,68,0.04)", borderRadius: 11, padding: "10px 12px", textAlign: "center", border: `1px solid ${T.border}` }}>
-                  <p style={{ margin: 0, fontSize: 10, color: T.muted, fontFamily: "'Plus Jakarta Sans',sans-serif" }}>{l}</p>
-                  <p style={{ margin: "4px 0 0", fontSize: 14, fontWeight: 700, color: c, fontFamily: "'Plus Jakarta Sans',sans-serif" }}>{fmtINR(v)}</p>
+              {[["Highest Bill", maxBill, T.coral], ["Lowest Bill", minBill, T.success]].map(([l, v, c]) => (
+                <div key={l} style={{ background: T.bg, borderRadius: 9, padding: "10px 12px", textAlign: "center", border: `1px solid ${T.border}` }}>
+                  <p style={{ fontSize: 10.5, color: T.hint }}>{l}</p>
+                  <p style={{ fontSize: 13.5, fontWeight: 700, color: c, marginTop: 3 }}>{fmtINR(v)}</p>
                 </div>
               ))}
             </div>
           )}
         </div>
-        <div style={{ ...card }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <div style={{ width: 3, height: 16, borderRadius: 2, background: `linear-gradient(180deg,${T.blue},#3395FF)` }} />
-              <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: T.navy, fontFamily: "'Plus Jakarta Sans',sans-serif" }}>👥 Top Vendors</h3>
-            </div>
-            <button style={makeBtn("default", { fontSize: 11, padding: "5px 12px", background: T.cream, border: `1.5px solid ${T.border2}` })} onClick={() => setTab("vendors")}>View All →</button>
+
+        <div style={{ ...card, padding: "18px 20px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+            <h3 style={{ fontSize: 13.5, fontWeight: 700, color: T.navy, fontFamily: "'DM Sans', sans-serif" }}>Top Vendors</h3>
+            <button style={btn("default", { fontSize: 11.5, padding: "5px 12px" })} onClick={() => setTab("vendors")}>View all →</button>
           </div>
-          {top5Vendors.length === 0 ? <p style={{ color: T.muted, fontSize: 12, textAlign: "center", padding: "1rem 0" }}>No data.</p> : (
+          {top5Vendors.length === 0 ? <p style={{ color: T.hint, fontSize: 12, textAlign: "center", padding: "1rem 0" }}>No data.</p> : (
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {top5Vendors.map((v, i) => {
                 const due = v.total - v.paid;
                 return (
-                  <div key={v.name} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "11px 13px", borderRadius: 11, background: "rgba(31,42,68,0.03)", border: `1px solid ${T.border}`, borderLeft: `3px solid ${CHART_COLORS[i]}`, gap: 10 }}>
+                  <div key={v.name} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "11px 13px", borderRadius: 9, background: T.bg, border: `1px solid ${T.border}`, borderLeft: `3px solid ${CHART_COLORS[i]}`, gap: 10 }}>
                     <div style={{ minWidth: 0 }}>
-                      <p style={{ margin: 0, fontSize: 12, fontWeight: 600, color: T.navy, fontFamily: "'Plus Jakarta Sans',sans-serif", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{v.name}</p>
-                      <p style={{ margin: "1px 0 0", fontSize: 10.5, color: T.muted, fontFamily: "'Plus Jakarta Sans',sans-serif" }}>{v.company}</p>
+                      <p style={{ fontSize: 12.5, fontWeight: 600, color: T.navy, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{v.name}</p>
+                      <p style={{ fontSize: 11, color: T.hint, marginTop: 2 }}>{v.company}</p>
                     </div>
                     <div style={{ textAlign: "right", flexShrink: 0 }}>
-                      <p style={{ margin: 0, fontSize: 12, fontWeight: 700, color: T.navy, fontFamily: "'Plus Jakarta Sans',sans-serif" }}>{fmtINR(v.total)}</p>
-                      <p style={{ margin: 0, fontSize: 10.5, color: due > 0 ? T.coral : T.success, fontFamily: "'Plus Jakarta Sans',sans-serif" }}>{due > 0 ? `${fmtINR(due)} due` : "✓ Settled"}</p>
+                      <p style={{ fontSize: 12.5, fontWeight: 700, color: T.navy }}>{fmtINR(v.total)}</p>
+                      <p style={{ fontSize: 11, color: due > 0 ? T.coral : T.success, marginTop: 2 }}>{due > 0 ? `${fmtINR(due)} due` : "✓ Settled"}</p>
                     </div>
                   </div>
                 );
@@ -775,29 +1305,26 @@ function DashboardTab({ companies, vendors, bills, payments, activityLog, setTab
         </div>
       </div>
 
-      {/* Recent Activity + Recent Payments */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(280px,1fr))", gap: 20 }}>
-        <div style={{ ...card }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
-            <div style={{ width: 3, height: 16, borderRadius: 2, background: `linear-gradient(180deg,${T.amber},${T.gold})` }} />
-            <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: T.navy, fontFamily: "'Plus Jakarta Sans',sans-serif" }}>⚡ Recent Activity</h3>
-          </div>
-          {recentActivity.length === 0 ? <p style={{ color: T.muted, fontSize: 12, textAlign: "center", padding: "1.5rem 0", fontFamily: "'Plus Jakarta Sans',sans-serif" }}>No activity yet.</p> : (
+      {/* Recent activity + payments */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(280px,1fr))", gap: 16 }}>
+        <div style={{ ...card, padding: "18px 20px" }}>
+          <h3 style={{ fontSize: 13.5, fontWeight: 700, color: T.navy, fontFamily: "'DM Sans', sans-serif", marginBottom: 14 }}>Recent Activity</h3>
+          {recentActivity.length === 0 ? <p style={{ color: T.hint, fontSize: 12, textAlign: "center", padding: "1.5rem 0" }}>No activity yet.</p> : (
             <div style={{ display: "flex", flexDirection: "column" }}>
               {recentActivity.map((a, i) => {
                 const dt = a.createdAt ? new Date(a.createdAt) : null;
-                const dtStr = dt ? dt.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "2-digit" }) + " " + dt.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }) : "—";
+                const dtStr = dt ? dt.toLocaleDateString("en-IN", { day: "2-digit", month: "short" }) + " " + dt.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }) : "—";
                 return (
-                  <div key={a.id} style={{ display: "flex", alignItems: "flex-start", gap: 11, padding: "10px 0", borderBottom: i < recentActivity.length - 1 ? `1px solid ${T.border}` : "none" }}>
+                  <div key={a.id} style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "10px 0", borderBottom: i < recentActivity.length - 1 ? `1px solid ${T.border}` : "none" }}>
                     <ActivityIcon type={a.type} />
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{ margin: 0, fontSize: 12.5, fontWeight: 600, color: T.navy, fontFamily: "'Plus Jakarta Sans',sans-serif" }}>{a.description}</p>
+                      <p style={{ fontSize: 12.5, fontWeight: 600, color: T.navy }}>{a.description}</p>
                       <div style={{ display: "flex", gap: 6, marginTop: 2, flexWrap: "wrap" }}>
-                        {a.companyName && <span style={{ fontSize: 10.5, color: T.muted, fontFamily: "'Plus Jakarta Sans',sans-serif" }}>{a.companyName}</span>}
-                        {a.vendorName && <span style={{ fontSize: 10.5, color: T.muted, fontFamily: "'Plus Jakarta Sans',sans-serif" }}>· {a.vendorName}</span>}
-                        {Number(a.amount) > 0 && <span style={{ fontSize: 10.5, color: T.success, fontWeight: 600, fontFamily: "'Plus Jakarta Sans',sans-serif" }}>· {fmtINR(a.amount)}</span>}
+                        {a.companyName && <span style={{ fontSize: 11, color: T.hint }}>{a.companyName}</span>}
+                        {a.vendorName && <span style={{ fontSize: 11, color: T.hint }}>· {a.vendorName}</span>}
+                        {Number(a.amount) > 0 && <span style={{ fontSize: 11, color: T.success, fontWeight: 600 }}>· {fmtINR(a.amount)}</span>}
                       </div>
-                      <p style={{ margin: "2px 0 0", fontSize: 10, color: T.hint, fontFamily: "'Plus Jakarta Sans',sans-serif" }}>{dtStr}</p>
+                      <p style={{ fontSize: 10.5, color: T.hint, marginTop: 2 }}>{dtStr}</p>
                     </div>
                   </div>
                 );
@@ -805,30 +1332,28 @@ function DashboardTab({ companies, vendors, bills, payments, activityLog, setTab
             </div>
           )}
         </div>
-        <div style={{ ...card }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <div style={{ width: 3, height: 16, borderRadius: 2, background: `linear-gradient(180deg,${T.success},#25c492)` }} />
-              <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: T.navy, fontFamily: "'Plus Jakarta Sans',sans-serif" }}>Recent Payments</h3>
-            </div>
-            <button style={makeBtn("default", { fontSize: 11, padding: "5px 12px", background: T.cream, border: `1.5px solid ${T.border2}` })} onClick={() => setTab("payments")}>View All →</button>
+
+        <div style={{ ...card, padding: "18px 20px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+            <h3 style={{ fontSize: 13.5, fontWeight: 700, color: T.navy, fontFamily: "'DM Sans', sans-serif" }}>Recent Payments</h3>
+            <button style={btn("default", { fontSize: 11.5, padding: "5px 12px" })} onClick={() => setTab("payments")}>View all →</button>
           </div>
-          {recentPayments.length === 0 ? <p style={{ color: T.muted, fontSize: 12, textAlign: "center", padding: "1.5rem 0", fontFamily: "'Plus Jakarta Sans',sans-serif" }}>No payments yet.</p> : (
+          {recentPayments.length === 0 ? <p style={{ color: T.hint, fontSize: 12, textAlign: "center", padding: "1.5rem 0" }}>No payments yet.</p> : (
             <div style={{ display: "flex", flexDirection: "column" }}>
               {recentPayments.map((p, i) => (
-                <div key={p.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: i < recentPayments.length - 1 ? `1px solid ${T.border}` : "none", gap: 10 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0 }}>
-                    <div style={{ width: 36, height: 36, borderRadius: 10, flexShrink: 0, background: "rgba(29,158,117,0.09)", border: `1px solid rgba(29,158,117,0.15)`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><rect x="2" y="5" width="20" height="14" rx="2" stroke={T.success} strokeWidth="1.8" /><path d="M2 10h20" stroke={T.success} strokeWidth="1.8" /></svg>
+                <div key={p.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "11px 0", borderBottom: i < recentPayments.length - 1 ? `1px solid ${T.border}` : "none", gap: 10 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 9, flex: 1, minWidth: 0 }}>
+                    <div style={{ width: 32, height: 32, borderRadius: 8, flexShrink: 0, background: "rgba(29,158,117,0.07)", border: `1px solid rgba(29,158,117,0.14)`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><rect x="2" y="5" width="20" height="14" rx="2" stroke={T.success} strokeWidth="1.8" /><path d="M2 10h20" stroke={T.success} strokeWidth="1.8" /></svg>
                     </div>
                     <div style={{ minWidth: 0 }}>
-                      <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: T.navy, fontFamily: "'Plus Jakarta Sans',sans-serif", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.vendorName}</p>
-                      <p style={{ margin: "2px 0 0", fontSize: 11, color: T.muted, fontFamily: "'Plus Jakarta Sans',sans-serif" }}>{p.date}{p.particulars ? ` · ${p.particulars}` : ""}</p>
+                      <p style={{ fontSize: 13, fontWeight: 600, color: T.navy, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.vendorName}</p>
+                      <p style={{ fontSize: 11, color: T.hint, marginTop: 2 }}>{p.date}{p.particulars ? ` · ${p.particulars}` : ""}</p>
                     </div>
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
                     <Badge color={p.paymentMode === "Razorpay X" ? "blue" : "green"}>{p.paymentMode}</Badge>
-                    <span style={{ fontWeight: 700, color: T.success, fontSize: 14, fontFamily: "'Plus Jakarta Sans',sans-serif", whiteSpace: "nowrap" }}>{fmtINR(p.amountPaid)}</span>
+                    <span style={{ fontWeight: 700, color: T.success, fontSize: 13.5 }}>{fmtINR(p.amountPaid)}</span>
                   </div>
                 </div>
               ))}
@@ -841,7 +1366,7 @@ function DashboardTab({ companies, vendors, bills, payments, activityLog, setTab
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   PAYMENTS TAB — Table with mobile card fallback
+   PAYMENTS TAB
 ═══════════════════════════════════════════════════════════════════════════ */
 function PaymentsTab({ payments, companies }) {
   const [filterCo, setFilterCo] = useState("");
@@ -857,25 +1382,23 @@ function PaymentsTab({ payments, companies }) {
     <div>
       <SectionHeader title="Payment History" />
 
-      {/* Filter + Stats bar */}
-      <div style={{ ...card, padding: "16px 20px", marginBottom: 16 }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 24, flexWrap: "wrap" }}>
+      {/* Summary + filters */}
+      <div style={{ ...card, padding: "16px 18px", marginBottom: 14 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 14, flexWrap: "wrap" }}>
+          <div style={{ display: "flex", gap: 28, flexWrap: "wrap" }}>
             <div>
-              <p style={{ margin: 0, fontSize: 10, color: T.muted, textTransform: "uppercase", letterSpacing: "0.8px", fontWeight: 700, fontFamily: "'Plus Jakarta Sans',sans-serif" }}>Transactions</p>
-              <p style={{ margin: "2px 0 0", fontSize: 22, fontWeight: 700, color: T.navy, fontFamily: "'Plus Jakarta Sans',sans-serif" }}>{filtered.length}</p>
+              <p style={{ fontSize: 11, color: T.hint, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.4px" }}>Transactions</p>
+              <p style={{ fontSize: 20, fontWeight: 700, color: T.navy, marginTop: 3 }}>{filtered.length}</p>
             </div>
-            <div style={{ width: 1, height: 36, background: T.border }} />
+            <div style={{ width: 1, background: T.border }} />
             <div>
-              <p style={{ margin: 0, fontSize: 10, color: T.muted, textTransform: "uppercase", letterSpacing: "0.8px", fontWeight: 700, fontFamily: "'Plus Jakarta Sans',sans-serif" }}>Total Paid</p>
-              <p style={{ margin: "2px 0 0", fontSize: 22, fontWeight: 700, color: T.success, fontFamily: "'Plus Jakarta Sans',sans-serif" }}>{fmtINR(sum(filtered, "amountPaid"))}</p>
+              <p style={{ fontSize: 11, color: T.hint, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.4px" }}>Total Paid</p>
+              <p style={{ fontSize: 20, fontWeight: 700, color: T.success, marginTop: 3 }}>{fmtINR(sum(filtered, "amountPaid"))}</p>
             </div>
           </div>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-            <div style={{ position: "relative" }}>
-              <input style={{ ...inp, paddingLeft: 30, width: "auto", minWidth: 160 }} placeholder="Search…" value={search} onChange={e => setSearch(e.target.value)} onFocus={focusOn} onBlur={focusOff} />
-            </div>
-            <select style={{ ...inp, width: "auto", minWidth: 150 }} value={filterCo} onChange={(e) => setFilterCo(e.target.value)} onFocus={focusOn} onBlur={focusOff}>
+            <input style={{ ...inp, width: "auto", minWidth: 170 }} placeholder="Search vendor…" value={search} onChange={e => setSearch(e.target.value)} onFocus={focusOn} onBlur={focusOff} />
+            <select style={{ ...inp, width: "auto", minWidth: 160 }} value={filterCo} onChange={(e) => setFilterCo(e.target.value)} onFocus={focusOn} onBlur={focusOff}>
               <option value="">All Companies</option>
               {companies.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
@@ -887,75 +1410,67 @@ function PaymentsTab({ payments, companies }) {
       <div style={{ ...card, padding: 0, overflow: "hidden" }}>
         {filtered.length === 0 ? (
           <div style={{ padding: "4rem 2rem", textAlign: "center" }}>
-            <div style={{ fontSize: 40, marginBottom: 14 }}>🧾</div>
-            <p style={{ color: T.muted, fontSize: 13, fontFamily: "'Plus Jakarta Sans',sans-serif", margin: 0 }}>No payments recorded yet.</p>
+            <div style={{ fontSize: 36, marginBottom: 14, opacity: 0.4 }}>🧾</div>
+            <p style={{ color: T.hint, fontSize: 13 }}>No payments recorded yet.</p>
           </div>
         ) : (
           <>
-            {/* Desktop table */}
             <div style={{ overflowX: "auto" }} className="pay-table">
-              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, fontFamily: "'Plus Jakarta Sans',sans-serif" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, fontFamily: "'DM Sans', sans-serif" }}>
                 <thead>
-                  <tr style={{ background: "rgba(31,42,68,0.03)", borderBottom: `1px solid ${T.border}` }}>
-                    {["Date","Vendor","Particulars","Cheque / UTR","Mode","Amount"].map(h => (
-                      <th key={h} style={{ textAlign: "left", padding: "12px 18px", color: T.muted, fontWeight: 700, fontSize: 10, letterSpacing: "0.8px", textTransform: "uppercase", whiteSpace: "nowrap", fontFamily: "'Plus Jakarta Sans',sans-serif" }}>{h}</th>
+                  <tr style={{ background: T.bg, borderBottom: `1px solid ${T.border}` }}>
+                    {["Date", "Vendor", "Particulars", "Cheque / UTR", "Mode", "Amount"].map(h => (
+                      <th key={h} style={{ textAlign: "left", padding: "11px 16px", color: T.hint, fontWeight: 600, fontSize: 11, letterSpacing: "0.3px", textTransform: "uppercase", whiteSpace: "nowrap" }}>{h}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {filtered.map((p, i) => (
-                    <tr key={p.id} style={{ borderBottom: i < filtered.length - 1 ? `1px solid ${T.border}` : "none", transition: "background 0.12s" }} onMouseEnter={e => e.currentTarget.style.background = "rgba(31,42,68,0.025)"} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
-                      <td style={{ padding: "14px 18px", color: T.muted, whiteSpace: "nowrap", fontSize: 12 }}>{p.date}</td>
-                      <td style={{ padding: "14px 18px" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
-                          <div style={{ width: 30, height: 30, borderRadius: 8, flexShrink: 0, background: "rgba(31,42,68,0.07)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                            <span style={{ fontSize: 11, fontWeight: 700, color: T.navy }}>{(p.vendorName || "?")[0].toUpperCase()}</span>
+                    <tr key={p.id} style={{ borderBottom: i < filtered.length - 1 ? `1px solid ${T.border}` : "none", transition: "background 0.1s" }} onMouseEnter={e => e.currentTarget.style.background = T.bg} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+                      <td style={{ padding: "13px 16px", color: T.hint, whiteSpace: "nowrap", fontSize: 12.5, fontFamily: "'DM Mono', monospace" }}>{p.date}</td>
+                      <td style={{ padding: "13px 16px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                          <div style={{ width: 28, height: 28, borderRadius: 7, background: T.bg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: T.navy, border: `1px solid ${T.border}`, flexShrink: 0 }}>
+                            {(p.vendorName || "?")[0].toUpperCase()}
                           </div>
-                          <span style={{ fontWeight: 600, color: T.navy, fontSize: 13 }}>{p.vendorName}</span>
+                          <span style={{ fontWeight: 600, color: T.navy }}>{p.vendorName}</span>
                         </div>
                       </td>
-                      <td style={{ padding: "14px 18px", color: T.muted, maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontSize: 12 }}>{p.particulars || "—"}</td>
-                      <td style={{ padding: "14px 18px", color: T.muted, fontFamily: "monospace", fontSize: 11.5 }}>{p.chequeNo || "—"}</td>
-                      <td style={{ padding: "14px 18px" }}><Badge color={p.paymentMode === "Razorpay X" ? "blue" : "green"}>{p.paymentMode}</Badge></td>
-                      <td style={{ padding: "14px 18px", whiteSpace: "nowrap" }}><span style={{ fontWeight: 700, color: T.success, fontSize: 14 }}>{fmtINR(p.amountPaid)}</span></td>
+                      <td style={{ padding: "13px 16px", color: T.hint, maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.particulars || "—"}</td>
+                      <td style={{ padding: "13px 16px", color: T.hint, fontFamily: "'DM Mono', monospace", fontSize: 12 }}>{p.chequeNo || "—"}</td>
+                      <td style={{ padding: "13px 16px" }}><Badge color={p.paymentMode === "Razorpay X" ? "blue" : "green"}>{p.paymentMode}</Badge></td>
+                      <td style={{ padding: "13px 16px", whiteSpace: "nowrap" }}><span style={{ fontWeight: 700, color: T.success, fontSize: 14 }}>{fmtINR(p.amountPaid)}</span></td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-            {/* Mobile cards */}
             <div className="pay-mobile" style={{ display: "none", flexDirection: "column" }}>
               {filtered.map((p, i) => (
-                <div key={p.id} style={{ padding: "14px 16px", borderBottom: i < filtered.length - 1 ? `1px solid ${T.border}` : "none" }}>
+                <div key={p.id} style={{ padding: "13px 15px", borderBottom: i < filtered.length - 1 ? `1px solid ${T.border}` : "none" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0 }}>
-                      <div style={{ width: 36, height: 36, borderRadius: 10, flexShrink: 0, background: "rgba(31,42,68,0.07)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                        <span style={{ fontSize: 13, fontWeight: 700, color: T.navy }}>{(p.vendorName || "?")[0].toUpperCase()}</span>
-                      </div>
-                      <div style={{ minWidth: 0 }}>
-                        <p style={{ margin: 0, fontWeight: 600, fontSize: 13, color: T.navy, fontFamily: "'Plus Jakarta Sans',sans-serif", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.vendorName}</p>
-                        <p style={{ margin: "2px 0 0", fontSize: 11, color: T.muted, fontFamily: "'Plus Jakarta Sans',sans-serif" }}>{p.date}{p.particulars ? ` · ${p.particulars}` : ""}</p>
-                      </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ fontWeight: 600, fontSize: 13, color: T.navy, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.vendorName}</p>
+                      <p style={{ fontSize: 11.5, color: T.hint, marginTop: 2 }}>{p.date}{p.particulars ? ` · ${p.particulars}` : ""}</p>
                     </div>
                     <div style={{ textAlign: "right", flexShrink: 0 }}>
-                      <p style={{ margin: 0, fontWeight: 700, fontSize: 14, color: T.success, fontFamily: "'Plus Jakarta Sans',sans-serif" }}>{fmtINR(p.amountPaid)}</p>
+                      <p style={{ fontWeight: 700, fontSize: 14, color: T.success }}>{fmtINR(p.amountPaid)}</p>
                       <div style={{ marginTop: 4 }}><Badge color={p.paymentMode === "Razorpay X" ? "blue" : "green"}>{p.paymentMode}</Badge></div>
                     </div>
                   </div>
-                  {p.chequeNo && <p style={{ margin: "8px 0 0", fontSize: 11, color: T.hint, fontFamily: "monospace" }}>UTR: {p.chequeNo}</p>}
+                  {p.chequeNo && <p style={{ fontSize: 11, color: T.hint, fontFamily: "'DM Mono', monospace", marginTop: 7 }}>UTR: {p.chequeNo}</p>}
                 </div>
               ))}
             </div>
           </>
         )}
       </div>
-      <style>{`@media(max-width:620px){.pay-table{display:none!important}.pay-mobile{display:flex!important}}`}</style>
     </div>
   );
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   COMPANIES TAB — Grid of cards
+   COMPANIES TAB
 ═══════════════════════════════════════════════════════════════════════════ */
 function CompaniesTab({ companies, vendors, bills, onAdd, onEdit, onDelete }) {
   const cVendors = (cid) => vendors.filter(v => v.companyId === cid);
@@ -964,54 +1479,59 @@ function CompaniesTab({ companies, vendors, bills, onAdd, onEdit, onDelete }) {
 
   return (
     <div>
-      <SectionHeader title="Companies" action={<button style={makeBtn("primary")} onClick={onAdd}>+ Add Company</button>} />
+      <SectionHeader title="Companies" action={<button style={btn("primary")} onClick={onAdd}>+ Add Company</button>} />
       {companies.length === 0 && <Empty icon="🏢" text="No companies yet. Add your first one." />}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(290px,1fr))", gap: 16 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(290px,1fr))", gap: 14 }}>
         {companies.map((c, i) => {
           const cb = cBills(c.id), net = sum(cb, "netAmount"), paid = sum(cb, "amountPaid"), due = net - paid, pct = net > 0 ? (paid / net) * 100 : 0;
           return (
-            <div key={c.id} style={{ ...card, padding: 0, overflow: "hidden", animation: `fadeUp 0.45s ease ${i * 70}ms both`, display: "flex", flexDirection: "column" }}>
-              <div style={{ height: 3, background: pct >= 100 ? `linear-gradient(90deg,${T.success},#25c492)` : `linear-gradient(90deg,${T.coral},${T.gold})` }} />
+            <div key={c.id} style={{ ...card, padding: 0, overflow: "hidden", animation: `fadeUp 0.4s ease ${i * 60}ms both`, display: "flex", flexDirection: "column" }}>
+              <div style={{ height: 3, background: pct >= 100 ? T.success : T.coral }} />
               <div style={{ padding: 18, flex: 1, display: "flex", flexDirection: "column" }}>
+                {/* Header */}
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14, gap: 10 }}>
-                  <div style={{ display: "flex", gap: 11, alignItems: "center", flex: 1, minWidth: 0 }}>
-                    <div style={{ width: 42, height: 42, borderRadius: 12, flexShrink: 0, background: `linear-gradient(135deg,${T.navy},#2d3d7a)`, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 3px 10px rgba(31,42,68,0.18)" }}>
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" stroke="#fff" strokeWidth="1.8" /><path d="M3 9h18M9 21V9" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" /></svg>
+                  <div style={{ display: "flex", gap: 10, alignItems: "center", flex: 1, minWidth: 0 }}>
+                    <div style={{ width: 38, height: 38, borderRadius: 10, flexShrink: 0, background: T.navy, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" stroke="#fff" strokeWidth="1.8" /><path d="M3 9h18M9 21V9" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" /></svg>
                     </div>
                     <div style={{ minWidth: 0 }}>
-                      <p style={{ margin: 0, fontWeight: 700, fontSize: 15, color: T.navy, fontFamily: "'Plus Jakarta Sans',sans-serif", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.name}</p>
-                      <p style={{ margin: "2px 0 0", fontSize: 11, color: T.muted, fontFamily: "'Plus Jakarta Sans',sans-serif" }}>{cVendors(c.id).length} vendors · {cb.length} bills</p>
+                      <p style={{ fontWeight: 700, fontSize: 14.5, color: T.navy, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.name}</p>
+                      <p style={{ fontSize: 11.5, color: T.hint, marginTop: 2 }}>{cVendors(c.id).length} vendors · {cb.length} bills</p>
                     </div>
                   </div>
                   <div style={{ display: "flex", gap: 5, flexShrink: 0 }}>
-                    <button onClick={() => onEdit(c)} style={{ width: 30, height: 30, borderRadius: 8, background: "rgba(31,42,68,0.06)", border: `1px solid ${T.border}`, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "background 0.15s" }} onMouseEnter={e => e.currentTarget.style.background = "rgba(31,42,68,0.12)"} onMouseLeave={e => e.currentTarget.style.background = "rgba(31,42,68,0.06)"}>
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" stroke={T.navy} strokeWidth="2" strokeLinecap="round" /><path d="M18.5 2.5a2.12 2.12 0 013 3L12 15l-4 1 1-4 9.5-9.5z" stroke={T.navy} strokeWidth="2" strokeLinecap="round" /></svg>
+                    <button onClick={() => onEdit(c)} style={{ width: 28, height: 28, borderRadius: 7, background: T.bg, border: `1px solid ${T.border}`, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "background 0.15s" }} onMouseEnter={e => e.currentTarget.style.background = "#e8e5e0"} onMouseLeave={e => e.currentTarget.style.background = T.bg}>
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" stroke={T.navy} strokeWidth="2" strokeLinecap="round" /><path d="M18.5 2.5a2.12 2.12 0 013 3L12 15l-4 1 1-4 9.5-9.5z" stroke={T.navy} strokeWidth="2" strokeLinecap="round" /></svg>
                     </button>
-                    <button onClick={() => onDelete(c)} style={{ width: 30, height: 30, borderRadius: 8, background: "rgba(227,74,47,0.07)", border: "1px solid rgba(227,74,47,0.18)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "background 0.15s" }} onMouseEnter={e => e.currentTarget.style.background = "rgba(227,74,47,0.16)"} onMouseLeave={e => e.currentTarget.style.background = "rgba(227,74,47,0.07)"}>
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><polyline points="3 6 5 6 21 6" stroke={T.coral} strokeWidth="2" strokeLinecap="round" /><path d="M19 6l-1 14H6L5 6M10 11v6M14 11v6M9 6V4h6v2" stroke={T.coral} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                    <button onClick={() => onDelete(c)} style={{ width: 28, height: 28, borderRadius: 7, background: "rgba(227,74,47,0.06)", border: `1px solid rgba(227,74,47,0.16)`, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "background 0.15s" }} onMouseEnter={e => e.currentTarget.style.background = "rgba(227,74,47,0.12)"} onMouseLeave={e => e.currentTarget.style.background = "rgba(227,74,47,0.06)"}>
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none"><polyline points="3 6 5 6 21 6" stroke={T.coral} strokeWidth="2" strokeLinecap="round" /><path d="M19 6l-1 14H6L5 6M10 11v6M14 11v6M9 6V4h6v2" stroke={T.coral} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
                     </button>
                   </div>
                 </div>
+
                 {(c.gstin || c.address) && (
                   <div style={{ marginBottom: 12 }}>
-                    {c.gstin && <p style={{ margin: "0 0 3px", fontSize: 11, color: T.muted, fontFamily: "'Plus Jakarta Sans',sans-serif" }}>GSTIN: <strong style={{ color: T.navy }}>{c.gstin}</strong></p>}
-                    {c.address && <p style={{ margin: 0, fontSize: 11, color: T.hint, fontFamily: "'Plus Jakarta Sans',sans-serif" }}>📍 {c.address}</p>}
+                    {c.gstin && <p style={{ fontSize: 11.5, color: T.hint, marginBottom: 3 }}>GSTIN: <strong style={{ color: T.navy }}>{c.gstin}</strong></p>}
+                    {c.address && <p style={{ fontSize: 11.5, color: T.hint }}>📍 {c.address}</p>}
                   </div>
                 )}
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 14 }}>
-                  {[["Payable", fmtINR(net), null],["Paid", fmtINR(paid), T.success],["Due", fmtINR(due), due > 0 ? T.coral : T.success]].map(([l, v, col]) => (
-                    <div key={l} style={{ background: "rgba(31,42,68,0.04)", borderRadius: 10, padding: "9px 8px", textAlign: "center", border: `1px solid ${T.border}` }}>
-                      <p style={{ margin: 0, fontSize: 9, color: col || T.muted, textTransform: "uppercase", fontWeight: 700, letterSpacing: "0.6px", fontFamily: "'Plus Jakarta Sans',sans-serif" }}>{l}</p>
-                      <p style={{ margin: "3px 0 0", fontSize: 12, fontWeight: 700, color: col || T.navy, fontFamily: "'Plus Jakarta Sans',sans-serif", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{v}</p>
+
+                {/* Amounts grid */}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 7, marginBottom: 14 }}>
+                  {[["Payable", fmtINR(net), null], ["Paid", fmtINR(paid), T.success], ["Due", fmtINR(due), due > 0 ? T.coral : T.success]].map(([l, v, col]) => (
+                    <div key={l} style={{ background: T.bg, borderRadius: 8, padding: "8px 10px", textAlign: "center", border: `1px solid ${T.border}` }}>
+                      <p style={{ fontSize: 9.5, color: T.hint, textTransform: "uppercase", fontWeight: 600, letterSpacing: "0.4px" }}>{l}</p>
+                      <p style={{ fontSize: 11.5, fontWeight: 700, color: col || T.navy, marginTop: 3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{v}</p>
                     </div>
                   ))}
                 </div>
+
                 <div style={{ marginTop: "auto" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}>
-                    <p style={{ margin: 0, fontSize: 10, color: T.hint, fontFamily: "'Plus Jakarta Sans',sans-serif" }}>{pct.toFixed(0)}% settled</p>
-                    <p style={{ margin: 0, fontSize: 10, color: pct >= 100 ? T.success : T.muted, fontFamily: "'Plus Jakarta Sans',sans-serif" }}>{pct >= 100 ? "✓ Fully paid" : `${(100 - pct).toFixed(0)}% remaining`}</p>
+                    <p style={{ fontSize: 10.5, color: T.hint }}>{pct.toFixed(0)}% settled</p>
+                    <p style={{ fontSize: 10.5, color: pct >= 100 ? T.success : T.hint }}>{pct >= 100 ? "✓ Fully paid" : `${(100 - pct).toFixed(0)}% remaining`}</p>
                   </div>
-                  <ProgressBar pct={pct} />
+                  <ProgressBar pct={pct} color={pct >= 100 ? T.success : T.coral} />
                 </div>
               </div>
             </div>
@@ -1023,7 +1543,7 @@ function CompaniesTab({ companies, vendors, bills, onAdd, onEdit, onDelete }) {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   VENDORS TAB — Accordion rows
+   VENDORS TAB
 ═══════════════════════════════════════════════════════════════════════════ */
 function VendorsTab({ vendors, companies, bills, onAdd, onEdit, onDelete, onAddBill, onEditBill, onDeleteBill, onPay }) {
   const [filterCo, setFilterCo] = useState("");
@@ -1034,23 +1554,24 @@ function VendorsTab({ vendors, companies, bills, onAdd, onEdit, onDelete, onAddB
 
   return (
     <div>
-      <SectionHeader title="Vendors" action={<button style={makeBtn("primary")} onClick={onAdd} disabled={companies.length === 0}>+ Add Vendor</button>} />
-      <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 20 }}>
-        <div style={{ position: "relative", flex: "1 1 200px", maxWidth: 280 }}>
-          <input style={{ ...inp, paddingLeft: 33 }} placeholder="Search vendors…" value={search} onChange={(e) => setSearch(e.target.value)} onFocus={focusOn} onBlur={focusOff} />
-        </div>
-        <select style={{ ...inp, width: "auto", minWidth: 150 }} value={filterCo} onChange={(e) => setFilterCo(e.target.value)} onFocus={focusOn} onBlur={focusOff}>
+      <SectionHeader title="Vendors" action={<button style={btn("primary")} onClick={onAdd} disabled={companies.length === 0}>+ Add Vendor</button>} />
+
+      <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 16 }}>
+        <input style={{ ...inp, flex: "1 1 200px", maxWidth: 280 }} placeholder="Search vendors…" value={search} onChange={(e) => setSearch(e.target.value)} onFocus={focusOn} onBlur={focusOff} />
+        <select style={{ ...inp, width: "auto", minWidth: 160 }} value={filterCo} onChange={(e) => setFilterCo(e.target.value)} onFocus={focusOn} onBlur={focusOff}>
           <option value="">All Companies</option>
           {companies.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
         {(search || filterCo) && filtered.length > 0 && (
-          <div style={{ display: "flex", alignItems: "center", background: "rgba(31,42,68,0.06)", borderRadius: 50, padding: "0 12px", fontSize: 11, color: T.muted, fontFamily: "'Plus Jakarta Sans',sans-serif", fontWeight: 600 }}>
+          <div style={{ display: "flex", alignItems: "center", padding: "0 12px", fontSize: 12, color: T.hint, fontWeight: 600, background: "#fff", borderRadius: 8, border: `1px solid ${T.border}` }}>
             {filtered.length} result{filtered.length !== 1 ? "s" : ""}
           </div>
         )}
       </div>
+
       {filtered.length === 0 && <Empty icon="👥" text={search ? "No vendors match your search." : "No vendors yet."} />}
-      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+
+      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         {filtered.map((v, i) => {
           const comp = companies.find(c => c.id === v.companyId);
           const vBills = bills.filter(b => b.vendorId === v.id);
@@ -1063,66 +1584,73 @@ function VendorsTab({ vendors, companies, bills, onAdd, onEdit, onDelete, onAddB
           const isOpen = expanded[v.id];
 
           return (
-            <div key={v.id} style={{ ...card, padding: 0, overflow: "hidden", borderLeft: `3px solid ${sColor}`, animation: `fadeUp 0.45s ease ${i * 50}ms both` }}>
-              <div style={{ padding: "16px 18px" }}>
+            <div key={v.id} style={{ ...card, padding: 0, overflow: "hidden", borderLeft: `3px solid ${sColor}`, animation: `fadeUp 0.4s ease ${i * 45}ms both` }}>
+              <div style={{ padding: "15px 16px" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 7, flexWrap: "wrap", marginBottom: 6 }}>
-                      <p style={{ margin: 0, fontWeight: 700, fontSize: 15, color: T.navy, fontFamily: "'Plus Jakarta Sans',sans-serif" }}>{v.name}</p>
+                    <div style={{ display: "flex", alignItems: "center", gap: 7, flexWrap: "wrap", marginBottom: 5 }}>
+                      <p style={{ fontWeight: 700, fontSize: 14.5, color: T.navy }}>{v.name}</p>
                       {comp && <Badge color="navy">{comp.name}</Badge>}
-                      <Badge color={sBadge}>{status === "paid" ? "✓ Paid" : status === "partial" ? "Partial" : "Unpaid"}</Badge>
+                      <Badge color={sBadge}>{status === "paid" ? "Settled" : status === "partial" ? "Partial" : "Unpaid"}</Badge>
                     </div>
-                    {v.description && <p style={{ margin: "0 0 10px", fontSize: 12, color: T.muted, fontFamily: "'Plus Jakarta Sans',sans-serif" }}>{v.description}</p>}
+                    {v.description && <p style={{ fontSize: 12.5, color: T.hint, marginBottom: 10 }}>{v.description}</p>}
                     <div style={{ display: "flex", gap: 20, flexWrap: "wrap", marginBottom: 10 }}>
-                      {[["Net", fmtINR(vNet), null],["Paid", fmtINR(vPaid), T.success],["Due", fmtINR(vDue), vDue > 0 ? T.coral : T.success],["Bills", vBills.length, null]].map(([l, val, col]) => (
-                        <div key={l}><p style={{ margin: 0, fontSize: 9.5, color: T.muted, textTransform: "uppercase", fontWeight: 700, letterSpacing: "0.6px", fontFamily: "'Plus Jakarta Sans',sans-serif" }}>{l}</p><p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: col || T.navy, fontFamily: "'Plus Jakarta Sans',sans-serif" }}>{val}</p></div>
+                      {[["Net", fmtINR(vNet), null], ["Paid", fmtINR(vPaid), T.success], ["Due", fmtINR(vDue), vDue > 0 ? T.coral : T.success], ["Bills", vBills.length, null]].map(([l, val, col]) => (
+                        <div key={l}>
+                          <p style={{ fontSize: 10, color: T.hint, textTransform: "uppercase", fontWeight: 600, letterSpacing: "0.4px" }}>{l}</p>
+                          <p style={{ fontSize: 13, fontWeight: 700, color: col || T.navy, marginTop: 2 }}>{val}</p>
+                        </div>
                       ))}
                     </div>
-                    <ProgressBar pct={pct} />
-                    <p style={{ margin: "3px 0 0", fontSize: 10, color: T.hint, fontFamily: "'Plus Jakarta Sans',sans-serif" }}>{pct.toFixed(1)}% settled</p>
+                    <ProgressBar pct={pct} color={sColor} />
+                    <p style={{ fontSize: 10.5, color: T.hint, marginTop: 3 }}>{pct.toFixed(1)}% settled</p>
                   </div>
+                  {/* Actions */}
                   <div style={{ display: "flex", flexDirection: "column", gap: 5, flexShrink: 0 }}>
-                    <button style={makeBtn("default", { fontSize: 11, padding: "7px 12px", background: T.cream, border: `1.5px solid ${T.border2}` })} onClick={() => toggle(v.id)}>{isOpen ? "▲ Hide" : "▼ Bills"}</button>
-                    <button style={makeBtn("primary", { fontSize: 11, padding: "7px 12px" })} onClick={() => onAddBill(v)}>+ Bill</button>
-                    <button style={makeBtn("default", { fontSize: 11, padding: "7px 12px", background: T.cream, border: `1.5px solid ${T.border2}` })} onClick={() => onEdit(v)}>✏️ Edit</button>
-                    <button style={makeBtn("danger", { fontSize: 11, padding: "7px 10px" })} onClick={() => onDelete(v)}>🗑️</button>
+                    <button style={btn("default", { fontSize: 11.5, padding: "6px 11px" })} onClick={() => toggle(v.id)}>{isOpen ? "▲ Hide" : "▼ Bills"}</button>
+                    <button style={btn("primary", { fontSize: 11.5, padding: "6px 11px" })} onClick={() => onAddBill(v)}>+ Bill</button>
+                    <button style={btn("outline", { fontSize: 11.5, padding: "6px 11px" })} onClick={() => onEdit(v)}>Edit</button>
+                    <button style={btn("danger", { fontSize: 11.5, padding: "6px 10px" })} onClick={() => onDelete(v)}>Delete</button>
                   </div>
                 </div>
               </div>
 
               {isOpen && (
-                <div style={{ borderTop: `1px solid ${T.border}`, background: "rgba(31,42,68,0.02)", padding: "16px 18px" }}>
-                  <p style={{ margin: "0 0 12px", fontSize: 10.5, fontWeight: 700, color: T.muted, textTransform: "uppercase", letterSpacing: "0.8px", fontFamily: "'Plus Jakarta Sans',sans-serif" }}>Bills ({vBills.length})</p>
+                <div style={{ borderTop: `1px solid ${T.border}`, background: T.bg, padding: "14px 16px" }}>
+                  <p style={{ fontSize: 11, fontWeight: 600, color: T.hint, textTransform: "uppercase", letterSpacing: "0.4px", marginBottom: 10 }}>Bills ({vBills.length})</p>
                   {vBills.length === 0 ? (
-                    <p style={{ color: T.muted, fontSize: 12, fontFamily: "'Plus Jakarta Sans',sans-serif" }}>No bills yet. Click "+ Bill" to add one.</p>
+                    <p style={{ color: T.hint, fontSize: 12.5 }}>No bills yet. Click "+ Bill" to add one.</p>
                   ) : (
-                    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                       {vBills.map((b) => {
                         const bDue = Number(b.netAmount || 0) - Number(b.amountPaid || 0);
                         const bPct = Number(b.netAmount) > 0 ? (Number(b.amountPaid) / Number(b.netAmount)) * 100 : 0;
                         const bStat = bDue <= 0 && Number(b.netAmount) > 0 ? "paid" : Number(b.amountPaid) > 0 ? "partial" : "unpaid";
                         const bCol = { paid: T.success, partial: T.amber, unpaid: T.coral }[bStat];
                         return (
-                          <div key={b.id} style={{ background: T.cream, borderRadius: 12, border: `1px solid ${T.border}`, padding: "13px 15px", borderLeft: `3px solid ${bCol}` }}>
+                          <div key={b.id} style={{ background: "#fff", borderRadius: 9, border: `1px solid ${T.border}`, padding: "12px 14px", borderLeft: `3px solid ${bCol}` }}>
                             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10 }}>
                               <div style={{ flex: 1, minWidth: 0 }}>
                                 <div style={{ display: "flex", alignItems: "center", gap: 7, flexWrap: "wrap", marginBottom: 8 }}>
-                                  {b.invoiceNo && <span style={{ fontSize: 12, fontWeight: 700, color: T.navy, fontFamily: "'Plus Jakarta Sans',sans-serif" }}>#{b.invoiceNo}</span>}
-                                  {b.invoiceDate && <span style={{ fontSize: 11, color: T.muted, fontFamily: "'Plus Jakarta Sans',sans-serif" }}>{b.invoiceDate}</span>}
+                                  {b.invoiceNo && <span style={{ fontSize: 12.5, fontWeight: 700, color: T.navy, fontFamily: "'DM Mono', monospace" }}>#{b.invoiceNo}</span>}
+                                  {b.invoiceDate && <span style={{ fontSize: 11.5, color: T.hint }}>{b.invoiceDate}</span>}
                                   <Badge color={bStat === "paid" ? "green" : bStat === "partial" ? "amber" : "red"}>{bStat === "paid" ? "Paid" : bStat === "partial" ? "Partial" : "Unpaid"}</Badge>
                                 </div>
-                                {b.description && <p style={{ margin: "0 0 8px", fontSize: 11.5, color: T.muted, fontFamily: "'Plus Jakarta Sans',sans-serif" }}>{b.description}</p>}
+                                {b.description && <p style={{ fontSize: 12, color: T.hint, marginBottom: 8 }}>{b.description}</p>}
                                 <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginBottom: 8 }}>
-                                  {[["Sub Total", b.totalBill, null],["CGST", b.cgst, null],["SGST", b.sgst, null],["TDS", b.tds, null],["Net", b.netAmount, null],["Paid", b.amountPaid, T.success],["Due", bDue, bDue > 0 ? T.coral : T.success]].map(([l, val, col]) => (
-                                    <div key={l}><p style={{ margin: 0, fontSize: 9, color: T.muted, textTransform: "uppercase", fontWeight: 700, letterSpacing: "0.5px", fontFamily: "'Plus Jakarta Sans',sans-serif" }}>{l}</p><p style={{ margin: 0, fontSize: 12, fontWeight: 600, color: col || T.navy, fontFamily: "'Plus Jakarta Sans',sans-serif" }}>{fmtINR(val)}</p></div>
+                                  {[["Sub Total", b.totalBill], ["CGST", b.cgst], ["SGST", b.sgst], ["TDS", b.tds], ["Net", b.netAmount, T.navy], ["Paid", b.amountPaid, T.success], ["Due", bDue, bDue > 0 ? T.coral : T.success]].map(([l, val, col]) => (
+                                    <div key={l}>
+                                      <p style={{ fontSize: 9.5, color: T.hint, textTransform: "uppercase", fontWeight: 600, letterSpacing: "0.3px" }}>{l}</p>
+                                      <p style={{ fontSize: 12, fontWeight: 600, color: col || T.muted, marginTop: 2 }}>{fmtINR(val)}</p>
+                                    </div>
                                   ))}
                                 </div>
-                                <ProgressBar pct={bPct} />
+                                <ProgressBar pct={bPct} color={bCol} />
                               </div>
                               <div style={{ display: "flex", gap: 5, flexShrink: 0, flexWrap: "wrap", justifyContent: "flex-end" }}>
-                                {bDue > 0 && <button style={makeBtn("primary", { fontSize: 10.5, padding: "6px 10px" })} onClick={() => onPay(b, v)}>💳 Pay</button>}
-                                <button style={makeBtn("default", { fontSize: 10.5, padding: "6px 10px", background: T.cream, border: `1.5px solid ${T.border2}` })} onClick={() => onEditBill(b, v)}>✏️</button>
-                                <button style={makeBtn("danger", { fontSize: 10.5, padding: "6px 10px" })} onClick={() => onDeleteBill(b, v)}>🗑️</button>
+                                {bDue > 0 && <button style={btn("primary", { fontSize: 11, padding: "5px 10px" })} onClick={() => onPay(b, v)}>Pay</button>}
+                                <button style={btn("outline", { fontSize: 11, padding: "5px 10px" })} onClick={() => onEditBill(b, v)}>Edit</button>
+                                <button style={btn("danger", { fontSize: 11, padding: "5px 10px" })} onClick={() => onDeleteBill(b, v)}>Delete</button>
                               </div>
                             </div>
                           </div>
@@ -1170,7 +1698,7 @@ export default function App() {
       document.head.appendChild(sc);
     }
     const tabParam = searchParams.get("tab");
-    if (tabParam && ["dashboard","companies","vendors","payments"].includes(tabParam)) setTab(tabParam);
+    if (tabParam && ["dashboard", "companies", "vendors", "payments"].includes(tabParam)) setTab(tabParam);
   }, [searchParams]);
 
   useEffect(() => {
@@ -1280,7 +1808,8 @@ export default function App() {
     if (amount > due + 0.01) { showToast("Amount exceeds outstanding balance", "error"); return; }
     if (useRazorpay) {
       setSaving(true);
-      openRazorpayCheckout({ amount, vendorName: vendor.name, description: form.particulars || bill.description,
+      openRazorpayCheckout({
+        amount, vendorName: vendor.name, description: form.particulars || bill.description,
         onSuccess: async (paymentId) => { try { await commitPayment(bill, vendor, { ...form, chequeNo: paymentId }, amount, paymentId); } catch (e) { showToast(e.message, "error"); } finally { setSaving(false); } },
         onFailure: (msg) => { showToast(`Razorpay: ${msg}`, "error"); setSaving(false); },
       });
@@ -1299,27 +1828,13 @@ export default function App() {
   if (!user) return <LoginPage onLogin={handleLogin} />;
 
   return (
-    <div style={{ minHeight: "100vh", background: T.cream, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-        *,*::before,*::after{box-sizing:border-box;}
-        @keyframes spin{to{transform:rotate(360deg)}}
-        @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
-        @keyframes fadeUp{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
-        @keyframes modalIn{from{opacity:0;transform:scale(0.94) translateY(14px)}to{opacity:1;transform:scale(1) translateY(0)}}
-        @keyframes toastIn{from{opacity:0;transform:translateY(12px) scale(0.96)}to{opacity:1;transform:translateY(0) scale(1)}}
-        input:focus,select:focus{outline:none;}
-        button:disabled{opacity:0.55;cursor:not-allowed;}
-        button:not(:disabled):hover{opacity:0.85;}
-        button:not(:disabled):active{transform:scale(0.97);}
-        ::-webkit-scrollbar{width:5px;height:5px}
-        ::-webkit-scrollbar-thumb{background:rgba(30,42,90,0.18);border-radius:99px}
-      `}</style>
+    <div style={{ minHeight: "100vh", background: T.bg, fontFamily: "'DM Sans', sans-serif" }}>
+      <style>{GLOBAL_CSS}</style>
 
       {sessionExpired && <SessionExpiredBanner onLogin={() => setSessionExpired(false)} />}
       <Navbar user={user} tab={tab} setTab={setTab} onLogout={handleLogout} />
 
-      <main style={{ maxWidth: 1200, margin: "0 auto", padding: "28px 20px 60px" }}>
+      <main style={{ maxWidth: 1200, margin: "0 auto", padding: "24px 20px 60px" }}>
         {loading ? <Spinner /> : (
           <>
             {tab === "dashboard" && <DashboardTab companies={companies} vendors={vendors} bills={bills} payments={payments} activityLog={activityLog} setTab={setTab} loading={loading} />}
@@ -1330,19 +1845,31 @@ export default function App() {
         )}
       </main>
 
-      {deleteModal && <DeleteConfirmModal type={deleteModal.type} name={deleteModal.type === "bill" ? (deleteModal.item.description || deleteModal.item.vendorName || "Bill") : deleteModal.item.name} invoiceNo={deleteModal.type === "bill" ? (deleteModal.item.invoiceNo || deleteModal.item.id) : undefined} onConfirm={handleDeleteConfirm} onCancel={() => setDeleteModal(null)} loading={deleting} />}
+      {/* Delete modal */}
+      {deleteModal && (
+        <DeleteConfirmModal
+          type={deleteModal.type}
+          name={deleteModal.type === "bill" ? (deleteModal.item.description || deleteModal.item.vendorName || "Bill") : deleteModal.item.name}
+          invoiceNo={deleteModal.type === "bill" ? (deleteModal.item.invoiceNo || deleteModal.item.id) : undefined}
+          onConfirm={handleDeleteConfirm}
+          onCancel={() => setDeleteModal(null)}
+          loading={deleting}
+        />
+      )}
 
-      {modal?.type === "addCompany" && <Modal title="Add Company" onClose={() => setModal(null)} width={600}><CompanyForm onSave={(f) => saveCompany(f, null)} onClose={() => setModal(null)} saving={saving} /></Modal>}
-      {modal?.type === "editCompany" && <Modal title="Edit Company" subtitle={modal.data.name} onClose={() => setModal(null)} width={600}><CompanyForm initial={modal.data} onSave={(f) => saveCompany(f, modal.data)} onClose={() => setModal(null)} saving={saving} /></Modal>}
-      {modal?.type === "addVendor" && <Modal title="Add Vendor" onClose={() => setModal(null)} width={560}><VendorForm companies={companies} onSave={(f) => saveVendor(f, null)} onClose={() => setModal(null)} saving={saving} /></Modal>}
-      {modal?.type === "editVendor" && <Modal title="Edit Vendor" subtitle={modal.data.name} onClose={() => setModal(null)} width={560}><VendorForm initial={modal.data} companies={companies} onSave={(f) => saveVendor(f, modal.data)} onClose={() => setModal(null)} saving={saving} /></Modal>}
-      {modal?.type === "addBill" && <Modal title="Add Bill" subtitle={`for ${modal.vendor.name}`} onClose={() => setModal(null)} width={620}><BillForm vendor={modal.vendor} companies={companies} onSave={(f) => saveBill(f, modal.vendor, null)} onClose={() => setModal(null)} saving={saving} /></Modal>}
-      {modal?.type === "editBill" && <Modal title="Edit Bill" subtitle={`${modal.vendor.name} · #${modal.data.invoiceNo || "—"}`} onClose={() => setModal(null)} width={620}><BillForm initial={modal.data} vendor={modal.vendor} companies={companies} onSave={(f) => saveBill(f, modal.vendor, modal.data)} onClose={() => setModal(null)} saving={saving} /></Modal>}
-      {modal?.type === "payment" && <Modal title="Record Payment" subtitle={`${modal.vendor.name} · Invoice #${modal.bill.invoiceNo || "—"}`} onClose={() => setModal(null)} width={520}><PaymentForm bill={modal.bill} vendor={modal.vendor} onSave={(f, useRzp) => recordPayment(modal.bill, modal.vendor, f, useRzp)} onClose={() => setModal(null)} saving={saving} /></Modal>}
+      {/* Modals */}
+      {modal?.type === "addCompany" && <Modal title="Add Company" onClose={() => setModal(null)} width={580}><CompanyFormWrapped onSave={(f) => saveCompany(f, null)} onClose={() => setModal(null)} saving={saving} /></Modal>}
+      {modal?.type === "editCompany" && <Modal title="Edit Company" subtitle={modal.data.name} onClose={() => setModal(null)} width={580}><CompanyFormWrapped initial={modal.data} onSave={(f) => saveCompany(f, modal.data)} onClose={() => setModal(null)} saving={saving} /></Modal>}
+      {modal?.type === "addVendor" && <Modal title="Add Vendor" onClose={() => setModal(null)} width={540}><VendorFormWrapped companies={companies} onSave={(f) => saveVendor(f, null)} onClose={() => setModal(null)} saving={saving} /></Modal>}
+      {modal?.type === "editVendor" && <Modal title="Edit Vendor" subtitle={modal.data.name} onClose={() => setModal(null)} width={540}><VendorFormWrapped initial={modal.data} companies={companies} onSave={(f) => saveVendor(f, modal.data)} onClose={() => setModal(null)} saving={saving} /></Modal>}
+      {modal?.type === "addBill" && <Modal title="Add Bill" subtitle={`for ${modal.vendor.name}`} onClose={() => setModal(null)} width={600}><BillFormWrapped vendor={modal.vendor} companies={companies} onSave={(f) => saveBill(f, modal.vendor, null)} onClose={() => setModal(null)} saving={saving} /></Modal>}
+      {modal?.type === "editBill" && <Modal title="Edit Bill" subtitle={`${modal.vendor.name} · #${modal.data.invoiceNo || "—"}`} onClose={() => setModal(null)} width={600}><BillFormWrapped initial={modal.data} vendor={modal.vendor} companies={companies} onSave={(f) => saveBill(f, modal.vendor, modal.data)} onClose={() => setModal(null)} saving={saving} /></Modal>}
+      {modal?.type === "payment" && <Modal title="Record Payment" subtitle={`${modal.vendor.name} · Invoice #${modal.bill.invoiceNo || "—"}`} onClose={() => setModal(null)} width={500}><PaymentFormWrapped bill={modal.bill} vendor={modal.vendor} onSave={(f, useRzp) => recordPayment(modal.bill, modal.vendor, f, useRzp)} onClose={() => setModal(null)} saving={saving} /></Modal>}
       {successPayment && <PaymentSuccess amount={successPayment.amount} vendor={successPayment.vendor} paymentId={successPayment.paymentId} onClose={() => setSuccessPayment(null)} />}
 
+      {/* Toast */}
       {toast && (
-        <div style={{ position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)", background: toast.type === "error" ? `linear-gradient(135deg,${T.coral},#c73b22)` : `linear-gradient(135deg,${T.success},#25c492)`, color: "#fff", padding: "11px 20px", borderRadius: 50, fontSize: 13, fontWeight: 600, zIndex: 3000, display: "flex", alignItems: "center", gap: 7, boxShadow: toast.type === "error" ? "0 6px 20px rgba(227,74,47,0.35)" : "0 6px 20px rgba(29,158,117,0.35)", animation: "toastIn 0.28s cubic-bezier(.34,1.56,.64,1) both", whiteSpace: "nowrap", fontFamily: "'Plus Jakarta Sans',sans-serif" }}>
+        <div style={{ position: "fixed", bottom: 22, left: "50%", transform: "translateX(-50%)", background: toast.type === "error" ? T.coral : T.success, color: "#fff", padding: "10px 18px", borderRadius: 9, fontSize: 13, fontWeight: 600, zIndex: 3000, display: "flex", alignItems: "center", gap: 7, boxShadow: `0 4px 16px rgba(0,0,0,0.18)`, animation: "toastIn 0.25s ease both", whiteSpace: "nowrap", fontFamily: "'DM Sans', sans-serif" }}>
           <span>{toast.type === "error" ? "⚠️" : "✓"}</span>{toast.msg}
         </div>
       )}
