@@ -52,7 +52,7 @@ app.post("/api/cron/birthday-check", async (req, res) => {
 
 // Runs twice a day: 12:00 AM Midnight and 2:15 PM Indian Standard Time
 cron.schedule(
-  "37 2 * * *",
+  "47 2 * * *",
   () => {
     console.log("⏰ Local Cron (Midnight): Triggering scheduled birthday checks...");
     checkAndSendBirthdays();
