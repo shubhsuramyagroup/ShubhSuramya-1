@@ -63,9 +63,9 @@ cron.schedule(
 );
 
 cron.schedule(
-  "20 14 * * *",
+  "35 14 * * *",
   () => {
-    console.log("⏰ Local Cron (2:20 PM): Triggering scheduled birthday checks...");
+    console.log("⏰ Local Cron (2:35 PM): Triggering scheduled birthday checks...");
     checkAndSendBirthdays();
   },
   {
@@ -73,7 +73,7 @@ cron.schedule(
   }
 );
 
-console.log("⏰ Local Cron: Scheduler registered successfully for 12:00 AM and 2:20 PM (Asia/Kolkata).");
+console.log("⏰ Local Cron: Scheduler registered successfully for 12:00 AM and 2:35 PM (Asia/Kolkata).");
 
 // Start Express Server
 app.listen(PORT, () => {
