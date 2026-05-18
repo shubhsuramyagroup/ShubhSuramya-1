@@ -214,6 +214,18 @@ function IconLogout() {
   );
 }
 
+function formatDOB(dob) {
+  if (!dob) return "N/A";
+  if (dob && (typeof dob.toDate === "function" || dob.seconds)) {
+    const date = typeof dob.toDate === "function" ? dob.toDate() : new Date(dob.seconds * 1000);
+    const day = String(date.getUTCDate()).padStart(2, "0");
+    const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+    const year = date.getUTCFullYear();
+    return `${day}-${month}-${year}`;
+  }
+  return dob;
+}
+
 /* ─── Main Dashboard ─────────────────────────────────────────────── */
 export default function Dashboard() {
   const [projects, setProjects] = useState([]);
@@ -251,12 +263,12 @@ export default function Dashboard() {
 
   const exportExcel = () => {
     const data = contacts.map((item) => ({
-      FullName: item.fullName,
-      Email: item.email,
-      Phone: item.phone,
-      DOB: item.dob,
-      Subject: item.subject,
-      Message: item.message,
+      FullName: item.fullName || "",
+      Email: item.email || "",
+      Phone: item.phone || "",
+      DOB: formatDOB(item.dob),
+      Subject: item.subject || "",
+      Message: item.message || "",
     }));
     const worksheet = XLSX.utils.json_to_sheet(data);
     const workbook = XLSX.utils.book_new();

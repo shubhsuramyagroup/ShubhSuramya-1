@@ -199,7 +199,7 @@ function ContactForm({ onSuccess }) {
         fullName: form.fullName,
         email: form.email,
         phone: form.phone,
-        dob: form.dob,
+        dob: form.dob ? new Date(form.dob) : null,
         subject: form.subject,
         message: form.message,
         createdAt: new Date(),

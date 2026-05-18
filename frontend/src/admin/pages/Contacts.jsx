@@ -12,6 +12,18 @@ function formatDate(timestamp) {
   });
 }
 
+function formatDOB(dob) {
+  if (!dob) return "N/A";
+  if (dob && (typeof dob.toDate === "function" || dob.seconds)) {
+    const date = typeof dob.toDate === "function" ? dob.toDate() : new Date(dob.seconds * 1000);
+    const day = String(date.getUTCDate()).padStart(2, "0");
+    const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+    const year = date.getUTCFullYear();
+    return `${day}-${month}-${year}`;
+  }
+  return dob;
+}
+
 export default function Contacts() {
   const navigate = useNavigate();
   const [contacts, setContacts] = useState([]);
@@ -44,7 +56,7 @@ export default function Contacts() {
       FullName: item.fullName || "",
       Email: item.email || "",
       Phone: item.phone || "",
-      DateOfBirth: item.dob || "",
+      DateOfBirth: formatDOB(item.dob),
       Subject: item.subject || "",
       Message: item.message || "",
       CreatedDate: formatDate(item.createdAt),
@@ -194,7 +206,7 @@ export default function Contacts() {
                       </td>
                       <td className="px-5 sm:px-6 py-4 text-gray-500 text-sm">{contact.email}</td>
                       <td className="px-5 sm:px-6 py-4 text-gray-500 text-sm whitespace-nowrap">{contact.phone}</td>
-                      <td className="px-5 sm:px-6 py-4 text-gray-500 text-sm whitespace-nowrap">{contact.dob}</td>
+                      <td className="px-5 sm:px-6 py-4 text-gray-500 text-sm whitespace-nowrap">{formatDOB(contact.dob)}</td>
                       <td className="px-5 sm:px-6 py-4">
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full
                                          bg-[#FFF0EC] text-[#E4572E] text-[10px] font-bold
