@@ -2,6 +2,8 @@ import { useEffect, useState, useRef } from "react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import { addContact } from "../services/contactService";
+import { PhoneInput } from "react-international-phone";
+import "react-international-phone/style.css";
 
 // ── useInView hook ────────────────────────────────────────────────
 function useInView(threshold = 0.12) {
@@ -179,6 +181,7 @@ function OfficeCard({ city, address, phone, mapUrl, delay }) {
 // ── Contact form ──────────────────────────────────────────────────
 function ContactForm({ onSuccess }) {
   const [formRef, inView] = useInView(0.1);
+
   const [form, setForm] = useState({
     fullName: "",
     email: "",
@@ -189,36 +192,60 @@ function ContactForm({ onSuccess }) {
   });
 
   const handleChange = (e) =>
-    setForm({ ...form, [e.target.name]: e.target.value });
+    setForm({
+      ...form,
+      [e.target.name]: e.target.value,
+    });
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+const handleSubmit = async (e) => {
+  e.preventDefault();
 
-    try {
-      await addContact({
-        fullName: form.fullName,
-        email: form.email,
-        phone: form.phone,
-        dob: form.dob ? new Date(form.dob) : null,
-        subject: form.subject,
-        message: form.message,
-        createdAt: new Date(),
-      });
+  if (
+    !form.fullName ||
+    !form.email ||
+    !form.phone ||
+    !form.dob ||
+    !form.subject ||
+    !form.message
+  ) {
+    alert("Please fill all required fields");
+    return;
+  }
 
-      onSuccess();
+  try {
+    let formattedPhone = form.phone.trim();
 
-      setForm({
-        fullName: "",
-        email: "",
-        phone: "",
-        dob: "",
-        subject: "",
-        message: "",
-      });
-    } catch (err) {
-      console.log(err);
-    }
-  };
+    // Remove all extra +
+    formattedPhone = formattedPhone.replace(/\+/g, "");
+
+    // Add exactly one +
+    formattedPhone = "+" + formattedPhone;
+
+    await addContact({
+      fullName: form.fullName,
+      email: form.email,
+      phone: formattedPhone,
+      dob: new Date(form.dob),
+      subject: form.subject,
+      message: form.message,
+      createdAt: new Date(),
+    });
+
+    onSuccess();
+
+    setForm({
+      fullName: "",
+      email: "",
+      phone: "",
+      dob: "",
+      subject: "",
+      message: "",
+    });
+
+  } catch (err) {
+    console.log(err);
+  }
+};
 
   return (
     <div
@@ -226,24 +253,29 @@ function ContactForm({ onSuccess }) {
       style={{
         opacity: inView ? 1 : 0,
         transform: inView ? "translateY(0)" : "translateY(36px)",
-        transition: "opacity 0.75s ease 0.1s, transform 0.75s ease 0.1s",
+        transition:
+          "opacity 0.75s ease 0.1s, transform 0.75s ease 0.1s",
       }}
       className="bg-white rounded-3xl shadow-xl border border-gray-100 p-6 sm:p-8 lg:p-10"
     >
-      
       <h3 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-1">
         Send us a message
       </h3>
+
       <p className="text-gray-400 text-sm mb-8">
         We'll get back to you within one business day.
       </p>
 
       <form onSubmit={handleSubmit} className="space-y-5">
+
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+
+          {/* Full Name */}
           <div>
             <label className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1.5 block">
               Full Name
             </label>
+
             <input
               type="text"
               name="fullName"
@@ -251,13 +283,16 @@ function ContactForm({ onSuccess }) {
               onChange={handleChange}
               required
               placeholder="Arjun Mehta"
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:border-[#E34A2F] focus:ring-2 focus:ring-[#E34A2F]/10 transition-all bg-gray-50 focus:bg-white"
+              className="w-full px-4 py-3 rounded-xl border border-gray-200"
             />
           </div>
+
+          {/* Email */}
           <div>
             <label className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1.5 block">
               Email Address
             </label>
+
             <input
               type="email"
               name="email"
@@ -265,74 +300,96 @@ function ContactForm({ onSuccess }) {
               onChange={handleChange}
               required
               placeholder="arjun@example.com"
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:border-[#E34A2F] focus:ring-2 focus:ring-[#E34A2F]/10 transition-all bg-gray-50 focus:bg-white"
+              className="w-full px-4 py-3 rounded-xl border border-gray-200"
             />
           </div>
+
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+
+          {/* Phone */}
           <div>
             <label className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1.5 block">
               Phone Number
             </label>
-            <input
-              type="tel"
-              name="phone"
+
+            <PhoneInput
+              country={"in"}
+              enableSearch={true}
               value={form.phone}
-              onChange={handleChange}
-              placeholder="+91 98765 43210"
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:border-[#E34A2F] focus:ring-2 focus:ring-[#E34A2F]/10 transition-all bg-gray-50 focus:bg-white"
+              onChange={(phone) =>
+                setForm({
+                  ...form,
+                  phone: "+" + phone,
+                })
+              }
+              inputProps={{
+                required: true,
+                name: "phone",
+              }}
             />
           </div>
+
+          {/* DOB */}
           <div>
             <label className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1.5 block">
-              Date of birth
+              Date of Birth
             </label>
+
             <input
               type="date"
               name="dob"
               value={form.dob}
               onChange={handleChange}
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-900 focus:outline-none focus:border-[#E34A2F] focus:ring-2 focus:ring-[#E34A2F]/10 transition-all bg-gray-50 focus:bg-white"
-            />
-          </div>
-          <div className="sm:col-span-2">
-            <label className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1.5 block">
-              Subject
-            </label>
-            <input
-              type="text"
-              name="subject"
-              value={form.subject}
-              onChange={handleChange}
               required
-              placeholder="Enter subject"
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:border-[#E34A2F] focus:ring-2 focus:ring-[#E34A2F]/10 transition-all bg-gray-50 focus:bg-white"
+              className="w-full px-4 py-3 rounded-xl border border-gray-200"
             />
           </div>
+
         </div>
 
+        {/* Subject */}
+        <div>
+          <label className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1.5 block">
+            Subject
+          </label>
+
+          <input
+            type="text"
+            name="subject"
+            value={form.subject}
+            onChange={handleChange}
+            required
+            placeholder="Enter subject"
+            className="w-full px-4 py-3 rounded-xl border border-gray-200"
+          />
+        </div>
+
+        {/* Message */}
         <div>
           <label className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1.5 block">
             Message
           </label>
+
           <textarea
             name="message"
             value={form.message}
             onChange={handleChange}
             required
             rows={5}
-            placeholder="Tell us about your project or query..."
-            className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:border-[#E34A2F] focus:ring-2 focus:ring-[#E34A2F]/10 transition-all bg-gray-50 focus:bg-white resize-none"
+            placeholder="Tell us about your project..."
+            className="w-full px-4 py-3 rounded-xl border border-gray-200 resize-none"
           />
         </div>
 
         <button
           type="submit"
-          className="w-full py-4 bg-[#E34A2F] hover:bg-[#C13A20] text-white font-bold text-sm rounded-xl transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-[#E34A2F]/30 active:translate-y-0"
+          className="w-full py-4 bg-[#E34A2F] text-white font-bold rounded-xl"
         >
           Send Message →
         </button>
+
       </form>
     </div>
   );
