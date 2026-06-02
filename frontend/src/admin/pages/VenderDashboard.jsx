@@ -100,7 +100,11 @@ const T = {
 };
 const CHART_COLORS = [T.coral, T.blue, T.success, T.amber, T.purple, T.teal, T.navy, T.gold];
 
-const fmtINR = (n) => `₹${Number(n || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+const fmtINR = (n) =>
+  `Rs. ${Number(n || 0).toLocaleString("en-IN", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
 const today = () => new Date().toISOString().slice(0, 10);
 function getMonthKey(d) { if (!d) return ""; const dt = new Date(d); return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}`; }
 function formatMonthLabel(key) { if (!key) return ""; const [y, m] = key.split("-"); return `${"Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec".split(" ")[parseInt(m, 10) - 1]} ${y}`; }
@@ -110,7 +114,7 @@ function isThisMonth(d) { return d && getMonthKey(d) === getMonthKey(today()); }
 /* ─── Receipt Number Generator ──────────────────────────────────────────── */
 function generateReceiptNo(existingSales) {
   const year = new Date().getFullYear();
-  const prefix = `SRB-${year}-`;
+  const prefix = `SSG-${year}-`;
   const nums = existingSales
     .map(s => s.receiptNo)
     .filter(r => r && r.startsWith(prefix))
@@ -234,174 +238,174 @@ const exportFlatSalesExcel = (sales) => {
 };
 
 /* ─── PDF Receipt Generator ──────────────────────────────────────────────── */
-async function generateSaleReceiptPDF(sale, salePayments = []) {
+// import headerImg from "../../../public/header.png"; // your full header image
+
+async function generateSaleReceiptPDF(sale, payment, paymentIndex = 0) {
+  if (!payment) {
+    alert("Payment not found.");
+    return;
+  }
+
   const doc = new jsPDF("p", "mm", "a4");
+  const W = 210;
+  const H = 297;
+  const HEADER_H = 52; // adjust to match your image's aspect ratio
 
-  // Header
-  doc.setFillColor(30, 42, 90);
-  doc.rect(0, 0, 210, 25, "F");
+  // ─── HEADER AS FULL IMAGE ─────────────────────────────────
+  doc.addImage(logo, "PNG", 0, 0, W, HEADER_H);
 
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(18);
-  doc.setFont("helvetica", "bold");
-  doc.text("SHUBH SURAMYA BUILDERS", 105, 12, { align: "center" });
-
-  doc.setFontSize(9);
-  doc.text("Sanand, Gujarat", 105, 18, { align: "center" });
-
-  doc.setTextColor(0, 0, 0);
-
-  let y = 35;
-
+  // ─── TITLE ────────────────────────────────────────────────
+  doc.setTextColor(18, 30, 90);
   doc.setFontSize(16);
-  doc.text("CUSTOMER RECEIPT", 105, y, { align: "center" });
+  doc.setFont("helvetica", "bold");
+  doc.text("Payment Receipt", W / 2, HEADER_H + 16, { align: "center" });
 
-  y += 10;
+  doc.setDrawColor(18, 30, 90);
+  doc.setLineWidth(0.4);
+  doc.line(72, HEADER_H + 18.5, W - 72, HEADER_H + 18.5);
 
-  // Receipt Info
-  autoTable(doc, {
-    startY: y,
-    theme: "grid",
-    body: [
-      ["Receipt No", sale.receiptNo || "", "Status", sale.status || ""],
-      ["Receipt Date", sale.bookingDate || "", "Customer", sale.customerName || ""]
-    ]
-  });
+  // ─── RECEIPT META ─────────────────────────────────────────
+  let y = HEADER_H + 30;
 
-  y = doc.lastAutoTable.finalY + 8;
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(18, 30, 90);
+  doc.text("Shubh Suramaya Group", 14, y);
 
-  // Customer Details
-  doc.setFontSize(12);
-  doc.text("Customer Details", 14, y);
-
-  autoTable(doc, {
-    startY: y + 3,
-    theme: "grid",
-    body: [
-      ["Customer Name", sale.customerName || ""],
-      ["Mobile", sale.mobile || ""],
-      ["Email", sale.email || ""],
-      ["PAN", sale.pan || ""],
-      ["Aadhaar", sale.aadhaar || ""],
-      ["Address", sale.address || ""]
-    ]
-  });
-
-  y = doc.lastAutoTable.finalY + 8;
-
-  // Property Details
-  doc.text("Property Details", 14, y);
-
-  autoTable(doc, {
-    startY: y + 3,
-    theme: "grid",
-    body: [
-      ["Project", sale.projectName || ""],
-      ["Building", sale.buildingName || ""],
-      ["Wing", sale.wing || ""],
-      ["Floor", sale.floorNo || ""],
-      ["Flat No", sale.flatNo || ""],
-      ["Flat Type", sale.flatType || ""],
-      ["Carpet Area", sale.carpetArea || ""],
-      ["Built-up Area", sale.builtUpArea || ""]
-    ]
-  });
-
-  y = doc.lastAutoTable.finalY + 8;
-
-  // Booking Details
-  doc.text("Booking Details", 14, y);
-
-  autoTable(doc, {
-    startY: y + 3,
-    theme: "grid",
-    body: [
-      ["Booking Date", sale.bookingDate || ""],
-      ["Agreement Date", sale.agreementDate || ""],
-      ["Possession Date", sale.possessionDate || ""],
-      ["Sales Executive", sale.salesExecutive || ""]
-    ]
-  });
-
-  y = doc.lastAutoTable.finalY + 8;
-
-  // Amount Details
-  doc.text("Amount Details", 14, y);
-
-  autoTable(doc, {
-    startY: y + 3,
-    head: [["Particular", "Amount"]],
-    theme: "grid",
-    body: [
-      ["Flat Price", fmtINR(sale.flatPrice)],
-      ["GST Amount", fmtINR(sale.gstAmount)],
-      ["Registration Amount", fmtINR(sale.registrationAmount)],
-      ["Stamp Duty", fmtINR(sale.stampDuty)],
-      ["Other Charges", fmtINR(sale.otherCharges)],
-      ["Total Amount", fmtINR(sale.totalAmount)]
-    ]
-  });
-
-  y = doc.lastAutoTable.finalY + 8;
-
-  // Payment History
-  doc.text("Payment History", 14, y);
-
-  autoTable(doc, {
-    startY: y + 3,
-    theme: "grid",
-    head: [[
-      "Date",
-      "Mode",
-      "Transaction ID",
-      "Bank",
-      "Notes",
-      "Amount"
-    ]],
-    body: salePayments.map((p) => [
-      p.paymentDate || "",
-      p.paymentMode || "",
-      p.transactionId || "",
-      p.bankName || "",
-      p.notes || "",
-      fmtINR(p.amount || 0)
-    ]),
-    styles: {
-      fontSize: 8,
-      overflow: "linebreak"
-    }
-  });
-
-  y = doc.lastAutoTable.finalY + 8;
-
-  // Financial Summary
-  autoTable(doc, {
-    startY: y,
-    theme: "grid",
-    body: [
-      ["Total Amount", fmtINR(sale.totalAmount)],
-      ["Paid Amount", fmtINR(sale.paidAmount)],
-      ["Remaining Amount", fmtINR(sale.remainingAmount)]
-    ]
-  });
-
-  y = doc.lastAutoTable.finalY + 20;
-
-  // Signatures
-  doc.line(20, y, 80, y);
-  doc.line(130, y, 190, y);
+  y += 7;
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(60, 60, 60);
+  doc.text("Date:", 14, y);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(18, 30, 90);
+  doc.text(payment.paymentDate || sale.bookingDate || "—", 32, y);
 
   y += 6;
+  const receiptNo = sale.receiptNo
+    ? `${sale.receiptNo}-P${String(paymentIndex + 1).padStart(2, "0")}`
+    : `P${String(paymentIndex + 1).padStart(2, "0")}`;
 
-  doc.text("Customer Signature", 50, y, {
-    align: "center"
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(60, 60, 60);
+  doc.text("Receipt No.:", 14, y);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(18, 30, 90);
+  doc.text(receiptNo, 44, y);
+
+  y += 14;
+
+  // ─── MAIN TABLE ───────────────────────────────────────────
+  autoTable(doc, {
+    startY: y,
+    theme: "grid",
+    tableWidth: W - 28,
+    margin: { left: 14, right: 14 },
+    styles: {
+      fontSize: 10,
+      cellPadding: 5,
+      lineColor: [210, 215, 230],
+      lineWidth: 0.3,
+    },
+    columnStyles: {
+      0: {
+        fontStyle: "bold",
+        textColor: [100, 115, 150],
+        cellWidth: 68,
+        fillColor: [245, 247, 252],
+      },
+      1: {
+        fontStyle: "normal",
+        textColor: [18, 30, 90],
+        fillColor: [255, 255, 255],
+      },
+    },
+    body: [
+      ["Received From:", sale.customerName || "—"],
+      ["Customer Email:", sale.email || "—"],
+      ["Customer Phone:", sale.mobile || "—"],
+      ["Amount Paid:", fmtINR(payment.amount || 0)],
+      [
+        "Total (incl. GST):",
+        fmtINR((payment.amount || 0) + (payment.gstAmount || 0)),
+      ],
+      ["Payment Method:", payment.paymentMode || "—"],
+      [
+        "Shop/Flat:",
+        `Flat ${sale.flatNo || "—"}, ${sale.wing || ""} Wing, Floor ${
+          sale.floorNo || "—"
+        }, ${sale.buildingName || ""} — ${sale.projectName || ""}`,
+      ],
+    ],
   });
 
-  doc.text("Authorized Signature", 160, y, {
-    align: "center"
-  });
+  y = doc.lastAutoTable.finalY + 16;
 
-  doc.save(`Receipt_${sale.receiptNo}.pdf`);
+  // ─── OPTIONAL TRANSACTION DETAILS ─────────────────────────
+  if (payment.transactionId || payment.bankName || payment.notes) {
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(120, 130, 155);
+    if (payment.transactionId) {
+      doc.text(`Transaction ID: ${payment.transactionId}`, 14, y);
+      y += 5;
+    }
+    if (payment.bankName) {
+      doc.text(`Bank: ${payment.bankName}`, 14, y);
+      y += 5;
+    }
+    if (payment.notes) {
+      doc.text(`Notes: ${payment.notes}`, 14, y);
+      y += 5;
+    }
+    y += 6;
+  }
+
+  // ─── AUTHORIZED BY & SIGNATURE ────────────────────────────
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(18, 30, 90);
+  doc.text("Authorized By: Shubh Suramya Group", 14, y);
+
+  y += 8;
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(60, 60, 60);
+  doc.text("Signature:", 14, y);
+  doc.setDrawColor(18, 30, 90);
+  doc.setLineWidth(0.4);
+  doc.line(36, y, 95, y);
+
+  y += 12;
+  doc.setFont("helvetica", "italic");
+  doc.setTextColor(80, 100, 140);
+  doc.text("Thank you for your payment!", 14, y);
+
+  // ─── FOOTER ───────────────────────────────────────────────
+  const footerY = H - 18;
+  doc.setFillColor(18, 30, 90);
+  doc.rect(0, footerY, W, 18, "F");
+
+  doc.setFontSize(8);
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(200, 210, 240);
+  doc.text(
+    "Shubh Suramya Group  |  Sanand, Ahmedabad, Gujarat – 382110",
+    W / 2,
+    footerY + 6,
+    { align: "center" }
+  );
+  doc.text(
+    "www.shubhsuramya.com  |  shubhsuramyagroup@gmail.com  |  +91 96872 58222",
+    W / 2,
+    footerY + 12,
+    { align: "center" }
+  );
+
+  doc.setTextColor(150, 165, 200);
+  doc.setFontSize(8);
+  doc.text("01", W - 14, footerY + 15, { align: "right" });
+
+  // ─── SAVE ─────────────────────────────────────────────────
+  doc.save(`Receipt_${receiptNo}.pdf`);
 }
 
 /* ─── Button helper ──────────────────────────────────────────────────────── */
@@ -870,73 +874,7 @@ function SaleDetailView({ sale, salePayments, onClose, onAddPayment, onDownloadP
             <div style={{ marginTop: 6 }}><Badge color={statusBadge[sale.status] || "navy"}>{sale.status}</Badge></div>
           </div>
         </div>
-        <ProgressBar pct={pct} color="rgba(255,255,255,0.4)" />
-        <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4 }}>
-          <p style={{ fontSize: 10.5, color: "rgba(255,255,255,0.35)" }}>{pct.toFixed(1)}% paid</p>
-          <p style={{ fontSize: 10.5, color: "rgba(255,255,255,0.35)" }}>Remaining: {fmtINR(sale.remainingAmount)}</p>
-        </div>
       </div>
-
-      {/* Amount summary */}
-      <div
-  style={{
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
-    gap: 12,
-    width: "100%",
-  }}
->
-  {[
-    ["Total", sale.totalAmount, T.navy],
-    ["Paid", sale.paidAmount, T.success],
-    [
-      "Due",
-      sale.remainingAmount,
-      Number(sale.remainingAmount) > 0 ? T.coral : T.success,
-    ],
-  ].map(([label, value, color]) => (
-    <div
-      key={label}
-      style={{
-        background: T.bg,
-        borderRadius: 12,
-        padding: "14px",
-        textAlign: "center",
-        border: `1px solid ${T.border}`,
-        minHeight: 80,
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "center",
-      }}
-    >
-      <p
-        style={{
-          fontSize: 11,
-          color: T.hint,
-          textTransform: "uppercase",
-          fontWeight: 600,
-          letterSpacing: "0.5px",
-          margin: 0,
-        }}
-      >
-        {label}
-      </p>
-
-      <p
-        style={{
-          fontSize: "clamp(13px, 2vw, 18px)",
-          fontWeight: 700,
-          color,
-          marginTop: 6,
-          overflowWrap: "break-word",
-          wordBreak: "break-word",
-        }}
-      >
-        {fmtINR(value)}
-      </p>
-    </div>
-  ))}
-</div>
 
       {/* Customer & Property */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))", gap: 12 }}>
@@ -959,44 +897,124 @@ function SaleDetailView({ sale, salePayments, onClose, onAddPayment, onDownloadP
         </div>
       </div>
 
-      {/* Amount breakdown */}
-      <div style={{ ...card, padding: "14px 16px" }}>
-        <p style={{ fontSize: 11, fontWeight: 700, color: T.hint, textTransform: "uppercase", letterSpacing: "0.4px", marginBottom: 10 }}>Amount Breakdown</p>
-        {[["Flat Price", sale.flatPrice], ["GST Amount", sale.gstAmount], ["Registration", sale.registrationAmount], ["Stamp Duty", sale.stampDuty], ["Other Charges", sale.otherCharges]].map(([l, v]) => (
-          <div key={l} style={{ display: "flex", justifyContent: "space-between", padding: "5px 0", borderBottom: `1px dashed ${T.border}` }}>
-            <span style={{ fontSize: 12, color: T.hint }}>{l}</span>
-            <span style={{ fontSize: 12.5, fontWeight: 600, color: T.navy }}>{fmtINR(v)}</span>
-          </div>
-        ))}
-        <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", marginTop: 2, borderTop: `2px solid ${T.border}` }}>
-          <span style={{ fontSize: 13, fontWeight: 700, color: T.navy }}>Total</span>
-          <span style={{ fontSize: 14, fontWeight: 700, color: T.coral }}>{fmtINR(sale.totalAmount)}</span>
-        </div>
-      </div>
-
       {/* Payment history */}
       <div style={{ ...card, padding: "14px 16px" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-          <p style={{ fontSize: 11, fontWeight: 700, color: T.hint, textTransform: "uppercase", letterSpacing: "0.4px" }}>Payment History ({salePayments.length})</p>
-          <button style={btn("primary", { fontSize: 11.5, padding: "6px 12px" })} onClick={onAddPayment}>+ Add Payment</button>
-        </div>
-        {salePayments.length === 0 ? (
-          <p style={{ color: T.hint, fontSize: 12.5, textAlign: "center", padding: "1rem 0" }}>No payments recorded yet.</p>
-        ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            {salePayments.map((p, i) => (
-              <div key={p.id || i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: T.bg, borderRadius: 8, padding: "9px 12px", border: `1px solid ${T.border}` }}>
-                <div>
-                  <p style={{ fontSize: 12.5, fontWeight: 600, color: T.navy }}>{p.paymentDate}</p>
-                  <p style={{ fontSize: 11, color: T.hint, marginTop: 2 }}>{p.paymentMode}{p.transactionId ? ` · ${p.transactionId}` : ""}</p>
-                  {p.notes && <p style={{ fontSize: 11, color: T.hint, marginTop: 1 }}>{p.notes}</p>}
-                </div>
-                <span style={{ fontWeight: 700, color: T.success, fontSize: 14 }}>{fmtINR(p.amount)}</span>
-              </div>
-            ))}
+  {/* ── Header Row ── */}
+  <div style={{
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+    flexWrap: "wrap",
+    gap: 8,
+  }}>
+    <p style={{
+      fontSize: 11,
+      fontWeight: 700,
+      color: T.hint,
+      textTransform: "uppercase",
+      letterSpacing: "0.4px",
+    }}>
+      Payment History ({salePayments.length})
+    </p>
+    <button
+      style={btn("primary", { fontSize: 11.5, padding: "6px 12px" })}
+      onClick={onAddPayment}
+    >
+      + Add Payment
+    </button>
+  </div>
+
+  {/* ── Empty State ── */}
+  {salePayments.length === 0 ? (
+    <p style={{ color: T.hint, fontSize: 12.5, textAlign: "center", padding: "1rem 0" }}>
+      No payments recorded yet.
+    </p>
+  ) : (
+    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+      {salePayments.map((p, i) => (
+        <div
+          key={i}
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "flex-start",
+            flexWrap: "wrap",          // ← wraps on small screens
+            gap: 8,
+            background: T.bg,
+            borderRadius: 8,
+            padding: "9px 12px",
+            border: `1px solid ${T.border}`,
+          }}
+        >
+          {/* ── Left: Date / Mode / Notes ── */}
+          <div style={{ flex: "1 1 160px", minWidth: 0 }}>
+            <p style={{
+              fontSize: 12.5,
+              fontWeight: 600,
+              color: T.navy,
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}>
+              {p.paymentDate}
+            </p>
+
+            <p style={{
+              fontSize: 11,
+              color: T.hint,
+              marginTop: 2,
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}>
+              {p.paymentMode}
+              {p.transactionId ? ` · ${p.transactionId}` : ""}
+            </p>
+
+            {p.notes && (
+              <p style={{
+                fontSize: 11,
+                color: T.hint,
+                marginTop: 1,
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+              }}>
+                {p.notes}
+              </p>
+            )}
           </div>
-        )}
-      </div>
+
+          {/* ── Right: Amount + Receipt Button ── */}
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            flexShrink: 0,
+            flexWrap: "wrap",          // ← stacks on very small screens
+          }}>
+            <span style={{
+              fontWeight: 700,
+              color: T.success,
+              fontSize: 14,
+              whiteSpace: "nowrap",
+            }}>
+              {fmtINR(p.amount)}
+            </span>
+
+            <button
+              style={btn("primary", { fontSize: 11, padding: "5px 10px" })}
+              onClick={() => generateSaleReceiptPDF(sale, p, i)}
+            >
+              Receipt
+            </button>
+          </div>
+        </div>
+      ))}
+    </div>
+  )}
+</div>
 
       {sale.notes && (
         <div style={{ ...card, padding: "12px 16px", borderLeft: `3px solid ${T.amber}` }}>
@@ -1047,9 +1065,6 @@ function FlatSalesTab({ flatSales, flatPayments, onAdd, onEdit, onDelete, onAddP
   const totalFlats = flatSales.length;
   const soldFlats = flatSales.filter(s => s.status === "Sold").length;
   const bookedFlats = flatSales.filter(s => s.status === "Booked").length;
-  const totalRevenue = sum(flatSales, "totalAmount");
-  const totalReceived = sum(flatSales, "paidAmount");
-  const totalPending = sum(flatSales, "remainingAmount");
   const todaySales = flatSales.filter(s => isToday(s.bookingDate)).length;
   const todayRevenue = flatSales.filter(s => isToday(s.bookingDate)).reduce((acc, s) => acc + Number(s.totalAmount || 0), 0);
 
@@ -1074,9 +1089,6 @@ function FlatSalesTab({ flatSales, flatPayments, onAdd, onEdit, onDelete, onAddP
         <StatCard label="Total Sales" value={totalFlats} icon="🏠" accent={T.navy} delay={0} />
         <StatCard label="Sold" value={soldFlats} icon="✅" accent={T.success} delay={50} />
         <StatCard label="Booked" value={bookedFlats} icon="📋" accent={T.blue} delay={100} />
-        <StatCard label="Total Revenue" value={fmtINR(totalRevenue)} icon="💰" accent={T.coral} delay={150} />
-        <StatCard label="Total Received" value={fmtINR(totalReceived)} icon="💚" accent={T.success} delay={200} />
-        <StatCard label="Pending Amount" value={fmtINR(totalPending)} icon="⏳" accent={totalPending > 0 ? T.amber : T.success} delay={250} />
         <StatCard label="Today's Sales" value={todaySales} icon="📅" accent={T.blue} delay={300} sub={todaySales > 0 ? fmtINR(todayRevenue) : ""} />
       </div>
 
@@ -1116,7 +1128,7 @@ function FlatSalesTab({ flatSales, flatPayments, onAdd, onEdit, onDelete, onAddP
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, fontFamily: "'DM Sans', sans-serif" }}>
               <thead>
                 <tr style={{ background: T.bg, borderBottom: `1px solid ${T.border}` }}>
-                  {["Receipt No", "Customer", "Project / Flat", "Booking Date", "Total Amount", "Paid", "Remaining", "Status", "Actions"].map(h => (
+                  {["Receipt No", "Customer", "Project / Flat", "Booking Date", "Status", "Actions"].map(h => (
                     <th key={h} style={{ textAlign: "left", padding: "11px 14px", color: T.hint, fontWeight: 600, fontSize: 11, letterSpacing: "0.3px", textTransform: "uppercase", whiteSpace: "nowrap" }}>{h}</th>
                   ))}
                 </tr>
@@ -1129,7 +1141,7 @@ function FlatSalesTab({ flatSales, flatPayments, onAdd, onEdit, onDelete, onAddP
                       onMouseEnter={e => e.currentTarget.style.background = T.bg}
                       onMouseLeave={e => e.currentTarget.style.background = "transparent"}
                     >
-                      <td style={{ padding: "13px 14px", fontFamily: "'DM Mono', monospace", fontSize: 12, color: T.coral, fontWeight: 700 }}>{s.receiptNo}</td>
+                      <td style={{ padding: "13px 14px", fontSize: 12, color: T.coral, fontWeight: 700 }}>{s.receiptNo}</td>
                       <td style={{ padding: "13px 14px" }}>
                         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                           <div>
@@ -1143,16 +1155,12 @@ function FlatSalesTab({ flatSales, flatPayments, onAdd, onEdit, onDelete, onAddP
                         <p style={{ fontSize: 11, color: T.hint, marginTop: 1 }}>Flat {s.flatNo}{s.wing ? ` · Wing ${s.wing}` : ""}{s.buildingName ? ` · ${s.buildingName}` : ""}</p>
                       </td>
                       <td style={{ padding: "13px 14px", color: T.hint, fontSize: 12, fontFamily: "'DM Mono', monospace", whiteSpace: "nowrap" }}>{s.bookingDate}</td>
-                      <td style={{ padding: "13px 14px", fontWeight: 700, color: T.navy, whiteSpace: "nowrap" }}>{fmtINR(s.totalAmount)}</td>
-                      <td style={{ padding: "13px 14px", fontWeight: 600, color: T.success, whiteSpace: "nowrap" }}>{fmtINR(s.paidAmount)}</td>
-                      <td style={{ padding: "13px 14px", fontWeight: 600, color: due > 0 ? T.coral : T.success, whiteSpace: "nowrap" }}>{fmtINR(due)}</td>
                       <td style={{ padding: "13px 14px" }}><Badge color={statusBadgeMap[s.status] || "navy"}>{s.status}</Badge></td>
                       <td style={{ padding: "13px 14px" }}>
                         <div style={{ display: "flex", gap: 4 }}>
                           <button style={btn("default", { fontSize: 11, padding: "5px 9px" })} onClick={() => onView(s)} title="View">👁</button>
                           <button style={btn("primary", { fontSize: 11, padding: "5px 9px" })} onClick={() => onAddPayment(s)} title="Add Payment">₹</button>
                           <button style={btn("outline", { fontSize: 11, padding: "5px 9px" })} onClick={() => onEdit(s)} title="Edit">✏️</button>
-                          <button style={btn("teal", { fontSize: 11, padding: "5px 9px" })} onClick={() => { const pmts = flatPayments.filter(p => p.saleId === s.id); generateSaleReceiptPDF(s, pmts); }} title="PDF">⬇</button>
                           <button style={btn("danger", { fontSize: 11, padding: "5px 9px" })} onClick={() => onDelete(s)} title="Delete">🗑</button>
                         </div>
                       </td>
@@ -1189,7 +1197,6 @@ function FlatSalesTab({ flatSales, flatPayments, onAdd, onEdit, onDelete, onAddP
                     <button style={btn("default", { fontSize: 11, padding: "5px 10px" })} onClick={() => onView(s)}>View</button>
                     <button style={btn("primary", { fontSize: 11, padding: "5px 10px" })} onClick={() => onAddPayment(s)}>Pay</button>
                     <button style={btn("outline", { fontSize: 11, padding: "5px 10px" })} onClick={() => onEdit(s)}>Edit</button>
-                    <button style={btn("teal", { fontSize: 11, padding: "5px 10px" })} onClick={() => { const pmts = flatPayments.filter(p => p.saleId === s.id); generateSaleReceiptPDF(s, pmts); }}>PDF</button>
                     <button style={btn("danger", { fontSize: 11, padding: "5px 10px" })} onClick={() => onDelete(s)}>Del</button>
                   </div>
                 </div>
@@ -1251,7 +1258,6 @@ function Navbar({ user, tab, setTab, onLogout }) {
             {navItems.map((n) => (
               <button key={n.key} onClick={() => setTab(n.key)} style={{ background: tab === n.key ? (n.key === "flatSales" ? "rgba(13,148,136,0.08)" : T.bg) : "transparent", border: "none", borderRadius: 8, padding: "7px 14px", color: tab === n.key ? (n.key === "flatSales" ? T.teal : T.navy) : T.muted, fontWeight: tab === n.key ? 600 : 500, fontSize: 13, cursor: "pointer", fontFamily: "'DM Sans', sans-serif", transition: "all 0.15s", display: "flex", alignItems: "center", gap: 6 }}>
                 <span style={{ fontSize: 12 }}>{n.icon}</span>{n.label}
-                {n.key === "flatSales" && <span style={{ width: 5, height: 5, borderRadius: "50%", background: T.teal, display: "inline-block", marginLeft: 2 }} />}
               </button>
             ))}
           </nav>

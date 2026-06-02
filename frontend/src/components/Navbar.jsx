@@ -9,7 +9,7 @@ export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
 
   // Replace with your WhatsApp number
-  const whatsappNumber = "8128299287";
+  const whatsappNumber = "9687258222";
 
   const openWhatsApp = () => {
     const message = encodeURIComponent(
