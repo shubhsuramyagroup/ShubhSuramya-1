@@ -84,9 +84,9 @@ export default function Footer() {
           <div className="flex flex-col gap-3">
             <h4 className="text-[#1E2A5A] font-semibold mb-2">Contact Us</h4>
 
-            <p className="text-[#1E2A5A]/60 text-sm">hi@justhome.com</p>
+            <p className="text-[#1E2A5A]/60 text-sm">shubhsuramyagroup@gmail.com</p>
 
-            <p className="text-[#1E2A5A]/60 text-sm">(123) 456-7890</p>
+            <p className="text-[#1E2A5A]/60 text-sm">(+91) 96872 58222 </p>
           </div>
 
           {/* 4. ADDRESS */}
@@ -94,8 +94,8 @@ export default function Footer() {
             <h4 className="text-[#1E2A5A] font-semibold mb-2">Our Address</h4>
 
             <p className="text-[#1E2A5A]/60 text-sm leading-relaxed">
-              99 Fifth Avenue, 3rd Floor <br />
-              San Francisco, CA 1980
+              Shubh Suramya Corporate House opp suramaya dreams
+Suramya Road, Near Eklingji Road, Sanand-382110
             </p>
           </div>
         </div>

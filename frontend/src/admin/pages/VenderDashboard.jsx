@@ -1227,14 +1227,15 @@ function FlatSalesTab({ flatSales, flatPayments, onAdd, onEdit, onDelete, onAddP
                         <Badge color={statusBadgeMap[s.status] || "navy"}>{s.status}</Badge>
                       </div>
                       <p style={{ fontSize: 11.5, color: T.hint }}>{s.receiptNo} · Flat {s.flatNo} · {s.projectName}</p>
-                      <p style={{ fontSize: 11.5, color: T.hint, marginTop: 1 }}>{s.mobile} · {s.bookingDate}</p>
-                    </div>
-                    <div style={{ textAlign: "right", flexShrink: 0 }}>
-                      <p style={{ fontWeight: 700, fontSize: 14, color: T.navy }}>{fmtINR(s.totalAmount)}</p>
-                      <p style={{ fontSize: 11.5, color: due > 0 ? T.coral : T.success, marginTop: 2 }}>{due > 0 ? `${fmtINR(due)} due` : "✓ Settled"}</p>
+                      <p style={{ fontSize: 11.5, color: T.hint, marginTop: 1 }}>{s.mobile} · {s.bookingDate
+  ? new Date(s.bookingDate).toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+    })
+  : "-"}</p>
                     </div>
                   </div>
-                  <ProgressBar pct={pct} color={due > 0 ? T.coral : T.success} />
                   <div style={{ display: "flex", gap: 5, marginTop: 10 }}>
                     <button style={btn("default", { fontSize: 11, padding: "5px 10px" })} onClick={() => onView(s)}>View</button>
                     <button style={btn("primary", { fontSize: 11, padding: "5px 10px" })} onClick={() => onAddPayment(s)}>Pay</button>
