@@ -1789,61 +1789,171 @@ function PaymentsTab({ payments, companies }) {
    COMPANIES TAB (unchanged)
 ═══════════════════════════════════════════════════════════════════════════ */
 function CompaniesTab({ companies, vendors, bills, onAdd, onEdit, onDelete }) {
-  const cVendors = (cid) => vendors.filter(v => v.companyId === cid);
-  const cBills = (cid) => { const vids = cVendors(cid).map(v => v.id); return bills.filter(b => vids.includes(b.vendorId)); };
+  const cVendors = (cid) => vendors.filter((v) => v.companyId === cid);
+  const cBills = (cid) => {
+    const vids = cVendors(cid).map((v) => v.id);
+    return bills.filter((b) => vids.includes(b.vendorId));
+  };
   const sum = (arr, k) => arr.reduce((s, v) => s + Number(v[k] || 0), 0);
 
   return (
-    <div>
-      <SectionHeader title="Companies" action={<button style={btn("primary")} onClick={onAdd}>+ Add Company</button>} />
-      {companies.length === 0 && <Empty icon="🏢" text="No companies yet. Add your first one." />}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(290px,1fr))", gap: 14 }}>
+    <div style={{ width: "100%", boxSizing: "border-box" }}>
+      <SectionHeader
+        title="Companies"
+        action={
+          <button style={btn("primary")} onClick={onAdd}>
+            + Add Company
+          </button>
+        }
+      />
+      
+      {companies.length === 0 && (
+        <Empty icon="🏢" text="No companies yet. Add your first one." />
+      )}
+
+      {/* Optimized responsive auto-fill layout grid block */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 320px), 1fr))",
+          gap: 14,
+          width: "100%",
+        }}
+      >
         {companies.map((c, i) => {
-          const cb = cBills(c.id), net = sum(cb, "netAmount"), paid = sum(cb, "amountPaid"), due = net - paid, pct = net > 0 ? (paid / net) * 100 : 0;
+          const cb = cBills(c.id);
+          const net = sum(cb, "netAmount");
+          const paid = sum(cb, "amountPaid");
+          const due = net - paid;
+          const pct = net > 0 ? (paid / net) * 100 : 0;
+
           return (
-            <div key={c.id} style={{ ...card, padding: 0, overflow: "hidden", animation: `fadeUp 0.4s ease ${i * 60}ms both`, display: "flex", flexDirection: "column" }}>
+            <div
+              key={c.id}
+              style={{
+                ...card,
+                padding: 0,
+                overflow: "hidden",
+                animation: `fadeUp 0.4s ease ${i * 60}ms both`,
+                display: "flex",
+                flexDirection: "column",
+                width: "100%",
+                boxSizing: "border-box",
+              }}
+            >
               <div style={{ height: 3, background: pct >= 100 ? T.success : T.coral }} />
+              
               <div style={{ padding: 18, flex: 1, display: "flex", flexDirection: "column" }}>
+                
+                {/* Header Profile Actions Meta Strip */}
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14, gap: 10 }}>
                   <div style={{ display: "flex", gap: 10, alignItems: "center", flex: 1, minWidth: 0 }}>
                     <div style={{ width: 38, height: 38, borderRadius: 10, flexShrink: 0, background: T.navy, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" stroke="#fff" strokeWidth="1.8" /><path d="M3 9h18M9 21V9" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" /></svg>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                        <rect x="3" y="3" width="18" height="18" rx="2" stroke="#fff" strokeWidth="1.8" />
+                        <path d="M3 9h18M9 21V9" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" />
+                      </svg>
                     </div>
-                    <div style={{ minWidth: 0 }}>
-                      <p style={{ fontWeight: 700, fontSize: 14.5, color: T.navy, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.name}</p>
-                      <p style={{ fontSize: 11.5, color: T.hint, marginTop: 2 }}>{cVendors(c.id).length} vendors · {cb.length} bills</p>
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <p style={{ fontWeight: 700, fontSize: 14.5, color: T.navy, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {c.name}
+                      </p>
+                      <p style={{ fontSize: 11.5, color: T.hint, marginTop: 2, margin: "2px 0 0 0" }}>
+                        {cVendors(c.id).length} vendors · {cb.length} bills
+                      </p>
                     </div>
                   </div>
+                  
                   <div style={{ display: "flex", gap: 5, flexShrink: 0 }}>
-                    <button onClick={() => onEdit(c)} style={{ width: 28, height: 28, borderRadius: 7, background: T.bg, border: `1px solid ${T.border}`, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "background 0.15s" }} onMouseEnter={e => e.currentTarget.style.background = "#e8e5e0"} onMouseLeave={e => e.currentTarget.style.background = T.bg}>
-                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" stroke={T.navy} strokeWidth="2" strokeLinecap="round" /><path d="M18.5 2.5a2.12 2.12 0 013 3L12 15l-4 1 1-4 9.5-9.5z" stroke={T.navy} strokeWidth="2" strokeLinecap="round" /></svg>
+                    <button 
+                      onClick={() => onEdit(c)} 
+                      type="button"
+                      style={{ width: 28, height: 28, borderRadius: 7, background: T.bg, border: `1px solid ${T.border}`, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "background 0.15s" }} 
+                      onMouseEnter={e => e.currentTarget.style.background = "#e8e5e0"} 
+                      onMouseLeave={e => e.currentTarget.style.background = T.bg}
+                    >
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none">
+                        <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" stroke={T.navy} strokeWidth="2" strokeLinecap="round" />
+                        <path d="M18.5 2.5a2.12 2.12 0 013 3L12 15l-4 1 1-4 9.5-9.5z" stroke={T.navy} strokeWidth="2" strokeLinecap="round" />
+                      </svg>
                     </button>
-                    <button onClick={() => onDelete(c)} style={{ width: 28, height: 28, borderRadius: 7, background: "rgba(227,74,47,0.06)", border: `1px solid rgba(227,74,47,0.16)`, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "background 0.15s" }} onMouseEnter={e => e.currentTarget.style.background = "rgba(227,74,47,0.12)"} onMouseLeave={e => e.currentTarget.style.background = "rgba(227,74,47,0.06)"}>
-                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none"><polyline points="3 6 5 6 21 6" stroke={T.coral} strokeWidth="2" strokeLinecap="round" /><path d="M19 6l-1 14H6L5 6M10 11v6M14 11v6M9 6V4h6v2" stroke={T.coral} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                    <button 
+                      onClick={() => onDelete(c)} 
+                      type="button"
+                      style={{ width: 28, height: 28, borderRadius: 7, background: "rgba(227,74,47,0.06)", border: `1px solid rgba(227,74,47,0.16)`, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "background 0.15s" }} 
+                      onMouseEnter={e => e.currentTarget.style.background = "rgba(227,74,47,0.12)"} 
+                      onMouseLeave={e => e.currentTarget.style.background = "rgba(227,74,47,0.06)"}
+                    >
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none">
+                        <polyline points="3 6 5 6 21 6" stroke={T.coral} strokeWidth="2" strokeLinecap="round" />
+                        <path d="M19 6l-1 14H6L5 6M10 11v6M14 11v6M9 6V4h6v2" stroke={T.coral} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
                     </button>
                   </div>
                 </div>
+
+                {/* Meta Descriptions Block */}
                 {(c.gstin || c.address) && (
-                  <div style={{ marginBottom: 12 }}>
-                    {c.gstin && <p style={{ fontSize: 11.5, color: T.hint, marginBottom: 3 }}>GSTIN: <strong style={{ color: T.navy }}>{c.gstin}</strong></p>}
-                    {c.address && <p style={{ fontSize: 11.5, color: T.hint }}>📍 {c.address}</p>}
+                  <div style={{ marginBottom: 12, wordBreak: "break-word" }}>
+                    {c.gstin && (
+                      <p style={{ fontSize: 11.5, color: T.hint, marginBottom: 3, margin: "0 0 3px 0" }}>
+                        GSTIN: <strong style={{ color: T.navy }}>{c.gstin}</strong>
+                      </p>
+                    )}
+                    {c.address && (
+                      <p style={{ fontSize: 11.5, color: T.hint, margin: 0 }}>
+                        📍 {c.address}
+                      </p>
+                    )}
                   </div>
                 )}
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 7, marginBottom: 14 }}>
-                  {[["Payable", fmtINR(net), null], ["Paid", fmtINR(paid), T.success], ["Due", fmtINR(due), due > 0 ? T.coral : T.success]].map(([l, v, col]) => (
-                    <div key={l} style={{ background: T.bg, borderRadius: 8, padding: "8px 10px", textAlign: "center", border: `1px solid ${T.border}` }}>
-                      <p style={{ fontSize: 9.5, color: T.hint, textTransform: "uppercase", fontWeight: 600, letterSpacing: "0.4px" }}>{l}</p>
-                      <p style={{ fontSize: 11.5, fontWeight: 700, color: col || T.navy, marginTop: 3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{v}</p>
+
+                {/* Fully Responsive Inner Metrics Grid */}
+                <div 
+                  style={{ 
+                    display: "grid", 
+                    gridTemplateColumns: "repeat(auto-fit, minmax(75px, 1fr))", 
+                    gap: 7, 
+                    marginBottom: 14 
+                  }}
+                >
+                  {[
+                    ["Payable", fmtINR(net), null], 
+                    ["Paid", fmtINR(paid), T.success], 
+                    ["Due", fmtINR(due), due > 0 ? T.coral : T.success]
+                  ].map(([l, v, col]) => (
+                    <div 
+                      key={l} 
+                      style={{ 
+                        background: T.bg, 
+                        borderRadius: 8, 
+                        padding: "8px 6px", 
+                        textAlign: "center", 
+                        border: `1px solid ${T.border}`,
+                        minWidth: 0
+                      }}
+                    >
+                      <p style={{ fontSize: 9.5, color: T.hint, textTransform: "uppercase", fontWeight: 600, letterSpacing: "0.4px", margin: 0 }}>
+                        {l}
+                      </p>
+                      <p style={{ fontSize: 11.5, fontWeight: 700, color: col || T.navy, marginTop: 3, margin: "3px 0 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {v}
+                      </p>
                     </div>
                   ))}
                 </div>
+
+                {/* Progress Settled Indicators */}
                 <div style={{ marginTop: "auto" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}>
-                    <p style={{ fontSize: 10.5, color: T.hint }}>{pct.toFixed(0)}% settled</p>
-                    <p style={{ fontSize: 10.5, color: pct >= 100 ? T.success : T.hint }}>{pct >= 100 ? "✓ Fully paid" : `${(100 - pct).toFixed(0)}% remaining`}</p>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 5, gap: 6, flexWrap: "wrap" }}>
+                    <p style={{ fontSize: 10.5, color: T.hint, margin: 0 }}>{pct.toFixed(0)}% settled</p>
+                    <p style={{ fontSize: 10.5, color: pct >= 100 ? T.success : T.hint, margin: 0 }}>
+                      {pct >= 100 ? "✓ Fully paid" : `${(100 - pct).toFixed(0)}% remaining`}
+                    </p>
                   </div>
                   <ProgressBar pct={pct} color={pct >= 100 ? T.success : T.coral} />
                 </div>
+
               </div>
             </div>
           );
