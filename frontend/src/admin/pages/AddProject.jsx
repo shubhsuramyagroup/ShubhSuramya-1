@@ -4,8 +4,8 @@ import { addProject } from "../../services/projectService";
 import { Toast, AdminSubmitBtn } from "../components/Adminshared ";
 
 // ─── CLOUDINARY CONFIG ────────────────────────────────────────────────────────
-const CLOUDINARY_CLOUD_NAME = "ddzsk54c2";
-const CLOUDINARY_UPLOAD_PRESET = "project_uploads";
+const CLOUDINARY_CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME ;
+const CLOUDINARY_UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
 
 // ─── Cloudinary Upload Helper ─────────────────────────────────────────────────
 async function uploadToCloudinary(file, folder = "projects", onProgress) {

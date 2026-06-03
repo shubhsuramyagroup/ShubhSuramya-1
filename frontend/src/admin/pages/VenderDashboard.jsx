@@ -6,6 +6,7 @@ import {
 } from "recharts";
 import logo from "../../../public/logo.png";
 import logo1 from "../../../public/logo1.png";
+import header from "../../../public/header.png";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 import jsPDF from "jspdf";
@@ -249,10 +250,10 @@ async function generateSaleReceiptPDF(sale, payment, paymentIndex = 0) {
   const doc = new jsPDF("p", "mm", "a4");
   const W = 210;
   const H = 297;
-  const HEADER_H = 52; // adjust to match your image's aspect ratio
+  const HEADER_H = 58; // adjust to match your image's aspect ratio
 
   // ─── HEADER AS FULL IMAGE ─────────────────────────────────
-  doc.addImage(logo, "PNG", 0, 0, W, HEADER_H);
+  doc.addImage(header, "PNG", 0, 0, W, HEADER_H);
 
   // ─── TITLE ────────────────────────────────────────────────
   doc.setTextColor(18, 30, 90);
@@ -278,7 +279,7 @@ async function generateSaleReceiptPDF(sale, payment, paymentIndex = 0) {
   doc.text("Date:", 14, y);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(18, 30, 90);
-  doc.text(payment.paymentDate || sale.bookingDate || "—", 32, y);
+  doc.text(payment.paymentDate || sale.bookingDate || "—", 25, y);
 
   y += 6;
   const receiptNo = sale.receiptNo
@@ -290,7 +291,7 @@ async function generateSaleReceiptPDF(sale, payment, paymentIndex = 0) {
   doc.text("Receipt No.:", 14, y);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(18, 30, 90);
-  doc.text(receiptNo, 44, y);
+  doc.text(receiptNo, 36, y);
 
   y += 14;
 
@@ -380,23 +381,23 @@ async function generateSaleReceiptPDF(sale, payment, paymentIndex = 0) {
   doc.text("Thank you for your payment!", 14, y);
 
   // ─── FOOTER ───────────────────────────────────────────────
-  const footerY = H - 18;
-  doc.setFillColor(18, 30, 90);
-  doc.rect(0, footerY, W, 18, "F");
+  const footerY = H - 22;
+  doc.setFillColor(22, 34, 94);
+  doc.rect(0, footerY, W, 22, "F");
 
   doc.setFontSize(8);
   doc.setFont("helvetica", "normal");
   doc.setTextColor(200, 210, 240);
   doc.text(
-    "Shubh Suramya Group  |  Sanand, Ahmedabad, Gujarat – 382110",
+    "Shubh Suramya Group  |  Shubh Suramya Corporate House opp suramaya dreams, Suramya Road, Near Eklingji Road, Sanand-382110",
     W / 2,
-    footerY + 6,
+    footerY + 8,
     { align: "center" }
   );
   doc.text(
-    "www.shubhsuramya.com  |  shubhsuramyagroup@gmail.com  |  +91 96872 58222",
+    "www.shubhsuramya.com  |  shubhsuramayagroup@gmail.com  |  +91 96872 58222",
     W / 2,
-    footerY + 12,
+    footerY + 14,
     { align: "center" }
   );
 
@@ -851,12 +852,44 @@ function SaleDetailView({ sale, salePayments, onClose, onAddPayment, onDownloadP
   const statusBadge = { Sold: "green", Booked: "blue", Cancelled: "red" };
   const sc = statusColors[sale.status] || T.navy;
 
-  const DetailRow = ({ label, value }) => (
-    <div style={{ display: "flex", justifyContent: "space-between", padding: "7px 0", borderBottom: `1px solid ${T.border}` }}>
-      <span style={{ fontSize: 12, color: T.hint, fontWeight: 500 }}>{label}</span>
-      <span style={{ fontSize: 12.5, fontWeight: 600, color: T.navy, textAlign: "right", maxWidth: "60%" }}>{value || "—"}</span>
-    </div>
-  );
+const DetailRow = ({ label, value }) => (
+  <div
+    style={{
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "flex-start",
+      gap: 10,
+      padding: "8px 0",
+      borderBottom: `1px solid ${T.border}`,
+      flexWrap: "wrap",
+    }}
+  >
+    <span
+      style={{
+        fontSize: 12,
+        color: T.hint,
+        fontWeight: 500,
+        minWidth: 70,
+      }}
+    >
+      {label}
+    </span>
+
+    <span
+      style={{
+        fontSize: 12.5,
+        fontWeight: 600,
+        color: T.navy,
+        textAlign: "right",
+        flex: 1,
+        wordBreak: "break-word",
+        overflowWrap: "break-word",
+      }}
+    >
+      {value || "—"}
+    </span>
+  </div>
+);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
@@ -1449,7 +1482,7 @@ function DashboardTab({ companies, vendors, bills, payments, activityLog, flatSa
       </div>
 
       {/* Vendor/Bill Stats */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", gap: 10 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(210px,10fr))", gap: 10 }}>
         <StatCard label="Companies"       value={companies.length}  icon="🏢" delay={0} />
         <StatCard label="Vendors"         value={vendors.length}    icon="👥" delay={40} />
         <StatCard label="Total Bills"     value={bills.length}      icon="📋" delay={80} />
@@ -1461,27 +1494,6 @@ function DashboardTab({ companies, vendors, bills, payments, activityLog, flatSa
         <StatCard label="Today's Revenue" value={fmtINR(todayRev)}  icon="📅" accent={T.blue} delay={320} />
         <StatCard label="This Month"      value={fmtINR(monthRev)}  icon="📆" accent={T.purple} delay={360} />
       </div>
-
-      {/* Flat Sales Summary on Dashboard */}
-      {flatSales.length > 0 && (
-        <div style={{ ...card, padding: "16px 18px", borderTop: `2.5px solid ${T.teal}` }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <span style={{ fontSize: 18 }}>🏠</span>
-              <h3 style={{ fontSize: 14, fontWeight: 700, color: T.navy }}>Flat Sales Overview</h3>
-            </div>
-            <button style={btn("default", { fontSize: 11.5, padding: "5px 12px" })} onClick={() => setTab("flatSales")}>View All →</button>
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(130px,1fr))", gap: 8 }}>
-            {[["Total Sales", flatSales.length, T.navy], ["Sold", flatSales.filter(s => s.status === "Sold").length, T.success], ["Booked", flatSales.filter(s => s.status === "Booked").length, T.blue], ["Revenue", fmtINR(flatTotalRevenue), T.coral], ["Received", fmtINR(flatTotalReceived), T.success], ["Pending", fmtINR(flatPending), flatPending > 0 ? T.amber : T.success]].map(([l, v, c]) => (
-              <div key={l} style={{ background: T.bg, borderRadius: 9, padding: "10px 12px", textAlign: "center", border: `1px solid ${T.border}` }}>
-                <p style={{ fontSize: 10, color: T.hint, textTransform: "uppercase", fontWeight: 600, letterSpacing: "0.4px" }}>{l}</p>
-                <p style={{ fontSize: 13, fontWeight: 700, color: c, marginTop: 3 }}>{v}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* Charts row */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(300px,1fr))", gap: 16 }}>
@@ -2027,24 +2039,116 @@ function VendorFormWrapped({ initial, companies, onSave, onClose, saving }) {
 }
 
 function BillFormWrapped({ initial, vendor, companies, onSave, onClose, saving }) {
-  const [f, setF] = useState(initial || { hsnCode: "", invoiceNo: "", invoiceDate: today(), totalBill: "", cgst: "", sgst: "", tds: "", description: "" });
+  const [f, setF] = useState(initial || {
+    hsnCode: "", invoiceNo: "", invoiceDate: today(),
+    totalBill: "", cgst: "", sgst: "", tds: "", description: "",
+    pdfUrl: "", pdfName: ""
+  });
+  const [pdfUploading, setPdfUploading] = useState(false);
+  const [pdfError, setPdfError] = useState("");
+  const fileInputRef = useRef(null);
+
   const set = (k) => (e) => setF((p) => ({ ...p, [k]: e.target.value }));
   const subTotal = Number(f.totalBill || 0), cgstAmt = Number(f.cgst || 0), sgstAmt = Number(f.sgst || 0);
   const billWithGST = subTotal + cgstAmt + sgstAmt, tdsAmt = Number(f.tds || 0), netAmount = billWithGST - tdsAmt;
+
+  // ── Cloudinary upload ──────────────────────────────────────────────────────
+const CLOUDINARY_CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME ;
+const CLOUDINARY_UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
+
+  const handlePdfUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (file.type !== "application/pdf") {
+      setPdfError("Only PDF files are allowed.");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setPdfError("File size must be under 10 MB.");
+      return;
+    }
+
+    setPdfError("");
+    setPdfUploading(true);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
+      formData.append("resource_type", "raw"); // required for PDFs
+
+      const res = await fetch(
+        `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/raw/upload`,
+        { method: "POST", body: formData }
+      );
+
+      if (!res.ok) throw new Error("Cloudinary upload failed");
+      const data = await res.json();
+
+      setF((p) => ({ ...p, pdfUrl: data.secure_url, pdfName: file.name }));
+    } catch (err) {
+      setPdfError("Upload failed. Please try again.");
+      console.error(err);
+    } finally {
+      setPdfUploading(false);
+    }
+  };
+
+  const removePdf = () => {
+    setF((p) => ({ ...p, pdfUrl: "", pdfName: "" }));
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  // ── Save (includes pdfUrl → Firebase via onSave) ──────────────────────────
+  const handleSave = () => {
+    // pdfUrl is already part of `f`, so onSave receives it automatically.
+    // In your Firebase write (wherever onSave is implemented), just include
+    // pdfUrl and pdfName fields alongside the rest of the bill data.
+    onSave({ ...f, billWithGST, netAmount });
+  };
+
+  // ── PDF upload UI styles ───────────────────────────────────────────────────
+  const uploadZoneStyle = {
+    border: `2px dashed ${T.border}`,
+    borderRadius: 10,
+    padding: "14px 16px",
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
+    cursor: "pointer",
+    background: T.bg,
+    transition: "border-color 0.2s",
+  };
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-      <InfoBanner name={vendor.name} sub={companies.find(c => c.id === vendor.companyId)?.name || ""} right={<Badge color="coral">{initial ? "Edit Bill" : "New Bill"}</Badge>} />
+      <InfoBanner
+        name={vendor.name}
+        sub={companies.find(c => c.id === vendor.companyId)?.name || ""}
+        right={<Badge color="coral">{initial ? "Edit Bill" : "New Bill"}</Badge>}
+      />
+
+      {/* ── Text fields ── */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(160px,1fr))", gap: 12 }}>
-        {[["Description", "description", "text"], ["HSN Code", "hsnCode", "text"], ["Invoice No.", "invoiceNo", "text"], ["Invoice Date", "invoiceDate", "date"]].map(([l, k, t]) => (
-          <Field key={k} label={l}><input style={inp} type={t} value={f[k]} onChange={set(k)} onFocus={focusOn} onBlur={focusOff} /></Field>
+        {[["Description","description","text"],["HSN Code","hsnCode","text"],["Invoice No.","invoiceNo","text"],["Invoice Date","invoiceDate","date"]].map(([l,k,t]) => (
+          <Field key={k} label={l}>
+            <input style={inp} type={t} value={f[k]} onChange={set(k)} onFocus={focusOn} onBlur={focusOff} />
+          </Field>
         ))}
       </div>
+
       <Divider label="Bill Breakdown" />
+
+      {/* ── Number fields ── */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(130px,1fr))", gap: 10 }}>
-        {[["Sub Total (₹)", "totalBill"], ["CGST (₹)", "cgst"], ["SGST (₹)", "sgst"], ["TDS (₹)", "tds"]].map(([l, k]) => (
-          <Field key={k} label={l}><input style={inp} type="number" value={f[k]} onChange={set(k)} onFocus={focusOn} onBlur={focusOff} placeholder="0.00" /></Field>
+        {[["Sub Total (₹)","totalBill"],["CGST (₹)","cgst"],["SGST (₹)","sgst"],["TDS (₹)","tds"]].map(([l,k]) => (
+          <Field key={k} label={l}>
+            <input style={inp} type="number" value={f[k]} onChange={set(k)} onFocus={focusOn} onBlur={focusOff} placeholder="0.00" />
+          </Field>
         ))}
       </div>
+
+      {/* ── Net summary ── */}
       <div style={{ background: T.bg, borderRadius: 10, padding: "14px 16px", border: `1px solid ${T.border}`, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
         <div style={{ fontSize: 12.5, color: T.muted, lineHeight: 2 }}>
           <p>GST Total: <strong style={{ color: T.navy }}>{fmtINR(billWithGST)}</strong></p>
@@ -2055,9 +2159,89 @@ function BillFormWrapped({ initial, vendor, companies, onSave, onClose, saving }
           <p style={{ fontSize: 24, fontWeight: 700, color: T.coral }}>{fmtINR(netAmount)}</p>
         </div>
       </div>
+
+      <Divider label="Invoice PDF" />
+
+      {/* ── PDF Upload ── */}
+      <Field label="Attach Invoice PDF">
+        {f.pdfUrl ? (
+          /* Uploaded state */
+          <div style={{ ...uploadZoneStyle, borderStyle: "solid", borderColor: T.navy, justifyContent: "space-between" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, overflow: "hidden" }}>
+              {/* PDF icon */}
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={T.coral} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="9" y1="13" x2="15" y2="13"/>
+                <line x1="9" y1="17" x2="12" y2="17"/>
+              </svg>
+              <div style={{ overflow: "hidden" }}>
+                <p style={{ fontSize: 12.5, fontWeight: 600, color: T.navy, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 200 }}>{f.pdfName}</p>
+                <a href={f.pdfUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: T.coral, textDecoration: "none" }}>View PDF ↗</a>
+              </div>
+            </div>
+            <button
+              style={{ ...btn("default"), padding: "4px 10px", fontSize: 11 }}
+              onClick={removePdf}
+              type="button"
+            >
+              Remove
+            </button>
+          </div>
+        ) : (
+          /* Upload zone */
+          <div
+            style={uploadZoneStyle}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            {pdfUploading ? (
+              <>
+                {/* Spinner */}
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={T.navy} strokeWidth="2.5" strokeLinecap="round">
+                  <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83">
+                    <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="0.8s" repeatCount="indefinite"/>
+                  </path>
+                </svg>
+                <span style={{ fontSize: 12.5, color: T.muted }}>Uploading to Cloudinary…</span>
+              </>
+            ) : (
+              <>
+                {/* Upload icon */}
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={T.muted} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                  <polyline points="17 8 12 3 7 8"/>
+                  <line x1="12" y1="3" x2="12" y2="15"/>
+                </svg>
+                <div>
+                  <p style={{ fontSize: 12.5, color: T.navy, fontWeight: 500, margin: 0 }}>Click to upload PDF</p>
+                  <p style={{ fontSize: 11, color: T.hint, margin: 0 }}>Max 10 MB · PDF only</p>
+                </div>
+              </>
+            )}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="application/pdf"
+              style={{ display: "none" }}
+              onChange={handlePdfUpload}
+            />
+          </div>
+        )}
+        {pdfError && (
+          <p style={{ fontSize: 11.5, color: T.coral, marginTop: 4 }}>{pdfError}</p>
+        )}
+      </Field>
+
+      {/* ── Actions ── */}
       <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", paddingTop: 16, borderTop: `1px solid ${T.border}` }}>
         <button style={btn("default")} onClick={onClose}>Cancel</button>
-        <button style={btn("primary")} onClick={() => onSave({ ...f, billWithGST, netAmount })} disabled={saving}>{saving ? "Saving…" : initial ? "Update Bill" : "Add Bill"}</button>
+        <button
+          style={btn("primary")}
+          onClick={handleSave}
+          disabled={saving || pdfUploading}
+        >
+          {saving ? "Saving…" : initial ? "Update Bill" : "Add Bill"}
+        </button>
       </div>
     </div>
   );
@@ -2067,7 +2251,6 @@ function PaymentFormWrapped({ bill, vendor, onSave, onClose, saving }) {
   const due = Number(bill.netAmount || 0) - Number(bill.amountPaid || 0);
   const [f, setF] = useState({ date: today(), particulars: "", chequeNo: "", amountPaid: String(due > 0 ? due.toFixed(2) : ""), paymentMode: "Razorpay X" });
   const set = (k) => (e) => setF((p) => ({ ...p, [k]: e.target.value }));
-  const isRazorpay = f.paymentMode === "Razorpay X";
   const pct = Number(bill.netAmount) > 0 ? (Number(bill.amountPaid) / Number(bill.netAmount)) * 100 : 0;
 
   return (
@@ -2094,10 +2277,10 @@ function PaymentFormWrapped({ bill, vendor, onSave, onClose, saving }) {
       </div>
       <Field label="Payment Mode">
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 2 }}>
-          {["Cash", "Cheque", "NEFT", "RTGS", "UPI", "Razorpay X"].map((m) => {
+          {["Cash", "Cheque", "NEFT", "RTGS", "UPI"].map((m) => {
             const active = f.paymentMode === m;
             return (
-              <button key={m} onClick={() => setF((p) => ({ ...p, paymentMode: m }))} style={{ padding: "7px 14px", borderRadius: 7, fontSize: 12.5, fontWeight: 600, cursor: "pointer", transition: "all 0.15s", border: active ? "none" : `1.5px solid ${T.border2}`, background: active ? (m === "Razorpay X" ? "#3395FF" : T.coral) : "#fff", color: active ? "#fff" : T.muted }}>
+              <button key={m} onClick={() => setF((p) => ({ ...p, paymentMode: m }))} style={{ padding: "7px 24px", borderRadius: 7, fontSize: 12.5, fontWeight: 600, cursor: "pointer", transition: "all 0.15s", border: active ? "none" : `1.5px solid ${T.border2}`, background: active ? (m === "Razorpay X" ? "#3395FF" : T.coral) : "#fff", color: active ? "#fff" : T.muted }}>
                 {m}
               </button>
             );
@@ -2106,10 +2289,8 @@ function PaymentFormWrapped({ bill, vendor, onSave, onClose, saving }) {
       </Field>
       <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", paddingTop: 16, borderTop: `1px solid ${T.border}` }}>
         <button style={btn("default")} onClick={onClose}>Cancel</button>
-        {isRazorpay
-          ? <button style={btn("razorpay")} onClick={() => onSave(f, true)} disabled={saving || !f.amountPaid}>{saving ? "Processing…" : `Pay ${fmtINR(f.amountPaid)}`}</button>
-          : <button style={btn("primary")} onClick={() => onSave(f, false)} disabled={saving || !f.amountPaid}>{saving ? "Recording…" : "Record Payment"}</button>
-        }
+ <button style={btn("primary")} onClick={() => onSave(f, false)} disabled={saving || !f.amountPaid}>{saving ? "Recording…" : "Record Payment"}</button>
+        
       </div>
     </div>
   );
