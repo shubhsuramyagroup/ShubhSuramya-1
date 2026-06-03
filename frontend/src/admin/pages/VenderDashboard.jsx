@@ -274,12 +274,27 @@ async function generateSaleReceiptPDF(sale, payment, paymentIndex = 0) {
   doc.text("Shubh Suramaya Group", 14, y);
 
   y += 7;
-  doc.setFont("helvetica", "normal");
-  doc.setTextColor(60, 60, 60);
-  doc.text("Date:", 14, y);
-  doc.setFont("helvetica", "bold");
-  doc.setTextColor(18, 30, 90);
-  doc.text(payment.paymentDate || sale.bookingDate || "—", 25, y);
+const formattedDate = payment.paymentDate
+  ? new Date(payment.paymentDate).toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+    })
+  : sale.bookingDate
+  ? new Date(sale.bookingDate).toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+    })
+  : "—";
+
+doc.setFont("helvetica", "normal");
+doc.setTextColor(60, 60, 60);
+doc.text("Date:", 14, y);
+
+doc.setFont("helvetica", "bold");
+doc.setTextColor(18, 30, 90);
+doc.text(formattedDate, 25, y);
 
   y += 6;
   const receiptNo = sale.receiptNo
@@ -711,8 +726,6 @@ function FlatSaleFormWrapped({ initial, existingSales, onSave, onClose, saving }
     setF(p => ({ ...p, totalAmount: total, remainingAmount: remaining < 0 ? 0 : remaining }));
   }, [f.flatPrice, f.gstAmount, f.registrationAmount, f.stampDuty, f.otherCharges, f.paidAmount]);
 
-  const statusColors = { Booked: "blue", Sold: "green", Cancelled: "red" };
-
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
       {/* Receipt No */}
@@ -723,8 +736,8 @@ function FlatSaleFormWrapped({ initial, existingSales, onSave, onClose, saving }
 
       <Divider label="Customer Information" />
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(170px,1fr))", gap: 12 }}>
-        <Field label="Customer Name *"><input style={inp} value={f.customerName} onChange={set("customerName")} onFocus={focusOn} onBlur={focusOff} placeholder="Full name" /></Field>
-        <Field label="Mobile Number *"><input style={inp} type="tel" value={f.mobile} onChange={set("mobile")} onFocus={focusOn} onBlur={focusOff} placeholder="10-digit number" /></Field>
+        <Field label="Customer Name"><input style={inp} value={f.customerName} onChange={set("customerName")} onFocus={focusOn} onBlur={focusOff} placeholder="Full name" /></Field>
+        <Field label="Mobile Number"><input style={inp} type="tel" value={f.mobile} onChange={set("mobile")} onFocus={focusOn} onBlur={focusOff} placeholder="10-digit number" /></Field>
         <Field label="Email"><input style={inp} type="email" value={f.email} onChange={set("email")} onFocus={focusOn} onBlur={focusOff} placeholder="email@example.com" /></Field>
         <Field label="PAN Number"><input style={inp} value={f.pan} onChange={set("pan")} onFocus={focusOn} onBlur={focusOff} placeholder="ABCDE1234F" /></Field>
         <Field label="Aadhaar Number"><input style={inp} value={f.aadhaar} onChange={set("aadhaar")} onFocus={focusOn} onBlur={focusOff} placeholder="XXXX XXXX XXXX" /></Field>
@@ -733,11 +746,11 @@ function FlatSaleFormWrapped({ initial, existingSales, onSave, onClose, saving }
 
       <Divider label="Property Information" />
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", gap: 12 }}>
-        <Field label="Project Name *"><input style={inp} value={f.projectName} onChange={set("projectName")} onFocus={focusOn} onBlur={focusOff} placeholder="e.g. Shubh Suramya" /></Field>
+        <Field label="Project Name"><input style={inp} value={f.projectName} onChange={set("projectName")} onFocus={focusOn} onBlur={focusOff} placeholder="e.g. Shubh Suramya" /></Field>
         <Field label="Building Name"><input style={inp} value={f.buildingName} onChange={set("buildingName")} onFocus={focusOn} onBlur={focusOff} placeholder="Building / Tower" /></Field>
         <Field label="Wing"><input style={inp} value={f.wing} onChange={set("wing")} onFocus={focusOn} onBlur={focusOff} placeholder="A / B / C" /></Field>
         <Field label="Floor Number"><input style={inp} value={f.floorNo} onChange={set("floorNo")} onFocus={focusOn} onBlur={focusOff} placeholder="e.g. 3" /></Field>
-        <Field label="Flat Number *"><input style={inp} value={f.flatNo} onChange={set("flatNo")} onFocus={focusOn} onBlur={focusOff} placeholder="e.g. 301" /></Field>
+        <Field label="Flat Number"><input style={inp} value={f.flatNo} onChange={set("flatNo")} onFocus={focusOn} onBlur={focusOff} placeholder="e.g. 301" /></Field>
         <Field label="Flat Type"><input style={inp} value={f.flatType} onChange={set("flatType")} onFocus={focusOn} onBlur={focusOff} placeholder="2BHK / 3BHK" /></Field>
         <Field label="Carpet Area (sq.ft)"><input style={inp} type="number" value={f.carpetArea} onChange={set("carpetArea")} onFocus={focusOn} onBlur={focusOff} placeholder="0" /></Field>
         <Field label="Built-up Area (sq.ft)"><input style={inp} type="number" value={f.builtUpArea} onChange={set("builtUpArea")} onFocus={focusOn} onBlur={focusOff} placeholder="0" /></Field>
@@ -745,40 +758,11 @@ function FlatSaleFormWrapped({ initial, existingSales, onSave, onClose, saving }
 
       <Divider label="Sale Information" />
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(160px,1fr))", gap: 12 }}>
-        <Field label="Booking Date *"><input style={inp} type="date" value={f.bookingDate} onChange={set("bookingDate")} onFocus={focusOn} onBlur={focusOff} /></Field>
+        <Field label="Booking Date"><input style={inp} type="date" value={f.bookingDate} onChange={set("bookingDate")} onFocus={focusOn} onBlur={focusOff} /></Field>
         <Field label="Agreement Date"><input style={inp} type="date" value={f.agreementDate} onChange={set("agreementDate")} onFocus={focusOn} onBlur={focusOff} /></Field>
         <Field label="Possession Date"><input style={inp} type="date" value={f.possessionDate} onChange={set("possessionDate")} onFocus={focusOn} onBlur={focusOff} /></Field>
         <Field label="Sales Executive"><input style={inp} value={f.salesExecutive} onChange={set("salesExecutive")} onFocus={focusOn} onBlur={focusOff} placeholder="Executive name" /></Field>
       </div>
-
-      <Divider label="Amount Information" />
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))", gap: 10 }}>
-        {[["Flat Price (₹) *", "flatPrice"], ["GST Amount (₹)", "gstAmount"], ["Registration (₹)", "registrationAmount"], ["Stamp Duty (₹)", "stampDuty"], ["Other Charges (₹)", "otherCharges"]].map(([l, k]) => (
-          <Field key={k} label={l}><input style={inp} type="number" value={f[k]} onChange={set(k)} onFocus={focusOn} onBlur={focusOff} placeholder="0.00" /></Field>
-        ))}
-      </div>
-      {/* Total Amount Display */}
-      <div style={{ background: T.navy, borderRadius: 10, padding: "14px 18px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <span style={{ fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.7)" }}>Total Amount (Auto Calculated)</span>
-        <span style={{ fontSize: 22, fontWeight: 700, color: T.gold }}>{fmtINR(f.totalAmount)}</span>
-      </div>
-
-      <Divider label="Payment Information" />
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", gap: 12 }}>
-        <Field label="Booking Amount (₹)"><input style={inp} type="number" value={f.bookingAmount} onChange={set("bookingAmount")} onFocus={focusOn} onBlur={focusOff} placeholder="0.00" /></Field>
-        <Field label="Paid Amount (₹)"><input style={inp} type="number" value={f.paidAmount} onChange={set("paidAmount")} onFocus={focusOn} onBlur={focusOff} placeholder="0.00" /></Field>
-        <Field label="Remaining Amount" hint="Auto calculated">
-          <div style={{ ...inp, background: T.bg, color: Number(f.remainingAmount) > 0 ? T.coral : T.success, fontWeight: 700 }}>{fmtINR(f.remainingAmount)}</div>
-        </Field>
-        <Field label="Payment Mode">
-          <select style={inp} value={f.paymentMode} onChange={set("paymentMode")} onFocus={focusOn} onBlur={focusOff}>
-            {["Cash", "Cheque", "NEFT", "RTGS", "UPI", "DD", "Online Transfer"].map(m => <option key={m} value={m}>{m}</option>)}
-          </select>
-        </Field>
-        <Field label="Transaction ID"><input style={inp} value={f.transactionId} onChange={set("transactionId")} onFocus={focusOn} onBlur={focusOff} placeholder="Cheque/UTR No." /></Field>
-        <Field label="Bank Name"><input style={inp} value={f.bankName} onChange={set("bankName")} onFocus={focusOn} onBlur={focusOff} placeholder="Bank name" /></Field>
-      </div>
-
       <Divider label="Status & Notes" />
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(170px,1fr))", gap: 12 }}>
         <Field label="Status">
@@ -797,7 +781,9 @@ function FlatSaleFormWrapped({ initial, existingSales, onSave, onClose, saving }
 
       <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", paddingTop: 16, borderTop: `1px solid ${T.border}` }}>
         <button style={btn("default")} onClick={onClose}>Cancel</button>
-        <button style={btn("primary")} onClick={() => onSave(f)} disabled={saving}>{saving ? "Saving…" : initial ? "Update Sale" : "Add Sale"}</button>
+        <button style={btn("primary")} onClick={() => onSave(f)} disabled={saving}>
+          {saving ? "Saving…" : initial ? "Update Sale" : "Add Sale"}
+        </button>
       </div>
     </div>
   );
@@ -924,7 +910,18 @@ const DetailRow = ({ label, value }) => (
           <DetailRow label="Flat Type" value={sale.flatType} />
           <DetailRow label="Carpet Area" value={sale.carpetArea ? `${sale.carpetArea} sq.ft` : null} />
           <DetailRow label="Built-up" value={sale.builtUpArea ? `${sale.builtUpArea} sq.ft` : null} />
-          <DetailRow label="Booking Date" value={sale.bookingDate} />
+          <DetailRow
+  label="Booking Date"
+  value={
+    sale.bookingDate
+      ? new Date(sale.bookingDate).toLocaleDateString("en-GB", {
+          day: "2-digit",
+          month: "long",
+          year: "numeric",
+        })
+      : "-"
+  }
+/>
           <DetailRow label="Possession" value={sale.possessionDate} />
           <DetailRow label="Sales Executive" value={sale.salesExecutive} />
         </div>
@@ -972,7 +969,7 @@ const DetailRow = ({ label, value }) => (
             display: "flex",
             justifyContent: "space-between",
             alignItems: "flex-start",
-            flexWrap: "wrap",          // ← wraps on small screens
+            flexWrap: "wrap",
             gap: 8,
             background: T.bg,
             borderRadius: 8,
@@ -990,9 +987,12 @@ const DetailRow = ({ label, value }) => (
               overflow: "hidden",
               textOverflow: "ellipsis",
             }}>
-              {p.paymentDate}
+              {new Date(p.paymentDate).toLocaleDateString("en-GB", {
+                day: "2-digit",
+                month: "long",
+                year: "numeric",
+              })}
             </p>
-
             <p style={{
               fontSize: 11,
               color: T.hint,
@@ -1004,7 +1004,6 @@ const DetailRow = ({ label, value }) => (
               {p.paymentMode}
               {p.transactionId ? ` · ${p.transactionId}` : ""}
             </p>
-
             {p.notes && (
               <p style={{
                 fontSize: 11,
@@ -1025,7 +1024,7 @@ const DetailRow = ({ label, value }) => (
             alignItems: "center",
             gap: 8,
             flexShrink: 0,
-            flexWrap: "wrap",          // ← stacks on very small screens
+            flexWrap: "wrap",
           }}>
             <span style={{
               fontWeight: 700,
@@ -1035,7 +1034,6 @@ const DetailRow = ({ label, value }) => (
             }}>
               {fmtINR(p.amount)}
             </span>
-
             <button
               style={btn("primary", { fontSize: 11, padding: "5px 10px" })}
               onClick={() => generateSaleReceiptPDF(sale, p, i)}
@@ -1057,7 +1055,6 @@ const DetailRow = ({ label, value }) => (
       )}
 
       <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
-        <button style={btn("teal")} onClick={onDownloadPDF}>⬇ Download PDF</button>
         <button style={btn("default")} onClick={onClose}>Close</button>
       </div>
     </div>
@@ -1187,7 +1184,23 @@ function FlatSalesTab({ flatSales, flatPayments, onAdd, onEdit, onDelete, onAddP
                         <p style={{ fontWeight: 600, color: T.navy, fontSize: 12.5 }}>{s.projectName}</p>
                         <p style={{ fontSize: 11, color: T.hint, marginTop: 1 }}>Flat {s.flatNo}{s.wing ? ` · Wing ${s.wing}` : ""}{s.buildingName ? ` · ${s.buildingName}` : ""}</p>
                       </td>
-                      <td style={{ padding: "13px 14px", color: T.hint, fontSize: 12, fontFamily: "'DM Mono', monospace", whiteSpace: "nowrap" }}>{s.bookingDate}</td>
+                      <td
+  style={{
+    padding: "13px 14px",
+    color: T.hint,
+    fontSize: 12,
+    fontFamily: "'DM Mono', monospace",
+    whiteSpace: "nowrap"
+  }}
+>
+  {s.bookingDate
+    ? new Date(s.bookingDate).toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+      })
+    : "-"}
+</td>
                       <td style={{ padding: "13px 14px" }}><Badge color={statusBadgeMap[s.status] || "navy"}>{s.status}</Badge></td>
                       <td style={{ padding: "13px 14px" }}>
                         <div style={{ display: "flex", gap: 4 }}>
@@ -2440,7 +2453,6 @@ export default function App() {
   async function saveFlatSale(form, existing) {
     if (!form.customerName?.trim()) { showToast("Customer name is required", "error"); return; }
     if (!form.flatNo?.trim()) { showToast("Flat number is required", "error"); return; }
-    if (!form.flatPrice || Number(form.flatPrice) <= 0) { showToast("Please enter a valid flat price", "error"); return; }
     setSaving(true);
     try {
       const data = {
@@ -2474,10 +2486,6 @@ export default function App() {
 
   async function saveFlatPayment(sale, form) {
     const amount = Number(form.amount || 0);
-    if (!amount || amount <= 0) { showToast("Enter a valid amount", "error"); return; }
-    const remaining = Number(sale.remainingAmount || 0);
-    if (amount > remaining + 0.01) { showToast("Amount exceeds remaining balance", "error"); return; }
-    setSaving(true);
     try {
       // Create payment record
       await fsCreate(token, "flatPayments", {
