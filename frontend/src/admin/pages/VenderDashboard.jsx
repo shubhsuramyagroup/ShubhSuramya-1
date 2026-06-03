@@ -2039,116 +2039,24 @@ function VendorFormWrapped({ initial, companies, onSave, onClose, saving }) {
 }
 
 function BillFormWrapped({ initial, vendor, companies, onSave, onClose, saving }) {
-  const [f, setF] = useState(initial || {
-    hsnCode: "", invoiceNo: "", invoiceDate: today(),
-    totalBill: "", cgst: "", sgst: "", tds: "", description: "",
-    pdfUrl: "", pdfName: ""
-  });
-  const [pdfUploading, setPdfUploading] = useState(false);
-  const [pdfError, setPdfError] = useState("");
-  const fileInputRef = useRef(null);
-
+  const [f, setF] = useState(initial || { hsnCode: "", invoiceNo: "", invoiceDate: today(), totalBill: "", cgst: "", sgst: "", tds: "", description: "" });
   const set = (k) => (e) => setF((p) => ({ ...p, [k]: e.target.value }));
   const subTotal = Number(f.totalBill || 0), cgstAmt = Number(f.cgst || 0), sgstAmt = Number(f.sgst || 0);
   const billWithGST = subTotal + cgstAmt + sgstAmt, tdsAmt = Number(f.tds || 0), netAmount = billWithGST - tdsAmt;
-
-  // ── Cloudinary upload ──────────────────────────────────────────────────────
-const CLOUDINARY_CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME ;
-const CLOUDINARY_UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
-
-  const handlePdfUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    if (file.type !== "application/pdf") {
-      setPdfError("Only PDF files are allowed.");
-      return;
-    }
-    if (file.size > 10 * 1024 * 1024) {
-      setPdfError("File size must be under 10 MB.");
-      return;
-    }
-
-    setPdfError("");
-    setPdfUploading(true);
-
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
-      formData.append("resource_type", "raw"); // required for PDFs
-
-      const res = await fetch(
-        `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/raw/upload`,
-        { method: "POST", body: formData }
-      );
-
-      if (!res.ok) throw new Error("Cloudinary upload failed");
-      const data = await res.json();
-
-      setF((p) => ({ ...p, pdfUrl: data.secure_url, pdfName: file.name }));
-    } catch (err) {
-      setPdfError("Upload failed. Please try again.");
-      console.error(err);
-    } finally {
-      setPdfUploading(false);
-    }
-  };
-
-  const removePdf = () => {
-    setF((p) => ({ ...p, pdfUrl: "", pdfName: "" }));
-    if (fileInputRef.current) fileInputRef.current.value = "";
-  };
-
-  // ── Save (includes pdfUrl → Firebase via onSave) ──────────────────────────
-  const handleSave = () => {
-    // pdfUrl is already part of `f`, so onSave receives it automatically.
-    // In your Firebase write (wherever onSave is implemented), just include
-    // pdfUrl and pdfName fields alongside the rest of the bill data.
-    onSave({ ...f, billWithGST, netAmount });
-  };
-
-  // ── PDF upload UI styles ───────────────────────────────────────────────────
-  const uploadZoneStyle = {
-    border: `2px dashed ${T.border}`,
-    borderRadius: 10,
-    padding: "14px 16px",
-    display: "flex",
-    alignItems: "center",
-    gap: 10,
-    cursor: "pointer",
-    background: T.bg,
-    transition: "border-color 0.2s",
-  };
-
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-      <InfoBanner
-        name={vendor.name}
-        sub={companies.find(c => c.id === vendor.companyId)?.name || ""}
-        right={<Badge color="coral">{initial ? "Edit Bill" : "New Bill"}</Badge>}
-      />
-
-      {/* ── Text fields ── */}
+      <InfoBanner name={vendor.name} sub={companies.find(c => c.id === vendor.companyId)?.name || ""} right={<Badge color="coral">{initial ? "Edit Bill" : "New Bill"}</Badge>} />
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(160px,1fr))", gap: 12 }}>
-        {[["Description","description","text"],["HSN Code","hsnCode","text"],["Invoice No.","invoiceNo","text"],["Invoice Date","invoiceDate","date"]].map(([l,k,t]) => (
-          <Field key={k} label={l}>
-            <input style={inp} type={t} value={f[k]} onChange={set(k)} onFocus={focusOn} onBlur={focusOff} />
-          </Field>
+        {[["Description", "description", "text"], ["HSN Code", "hsnCode", "text"], ["Invoice No.", "invoiceNo", "text"], ["Invoice Date", "invoiceDate", "date"]].map(([l, k, t]) => (
+          <Field key={k} label={l}><input style={inp} type={t} value={f[k]} onChange={set(k)} onFocus={focusOn} onBlur={focusOff} /></Field>
         ))}
       </div>
-
       <Divider label="Bill Breakdown" />
-
-      {/* ── Number fields ── */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(130px,1fr))", gap: 10 }}>
-        {[["Sub Total (₹)","totalBill"],["CGST (₹)","cgst"],["SGST (₹)","sgst"],["TDS (₹)","tds"]].map(([l,k]) => (
-          <Field key={k} label={l}>
-            <input style={inp} type="number" value={f[k]} onChange={set(k)} onFocus={focusOn} onBlur={focusOff} placeholder="0.00" />
-          </Field>
+        {[["Sub Total (₹)", "totalBill"], ["CGST (₹)", "cgst"], ["SGST (₹)", "sgst"], ["TDS (₹)", "tds"]].map(([l, k]) => (
+          <Field key={k} label={l}><input style={inp} type="number" value={f[k]} onChange={set(k)} onFocus={focusOn} onBlur={focusOff} placeholder="0.00" /></Field>
         ))}
       </div>
-
-      {/* ── Net summary ── */}
       <div style={{ background: T.bg, borderRadius: 10, padding: "14px 16px", border: `1px solid ${T.border}`, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
         <div style={{ fontSize: 12.5, color: T.muted, lineHeight: 2 }}>
           <p>GST Total: <strong style={{ color: T.navy }}>{fmtINR(billWithGST)}</strong></p>
@@ -2159,89 +2067,9 @@ const CLOUDINARY_UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
           <p style={{ fontSize: 24, fontWeight: 700, color: T.coral }}>{fmtINR(netAmount)}</p>
         </div>
       </div>
-
-      <Divider label="Invoice PDF" />
-
-      {/* ── PDF Upload ── */}
-      <Field label="Attach Invoice PDF">
-        {f.pdfUrl ? (
-          /* Uploaded state */
-          <div style={{ ...uploadZoneStyle, borderStyle: "solid", borderColor: T.navy, justifyContent: "space-between" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, overflow: "hidden" }}>
-              {/* PDF icon */}
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={T.coral} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                <polyline points="14 2 14 8 20 8"/>
-                <line x1="9" y1="13" x2="15" y2="13"/>
-                <line x1="9" y1="17" x2="12" y2="17"/>
-              </svg>
-              <div style={{ overflow: "hidden" }}>
-                <p style={{ fontSize: 12.5, fontWeight: 600, color: T.navy, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 200 }}>{f.pdfName}</p>
-                <a href={f.pdfUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: T.coral, textDecoration: "none" }}>View PDF ↗</a>
-              </div>
-            </div>
-            <button
-              style={{ ...btn("default"), padding: "4px 10px", fontSize: 11 }}
-              onClick={removePdf}
-              type="button"
-            >
-              Remove
-            </button>
-          </div>
-        ) : (
-          /* Upload zone */
-          <div
-            style={uploadZoneStyle}
-            onClick={() => fileInputRef.current?.click()}
-          >
-            {pdfUploading ? (
-              <>
-                {/* Spinner */}
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={T.navy} strokeWidth="2.5" strokeLinecap="round">
-                  <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83">
-                    <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="0.8s" repeatCount="indefinite"/>
-                  </path>
-                </svg>
-                <span style={{ fontSize: 12.5, color: T.muted }}>Uploading to Cloudinary…</span>
-              </>
-            ) : (
-              <>
-                {/* Upload icon */}
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={T.muted} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                  <polyline points="17 8 12 3 7 8"/>
-                  <line x1="12" y1="3" x2="12" y2="15"/>
-                </svg>
-                <div>
-                  <p style={{ fontSize: 12.5, color: T.navy, fontWeight: 500, margin: 0 }}>Click to upload PDF</p>
-                  <p style={{ fontSize: 11, color: T.hint, margin: 0 }}>Max 10 MB · PDF only</p>
-                </div>
-              </>
-            )}
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="application/pdf"
-              style={{ display: "none" }}
-              onChange={handlePdfUpload}
-            />
-          </div>
-        )}
-        {pdfError && (
-          <p style={{ fontSize: 11.5, color: T.coral, marginTop: 4 }}>{pdfError}</p>
-        )}
-      </Field>
-
-      {/* ── Actions ── */}
       <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", paddingTop: 16, borderTop: `1px solid ${T.border}` }}>
         <button style={btn("default")} onClick={onClose}>Cancel</button>
-        <button
-          style={btn("primary")}
-          onClick={handleSave}
-          disabled={saving || pdfUploading}
-        >
-          {saving ? "Saving…" : initial ? "Update Bill" : "Add Bill"}
-        </button>
+        <button style={btn("primary")} onClick={() => onSave({ ...f, billWithGST, netAmount })} disabled={saving}>{saving ? "Saving…" : initial ? "Update Bill" : "Add Bill"}</button>
       </div>
     </div>
   );
