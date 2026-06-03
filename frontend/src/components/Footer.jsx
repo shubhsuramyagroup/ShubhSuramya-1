@@ -65,20 +65,37 @@ export default function Footer() {
 
           {/* 2. QUICK LINKS */}
           <div className="flex flex-col gap-3">
-            <h4 className="text-[#1E2A5A] font-semibold mb-2">Quick Links</h4>
+  <h4 className="text-[#1E2A5A] font-semibold mb-2">Quick Links</h4>
 
-            {["About", "Contact", "FAQ's", "Blog", "Pricing Plans"].map(
-              (item) => (
-                <Link
-                  key={item}
-                  to="#"
-                  className="text-[#1E2A5A]/60 hover:text-[#E34A2F] text-sm transition"
-                >
-                  {item}
-                </Link>
-              ),
-            )}
-          </div>
+  <Link
+    to="/"
+    className="text-[#1E2A5A]/60 hover:text-[#E34A2F] text-sm transition"
+  >
+    Home
+  </Link>
+
+  <Link
+    to="/projects"
+    className="text-[#1E2A5A]/60 hover:text-[#E34A2F] text-sm transition"
+  >
+    Projects
+  </Link>
+
+  <Link
+    to="/about"
+    className="text-[#1E2A5A]/60 hover:text-[#E34A2F] text-sm transition"
+  >
+    About
+  </Link>
+
+  <Link
+    to="/contact"
+    className="text-[#1E2A5A]/60 hover:text-[#E34A2F] text-sm transition"
+  >
+    Contact
+  </Link>
+
+</div>
 
           {/* 3. CONTACT */}
           <div className="flex flex-col gap-3">
