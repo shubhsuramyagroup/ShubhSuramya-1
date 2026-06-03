@@ -803,10 +803,6 @@ function FlatPaymentFormWrapped({ sale, onSave, onClose, saving }) {
             <p style={{ fontSize: 14, fontWeight: 700, color: "#fff" }}>{sale.customerName}</p>
             <p style={{ fontSize: 11.5, color: "rgba(255,255,255,0.45)", marginTop: 2 }}>{sale.receiptNo} · Flat {sale.flatNo}, {sale.projectName}</p>
           </div>
-          <div style={{ textAlign: "right" }}>
-            <p style={{ fontSize: 10.5, color: "rgba(255,255,255,0.45)" }}>Outstanding</p>
-            <p style={{ fontSize: 20, fontWeight: 700, color: "#ff8a75" }}>{fmtINR(remaining)}</p>
-          </div>
         </div>
         <ProgressBar pct={Number(sale.totalAmount) > 0 ? (Number(sale.paidAmount) / Number(sale.totalAmount)) * 100 : 0} color="rgba(255,255,255,0.35)" />
       </div>
@@ -1679,7 +1675,16 @@ function DashboardTab({ companies, vendors, bills, payments, activityLog, flatSa
                     </div>
                     <div style={{ minWidth: 0 }}>
                       <p style={{ fontSize: 13, fontWeight: 600, color: T.navy, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.vendorName}</p>
-                      <p style={{ fontSize: 11, color: T.hint, marginTop: 2 }}>{p.date}{p.particulars ? ` · ${p.particulars}` : ""}</p>
+                      <p style={{ fontSize: 11, color: T.hint, marginTop: 2 }}>
+  {p.date
+    ? new Date(p.date).toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+      })
+    : "-"}
+  {p.particulars ? ` · ${p.particulars}` : ""}
+</p>
                     </div>
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
@@ -1758,7 +1763,23 @@ function PaymentsTab({ payments, companies }) {
                       onMouseEnter={e => e.currentTarget.style.background = T.bg}
                       onMouseLeave={e => e.currentTarget.style.background = "transparent"}
                     >
-                      <td style={{ padding: "13px 16px", color: T.hint, whiteSpace: "nowrap", fontSize: 12.5, fontFamily: "'DM Mono', monospace" }}>{p.date}</td>
+<td
+  style={{
+    padding: "13px 16px",
+    color: T.hint,
+    whiteSpace: "nowrap",
+    fontSize: 12.5,
+    fontFamily: "'DM Mono', monospace"
+  }}
+>
+  {p.date
+    ? new Date(p.date).toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+      })
+    : "-"}
+</td>
                       <td style={{ padding: "13px 16px" }}>
                         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                           <div style={{ width: 28, height: 28, borderRadius: 7, background: T.bg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: T.navy, border: `1px solid ${T.border}`, flexShrink: 0 }}>{(p.vendorName || "?")[0].toUpperCase()}</div>
