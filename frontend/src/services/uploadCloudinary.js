@@ -1,5 +1,5 @@
-const CLOUDINARY_CLOUD_NAME = "ddzsk54c2";       // e.g. "myapp123"
-const CLOUDINARY_UPLOAD_PRESET = "project_uploads";
+const CLOUDINARY_CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
+const CLOUDINARY_UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
 
 export const uploadImage = async (file) => {
   try {
