@@ -5,7 +5,7 @@ import { auth } from "../../firebase";
 import { loginAdmin } from "../../services/authService";
 import logo from "../../../public/logo.png";
 
-export default function AdminLogin() {
+export default function VendorLogin() {
   const navigate = useNavigate();
 
   const [email,    setEmail]    = useState("");
@@ -16,7 +16,7 @@ export default function AdminLogin() {
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (user) => {
-      if (user) navigate("/admin/dashboard");
+      if (user) navigate("/vendor/dashboard");
     });
     return () => unsub();
   }, [navigate]);
@@ -27,8 +27,8 @@ export default function AdminLogin() {
     try {
       const userCredential = await loginAdmin(email, password);
       if (userCredential.user) {
-        localStorage.setItem("admin", JSON.stringify(userCredential.user));
-        navigate("/admin/dashboard");
+        localStorage.setItem("vendor", JSON.stringify(userCredential.user));
+        navigate("/vendor/dashboard");
       }
     } catch (err) {
       setError(
