@@ -8,6 +8,8 @@ import logo from "../../../public/logo.png";
 import logo1 from "../../../public/logo1.png";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
+import { signOut } from "firebase/auth";
+import { auth } from "../../firebase";
 
 /* ─── Firebase Config ─────────────────────────────────────────────────────── */
 const FB = {
@@ -1189,7 +1191,6 @@ function PaymentSuccess({ amount, vendor, paymentId, onClose }) {
 ═══════════════════════════════════════════════════════════════════════════ */
 export default function App() {
   const navigate = useNavigate();
-  const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
   const [sessionExpired, setSessionExpired] = useState(false);
   const [tab, setTab] = useState("dashboard");
@@ -1208,6 +1209,7 @@ export default function App() {
   const [toast, setToast] = useState(null);
   const [successPayment, setSuccessPayment] = useState(null);
   const [searchParams] = useSearchParams();
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
     if (!document.getElementById("razorpay-sdk")) {
@@ -1251,7 +1253,41 @@ export default function App() {
   useEffect(() => { if (token) loadAll(token); }, [token, loadAll]);
 
   function handleLogin(u) { saveSession(u); setUser({ email: u.email, uid: u.uid }); setToken(u.token); setSessionExpired(false); setTab("dashboard"); }
-  function handleLogout() { clearSession(); setUser(null); setToken(null); setCompanies([]); setVendors([]); setBills([]); setPayments([]); setSessionExpired(false); navigate("/vendors"); }
+
+
+async function handleLogout() {
+  try {
+    console.log("========== LOGOUT ==========");
+
+    await signOut(auth);
+
+    console.log("Firebase User Signed Out");
+
+    localStorage.removeItem("shubh_admin_session");
+    localStorage.removeItem("vendor");
+
+    clearSession();
+
+    setUser(null);
+    setToken(null);
+
+    setCompanies([]);
+    setVendors([]);
+    setBills([]);
+    setPayments([]);
+
+    setSessionExpired(false);
+
+    console.log(
+      "Session After Logout:",
+      localStorage.getItem("shubh_admin_session")
+    );
+
+    navigate("/vendors", { replace: true });
+  } catch (err) {
+    console.error("Logout Error:", err);
+  }
+}
 
   async function saveCompany(form, existing) {
     setSaving(true);

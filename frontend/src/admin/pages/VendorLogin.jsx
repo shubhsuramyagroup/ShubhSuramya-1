@@ -1,47 +1,141 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { onAuthStateChanged } from "firebase/auth";
-import { auth } from "../../firebase";
 import { loginAdmin } from "../../services/authService";
 import logo from "../../../public/logo.png";
 
 export default function VendorLogin() {
   const navigate = useNavigate();
 
-  const [email,    setEmail]    = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [showPwd,  setShowPwd]  = useState(false);
-  const [loading,  setLoading]  = useState(false);
-  const [error,    setError]    = useState("");
+  const [showPwd, setShowPwd] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (user) => {
-      if (user) navigate("/vendor/dashboard");
-    });
-    return () => unsub();
-  }, [navigate]);
+  console.log("Vendor Login Loaded");
+
+  const session = localStorage.getItem(
+    "shubh_admin_session"
+  );
+
+  console.log("Stored Session:", session);
+
+  if (!session) return;
+
+  try {
+    const parsed = JSON.parse(session);
+
+    if (
+      parsed?.token &&
+      parsed?.expiresAt &&
+      Date.now() < parsed.expiresAt
+    ) {
+      console.log("Valid Session Found");
+      navigate("/vendor/dashboard", {
+        replace: true,
+      });
+    } else {
+      console.log("Session Expired");
+      localStorage.removeItem(
+        "shubh_admin_session"
+      );
+    }
+  } catch (err) {
+    console.error(err);
+
+    localStorage.removeItem(
+      "shubh_admin_session"
+    );
+  }
+}, [navigate]);
 
   const handleLogin = async () => {
-    if (!email || !password) { setError("Please enter your email and password."); return; }
-    setError(""); setLoading(true);
-    try {
-      const userCredential = await loginAdmin(email, password);
-      if (userCredential.user) {
-        localStorage.setItem("vendor", JSON.stringify(userCredential.user));
-        navigate("/vendor/dashboard");
-      }
-    } catch (err) {
-      setError(
-        err.message
-          .replace("INVALID_LOGIN_CREDENTIALS", "Invalid email or password.")
-          .replace("TOO_MANY_ATTEMPTS_TRY_LATER", "Too many attempts. Try later.")
-      );
-    } finally {
-      setLoading(false);
+  if (!email || !password) {
+    setError(
+      "Please enter your email and password."
+    );
+    return;
+  }
+
+  setError("");
+  setLoading(true);
+
+  try {
+    console.log("========== LOGIN ==========");
+    console.log("Email:", email);
+
+    const userCredential =
+      await loginAdmin(email, password);
+
+    console.log(
+      "Login Success:",
+      userCredential
+    );
+
+    const user = userCredential.user;
+
+    if (!user) {
+      throw new Error("User not found");
     }
-  };
+
+    const token =
+      await user.getIdToken(true);
+
+    console.log("Firebase Token:", token);
+
+    const session = {
+      uid: user.uid,
+      email: user.email,
+      token,
+      expiresAt:
+        Date.now() + 3600 * 1000,
+    };
+
+    console.log(
+      "Session Object:",
+      session
+    );
+
+    localStorage.setItem(
+      "shubh_admin_session",
+      JSON.stringify(session)
+    );
+
+    console.log(
+      "Saved Session:",
+      JSON.parse(
+        localStorage.getItem(
+          "shubh_admin_session"
+        )
+      )
+    );
+
+    navigate("/vendor/dashboard", {
+      replace: true,
+    });
+  } catch (err) {
+    console.error("LOGIN ERROR:", err);
+
+    setError(
+      err.message
+        .replace(
+          "INVALID_LOGIN_CREDENTIALS",
+          "Invalid email or password."
+        )
+        .replace(
+          "TOO_MANY_ATTEMPTS_TRY_LATER",
+          "Too many attempts. Try later."
+        )
+    );
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
+    // KEEP YOUR EXISTING JSX EXACTLY SAME
+    // ONLY replace the useEffect and handleLogin above
     <div className="min-h-screen flex items-center justify-center bg-[#F8F7F4] p-4">
           <div className="w-full max-w-6xl grid lg:grid-cols-2 rounded-[28px] overflow-hidden border border-[#E8E5DF] bg-white shadow-[0_32px_80px_rgba(10,14,30,0.18)]">
     
@@ -57,7 +151,7 @@ export default function VendorLogin() {
                           <div className="flex items-center gap-3 mb-4">
                             <img src={logo} alt="logo" className="w-10 h-10 object-contain flex-shrink-0" />
                             <h1 className="m-0 text-[30px] font-extrabold text-white tracking-tight leading-none">
-                              Shubh <span className="text-[#E34A2F]">Sauramya</span>
+                              Shubh <span className="text-[#E34A2F]">Suramya</span>
                             </h1>
                           </div>
                           <p className="m-0 text-[14px] text-white/50 leading-relaxed max-w-[280px]">
@@ -105,7 +199,7 @@ export default function VendorLogin() {
               </h2>
     
               <p className="text-gray-500 mt-2 mb-8">
-                Sign in to your sales account
+                Sign in to your vendors account
               </p>
     
               <div className="space-y-5">

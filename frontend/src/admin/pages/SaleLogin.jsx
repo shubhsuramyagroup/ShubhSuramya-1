@@ -84,7 +84,7 @@ export default function SaleLogin() {
                       <div className="flex items-center gap-3 mb-4">
                         <img src={logo} alt="logo" className="w-10 h-10 object-contain flex-shrink-0" />
                         <h1 className="m-0 text-[30px] font-extrabold text-white tracking-tight leading-none">
-                          Shubh <span className="text-[#E34A2F]">Sauramya</span>
+                          Shubh <span className="text-[#E34A2F]">Suramya</span>
                         </h1>
                       </div>
                       <p className="m-0 text-[14px] text-white/50 leading-relaxed max-w-[280px]">
