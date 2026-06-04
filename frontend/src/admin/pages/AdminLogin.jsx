@@ -1,177 +1,160 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "../../firebase";
+
 import { loginAdmin } from "../../services/authService";
-import logo from "../../../public/logo.png";
 
 export default function AdminLogin() {
   const navigate = useNavigate();
 
-  const [email,    setEmail]    = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [showPwd,  setShowPwd]  = useState(false);
-  const [loading,  setLoading]  = useState(false);
-  const [error,    setError]    = useState("");
 
+  const [loading, setLoading] = useState(false);
+
+  const [error, setError] = useState("");
+
+  // Auto Login Check
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (user) => {
-      if (user) navigate("/admin/dashboard");
-    });
-    return () => unsub();
-  }, [navigate]);
-
-  const handleLogin = async () => {
-    if (!email || !password) { setError("Please enter your email and password."); return; }
-    setError(""); setLoading(true);
-    try {
-      const userCredential = await loginAdmin(email, password);
-      if (userCredential.user) {
-        localStorage.setItem("admin", JSON.stringify(userCredential.user));
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
         navigate("/admin/dashboard");
       }
-    } catch (err) {
-      setError(
-        err.message
-          .replace("INVALID_LOGIN_CREDENTIALS", "Invalid email or password.")
-          .replace("TOO_MANY_ATTEMPTS_TRY_LATER", "Too many attempts. Try later.")
-      );
-    } finally {
-      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [navigate]);
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+
+    setLoading(true);
+    setError("");
+
+    try {
+      const userCredential = await loginAdmin(email, password);
+
+      if (userCredential.user) {
+        localStorage.setItem("admin", JSON.stringify(userCredential.user));
+
+        navigate("/admin/dashboard");
+      }
+    } catch (error) {
+      console.log(error);
+
+      setError("Invalid Email or Password");
     }
+
+    setLoading(false);
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#F8F7F4] p-4">
-          <div className="w-full max-w-6xl grid lg:grid-cols-2 rounded-[28px] overflow-hidden border border-[#E8E5DF] bg-white shadow-[0_32px_80px_rgba(10,14,30,0.18)]">
-    
-            {/* Left Side */}
-            <div className="hidden lg:flex flex-col justify-end relative overflow-hidden p-12 bg-gradient-to-br from-[#1F2A44] via-[#162048] to-[#0e1530]">
-                      {/* Decorative blobs */}
-                      <div className="absolute -top-16 -right-16 w-56 h-56 rounded-full bg-[#E34A2F]/10 pointer-events-none" />
-                      <div className="absolute -bottom-10 -left-10 w-40 h-40 rounded-full bg-[#F5A623]/8 pointer-events-none" />
-            
-                      <div className="flex flex-col gap-6 z-10">
-                        {/* Logo + Brand */}
-                        <div>
-                          <div className="flex items-center gap-3 mb-4">
-                            <img src={logo} alt="logo" className="w-10 h-10 object-contain flex-shrink-0" />
-                            <h1 className="m-0 text-[30px] font-extrabold text-white tracking-tight leading-none">
-                              Shubh <span className="text-[#E34A2F]">Suramya</span>
-                            </h1>
-                          </div>
-                          <p className="m-0 text-[14px] text-white/50 leading-relaxed max-w-[280px]">
-                            Vendor & payment management portal for authorised administrators.
-                          </p>
-                        </div>
-            
-                        {/* Feature list */}
-                        <div className="flex flex-col gap-3.5">
-                          {[
-                            ["🏢", "Manage Companies & Vendors"],
-                            ["📋", "Track Bills & Invoices"],
-                            ["💳", "Record Payments via Razorpay"],
-                            ["🏠", "Flat Sales & Customer Receipts"],
-                          ].map(([icon, text]) => (
-                            <div key={text} className="flex items-center gap-3">
-                              <div className="w-8 h-8 rounded-[9px] bg-white/7 border border-white/10 flex items-center justify-center text-sm flex-shrink-0">
-                                {icon}
-                              </div>
-                              <span className="text-[12.5px] text-white/65">{text}</span>
-                            </div>
-                          ))}
-                        </div>
-            
-                        <p className="m-0 text-[11px] text-white/25">Shubh Sauramya · Sanand, Gujarat</p>
-                      </div>
-                    </div>
-    
-            {/* Right Side */}
-            <div className="bg-white px-6 py-10 sm:px-8 md:px-10 lg:px-12 flex flex-col justify-center min-h-[520px]">
-    
-              <div className="flex items-center gap-3 mb-8 lg:hidden">
-                <img
-                  src={logo}
-                  alt="logo"
-                  className="w-10 h-10"
-                />
-                <h1 className="text-2xl font-extrabold text-[#1F2A44]">
-                  Shubh <span className="text-[#E34A2F]">Sauramya</span>
-                </h1>
-              </div>
-    
-              <h2 className="text-3xl font-bold text-[#1F2A44]">
-                Welcome Back
-              </h2>
-    
-              <p className="text-gray-500 mt-2 mb-8">
-                Sign in to your sales account
-              </p>
-    
-              <div className="space-y-5">
-    
-                <div>
-                  <label className="block text-sm font-semibold mb-2">
-                    Email Address
-                  </label>
-    
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) =>
-                      setEmail(e.target.value)
-                    }
-                    className="w-full px-4 py-3 rounded-xl border border-gray-300"
-                    placeholder="sales@gmail.com"
-                  />
-                </div>
-    
-                <div>
-                  <label className="block text-sm font-semibold mb-2">
-                    Password
-                  </label>
-    
-                  <div className="relative">
-                    <input
-                      type={showPwd ? "text" : "password"}
-                      value={password}
-                      onChange={(e) =>
-                        setPassword(e.target.value)
-                      }
-                      className="w-full px-4 py-3 rounded-xl border border-gray-300"
-                      placeholder="••••••••"
-                    />
-    
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setShowPwd(!showPwd)
-                      }
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-gray-500"
-                    >
-                      {showPwd ? "Hide" : "Show"}
-                    </button>
-                  </div>
-                </div>
-    
-                {error && (
-                  <p className="text-red-500 text-sm">
-                    {error}
-                  </p>
-                )}
-    
-                <button
-                  onClick={handleLogin}
-                  disabled={loading}
-                  className="w-full bg-[#E34A2F] text-white py-3 rounded-xl font-semibold hover:bg-[#C93F26]"
-                >
-                  {loading
-                    ? "Signing In..."
-                    : "Sign In →"}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+    <div
+      style={{
+        minHeight: "100vh",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        background: "#F8F7F4",
+        padding: "20px",
+      }}
+    >
+      <form
+        onSubmit={handleLogin}
+        style={{
+          width: "100%",
+          maxWidth: "420px",
+          background: "#fff",
+          padding: "40px",
+          borderRadius: "20px",
+          boxShadow: "0 10px 40px rgba(0,0,0,0.08)",
+        }}
+      >
+        <h1
+          style={{
+            fontSize: "34px",
+            marginBottom: "10px",
+            color: "#1F2A44",
+          }}
+        >
+          Admin Login
+        </h1>
+
+        <p
+          style={{
+            color: "#666",
+            marginBottom: "30px",
+          }}
+        >
+          Login to access dashboard
+        </p>
+
+        <input
+          type="email"
+          placeholder="Enter Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+          style={{
+            width: "100%",
+            padding: "14px",
+            marginBottom: "18px",
+            borderRadius: "12px",
+            border: "1px solid #ddd",
+            outline: "none",
+            fontSize: "15px",
+          }}
+        />
+
+        <input
+          type="password"
+          placeholder="Enter Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+          style={{
+            width: "100%",
+            padding: "14px",
+            marginBottom: "18px",
+            borderRadius: "12px",
+            border: "1px solid #ddd",
+            outline: "none",
+            fontSize: "15px",
+          }}
+        />
+
+        {error && (
+          <p
+            style={{
+              color: "red",
+              marginBottom: "15px",
+              fontSize: "14px",
+            }}
+          >
+            {error}
+          </p>
+        )}
+
+        <button
+          type="submit"
+          disabled={loading}
+          style={{
+            width: "100%",
+            padding: "14px",
+            border: "none",
+            borderRadius: "12px",
+            background: "#E4572E",
+            color: "#fff",
+            fontWeight: "600",
+            fontSize: "15px",
+            cursor: "pointer",
+          }}
+        >
+          {loading ? "Logging in..." : "Login"}
+        </button>
+      </form>
+    </div>
   );
 }

@@ -7,9 +7,7 @@ import ProjectDetailPage from "./pages/ProjectDetailPage";
 import ScrollToTop from "./components/ScrollToTop";
 
 import AdminLogin from "./admin/pages/AdminLogin";
-import AdminProtectedRoute from "./admin/components/AdminProtectedRoute";
-import VendorProtectedRoute from "./admin/components/VendorProtectedRoute";
-import SaleProtectedRoute from "./admin/components/SaleProtectedRoute";
+import ProtectedRoute from "./admin/components/ProtectedRoute";
 
 import Dashboard from "./admin/pages/Dashboard";
 import AddProject from "./admin/pages/AddProject";
@@ -20,11 +18,7 @@ import Articles from "./admin/pages/Articles";
 import EditArticle from "./admin/pages/EditArticle";
 import Contacts from "./admin/pages/Contacts";
 
-import VendorLogin from "./admin/pages/VendorLogin";
 import VendorDashboard from "../src/admin/pages/VenderDashboard";
-
-import SaleLogin from "./admin/pages/SaleLogin";
-import FlatSaleDashboard from "./admin/pages/FlatSaleDashboard";
 import "./App.css";
 
 function App() {
@@ -44,9 +38,9 @@ function App() {
         <Route
           path="/admin/dashboard"
           element={
-            <AdminProtectedRoute>
+            <ProtectedRoute>
               <Dashboard />
-            </AdminProtectedRoute>
+            </ProtectedRoute>
           }
         />
         <Route path="/admin/add-project" element={<AddProject />} />
@@ -57,26 +51,7 @@ function App() {
         <Route path="/admin/articles" element={<Articles />} />
         <Route path="/admin/edit-article/:id" element={<EditArticle />} />
         <Route path="/admin/contacts" element={<Contacts />} />
-
-        <Route path="/vendors" element={<VendorLogin />} />
-        <Route
-          path="/vendor/dashboard"
-          element={
-            <VendorProtectedRoute>
-              <VendorDashboard />
-            </VendorProtectedRoute>
-          }
-        />
-
-        <Route path="/sales" element={<SaleLogin />} />
-        <Route
-          path="/sale/dashboard"
-          element={
-            <SaleProtectedRoute>
-              <FlatSaleDashboard />
-            </SaleProtectedRoute>
-          }
-        />
+        <Route path="/admin/vendors" element={<VendorDashboard />} />
       </Routes>
     </BrowserRouter>
   );
