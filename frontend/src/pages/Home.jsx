@@ -362,8 +362,7 @@ const FALLBACK_PROJECT = {
   units: "—",
   area: "—",
   status: "—",
-  mainImage:
-    "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=900&q=85",
+  mainImage: "Loading…",
 };
 
 /* ─── MAIN COMPONENT ─── */
@@ -858,8 +857,7 @@ export default function Home() {
                   >
                     <img
                       src={
-                        proj.mainImage ||
-                        "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=900&q=85"
+                        proj.mainImage
                       }
                       alt={proj.title}
                       className="w-full h-full object-cover"

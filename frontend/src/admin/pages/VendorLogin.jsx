@@ -1,10 +1,48 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { onAuthStateChanged } from "firebase/auth";
-import { auth } from "../../firebase";
-import { loginAdmin } from "../../services/authService";
-import { FaEye, FaEyeSlash } from "react-icons/fa";
 import logo from "../../../public/logo.png";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
+
+/* ─── Firebase Config ─────────────────────────────────────────────────────── */
+const FB = {
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+};
+
+
+
+/* ─── Auth ───────────────────────────────────────────────────────────────── */
+async function signIn(email, password) {
+  const r = await fetch(
+    `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${FB.apiKey}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password, returnSecureToken: true }),
+    }
+  );
+  const d = await r.json();
+  if (!r.ok) throw new Error(d.error?.message || "Login failed");
+  return {
+    token: d.idToken,
+    uid: d.localId,
+    email: d.email,
+    expiresAt: Date.now() + Number(d.expiresIn || 3600) * 1000,
+  };
+}
+
+function SessionExpiredBanner({ onLogin }) {
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(10,14,30,0.60)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 3000, padding: 16 }}>
+      <div style={{ background: "#fff", borderRadius: 14, maxWidth: 360, width: "100%", padding: "2rem", textAlign: "center", boxShadow: "0 20px 60px rgba(10,14,30,0.22)", border: `1px solid ${T.border}`, overflow: "hidden", position: "relative" }}>
+        <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: T.coral }} />
+        <div style={{ fontSize: 36, marginBottom: 14 }}>⏱</div>
+        <h2 style={{ fontSize: 18, fontWeight: 700, color: T.navy, marginBottom: 8 }}>Session Expired</h2>
+        <p style={{ color: T.hint, fontSize: 13.5, lineHeight: 1.6, marginBottom: 22 }}>Please sign in again to continue.</p>
+        <button style={{ ...btn("primary"), width: "100%", justifyContent: "center", padding: "11px 20px" }} onClick={onLogin}>Sign In Again</button>
+      </div>
+    </div>
+  );
+}
 
 /* ─── Design Tokens ──────────────────────────────────────────────────────── */
 const T = {
@@ -51,7 +89,8 @@ const makeBtn = (variant = "default", extra = {}) => ({
   letterSpacing: "0.3px",
   padding: "9px 18px",
   borderRadius: 50,
-  border: variant === "outline" ? `1.5px solid ${T.navy}` : "none",
+  border:
+    variant === "outline" ? `1.5px solid ${T.navy}` : "none",
   background:
     variant === "primary"
       ? `linear-gradient(135deg,${T.coral},#f5743a)`
@@ -90,10 +129,12 @@ function Field({ label, children }) {
   );
 }
 
+
+
 /* ═══════════════════════════════════════════════════════════════════════════
-   ADMIN LOGIN PAGE
+   LOGIN PAGE
 ═══════════════════════════════════════════════════════════════════════════ */
-export default function AdminLogin() {
+export default function LoginPage() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -101,38 +142,41 @@ export default function AdminLogin() {
   const [error, setError] = useState("");
   const [show, setShow] = useState(false);
 
-  // Auto Login Check
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        navigate("/admin/dashboard");
-      }
-    });
-    return () => unsubscribe();
-  }, [navigate]);
+  const session = localStorage.getItem("vendorSession");
+  if (session) {
+    navigate("/vendors");
+  }
+}, [navigate]);
 
-  const handleLogin = async () => {
-    if (!email || !password) {
-      setError("Please enter your email and password.");
-      return;
-    }
+  async function handleSubmit() {
+  if (!email || !password) {
+    setError("Please enter your email and password.");
+    return;
+  }
 
-    setLoading(true);
-    setError("");
+  setError("");
+  setLoading(true);
 
-    try {
-      const userCredential = await loginAdmin(email, password);
-      if (userCredential.user) {
-        localStorage.setItem("admin", JSON.stringify(userCredential.user));
-        navigate("/admin/dashboard");
-      }
-    } catch (err) {
-      console.log(err);
-      setError("Invalid email or password.");
-    }
+  try {
+    const u = await signIn(email, password);
 
+    localStorage.setItem("shubh_admin_session", JSON.stringify(u));
+
+    navigate("/vendor/dashboard");
+  } catch (e) {
+    setError(
+      e.message
+        .replace("INVALID_LOGIN_CREDENTIALS", "Invalid email or password.")
+        .replace(
+          "TOO_MANY_ATTEMPTS_TRY_LATER",
+          "Too many attempts. Try later."
+        )
+    );
+  } finally {
     setLoading(false);
-  };
+  }
+}
 
   return (
     <div
@@ -243,7 +287,7 @@ export default function AdminLogin() {
                   maxWidth: 280,
                 }}
               >
-                Admin portal for authorised administrators only.
+                Vendor & payment management portal for authorised administrators.
               </p>
             </div>
 
@@ -292,19 +336,21 @@ export default function AdminLogin() {
             justifyContent: "center",
           }}
         >
-          {/* Mobile logo — hidden on desktop via media query */}
-          <div className="flex items-center gap-3 mb-8 lg:hidden">
-            <img src={logo} alt="logo" className="w-10 h-10" />
+            <div className="flex items-center gap-3 mb-8 lg:hidden">
+            <img
+              src={logo}
+              alt="logo"
+              className="w-10 h-10"
+            />
             <h1 className="text-2xl font-extrabold text-[#1F2A44]">
-              Shubh <span className="text-[#E34A2F]">Suramya</span>
+              Shubh <span className="text-[#E34A2F]">Sauramya</span>
             </h1>
           </div>
-
           <h2 style={{ marginBottom: 6, color: T.navy, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-            Admin Portal
+            Welcome back
           </h2>
           <p style={{ color: T.muted, marginBottom: 30, fontSize: 14 }}>
-            Sign in to your admin account
+            Sign in to your vendor account
           </p>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
@@ -317,7 +363,7 @@ export default function AdminLogin() {
                 onFocus={focusOn}
                 onBlur={focusOff}
                 placeholder="admin@shubhinfra.com"
-                onKeyDown={(e) => e.key === "Enter" && handleLogin()}
+                onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
               />
             </Field>
 
@@ -331,7 +377,7 @@ export default function AdminLogin() {
                   onFocus={focusOn}
                   onBlur={focusOff}
                   placeholder="••••••••"
-                  onKeyDown={(e) => e.key === "Enter" && handleLogin()}
+                  onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
                 />
                 <button
                   type="button"
@@ -374,7 +420,7 @@ export default function AdminLogin() {
             )}
 
             <button
-              onClick={handleLogin}
+              onClick={handleSubmit}
               disabled={loading}
               style={{
                 ...makeBtn("primary", {
