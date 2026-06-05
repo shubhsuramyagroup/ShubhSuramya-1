@@ -10,6 +10,7 @@ import ScrollToTop from "./components/ScrollToTop";
 import AdminLogin from "./admin/pages/AdminLogin";
 import ProtectedRoute from "./admin/components/ProtectedRoute";
 import VendorProtectedRoute from "./admin/components/VendorProtectedRoute";
+import FlatSaleProtectedRoute from "./admin/components/FlatSaleProtectedRoute";
 
 import Dashboard from "./admin/pages/Dashboard";
 import AddProject from "./admin/pages/AddProject";
@@ -22,6 +23,9 @@ import Contacts from "./admin/pages/Contacts";
 
 import VendorLogin from "./admin/pages/VendorLogin";
 import VendorDashboard from "../src/admin/pages/VenderDashboard";
+
+import FlatSaleLogin from "./admin/pages/FlatSaleLogin";
+import FlatSaleDashboard from "./admin/pages/FlatSaleDashboard";
 import "./App.css";
 
 function App() {
@@ -57,14 +61,25 @@ function App() {
 
         <Route path="/vendors" element={<VendorLogin />} />
 
-<Route
-  path="/vendor/dashboard"
-  element={
-    <VendorProtectedRoute>
-      <VendorDashboard />
-    </VendorProtectedRoute>
-  }
-/>
+        <Route
+          path="/vendor/dashboard"
+          element={
+            <VendorProtectedRoute>
+              <VendorDashboard />
+            </VendorProtectedRoute>
+          }
+        />
+
+        <Route path="/sales" element={<FlatSaleLogin />} />
+        
+        <Route
+          path="/sale/dashboard"
+          element={
+            <FlatSaleProtectedRoute>
+              <FlatSaleDashboard />
+            </FlatSaleProtectedRoute>
+          }
+        />
       </Routes>
     </BrowserRouter>
   );

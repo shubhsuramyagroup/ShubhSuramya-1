@@ -145,7 +145,7 @@ export default function LoginPage() {
   useEffect(() => {
   const session = localStorage.getItem("vendorSession");
   if (session) {
-    navigate("/vendors");
+    navigate("/sales");
   }
 }, [navigate]);
 
@@ -163,7 +163,7 @@ export default function LoginPage() {
 
     localStorage.setItem("shubh_admin_session", JSON.stringify(u));
 
-    navigate("/vendor/dashboard");
+    navigate("/sale/dashboard");
   } catch (e) {
     setError(
       e.message
@@ -350,7 +350,7 @@ export default function LoginPage() {
             Welcome back
           </h2>
           <p style={{ color: T.muted, marginBottom: 30, fontSize: 14 }}>
-            Sign in to your vendor account
+            Sign in to your flat sale account
           </p>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
