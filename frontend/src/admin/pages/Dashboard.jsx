@@ -276,12 +276,11 @@ export default function Dashboard() {
     XLSX.writeFile(workbook, "contacts.xlsx");
   };
 
-  const handleLogout = () => {
-  localStorage.removeItem("admin");
-  sessionStorage.removeItem("admin");
-
-  navigate("/admin");
-};
+  const handleLogout = async () => {
+    await signOut(auth);
+    localStorage.removeItem("admin");
+    navigate("/admin");
+  };
 
   const dashboardCards = [
     {
@@ -383,22 +382,13 @@ export default function Dashboard() {
                 Contacts
               </button>
             </Link>
-            <Link to="/vendors?tab=vendors">
+            <Link to="/admin/vendors?tab=vendors">
               <button
                 className="inline-flex items-center gap-1.5 bg-white border border-gray-200 text-[#1F2A44]
                                  px-4 py-2 rounded-full text-[12px] font-semibold
                                  hover:border-blue-500 hover:text-blue-500 transition-all duration-200"
               >
                 Vendors
-              </button>
-            </Link>
-            <Link to="/sales?tab=sales">
-              <button
-                className="inline-flex items-center gap-1.5 bg-white border border-gray-200 text-[#1F2A44]
-                                 px-4 py-2 rounded-full text-[12px] font-semibold
-                                 hover:border-blue-500 hover:text-blue-500 transition-all duration-200"
-              >
-                Sales
               </button>
             </Link>
             <button
