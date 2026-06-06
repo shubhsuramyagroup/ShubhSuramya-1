@@ -206,6 +206,7 @@ function btn(variant = "default", extra = {}) {
     default: { background: "#fff", color: T.navy, border: `1.5px solid ${T.border2}` },
     teal: { background: T.teal, color: "#fff", boxShadow: "0 2px 8px rgba(13,148,136,0.22)" },
     amber: { background: T.amber, color: "#fff", boxShadow: "0 2px 8px rgba(239,159,39,0.22)" },
+    blue: { background: T.blue, color: "#fff", boxShadow: "0 2px 8px rgba(55,138,221,0.22)" },
   };
   return { ...base, ...(variants[variant] || variants.default), ...extra };
 }
@@ -266,14 +267,7 @@ function Badge({ children, color = "navy" }) {
 function ProgressBar({ pct, color }) {
   const c = color || (pct >= 100 ? T.success : T.coral);
   return (
-    <div
-      style={{
-        height: 3,
-        background: "rgba(30,42,90,0.07)",
-        borderRadius: 99,
-        overflow: "hidden",
-      }}
-    >
+    <div style={{ height: 3, background: "rgba(30,42,90,0.07)", borderRadius: 99, overflow: "hidden" }}>
       <div
         style={{
           height: "100%",
@@ -289,26 +283,8 @@ function ProgressBar({ pct, color }) {
 
 function Spinner() {
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "5rem 0",
-        gap: 14,
-      }}
-    >
-      <div
-        style={{
-          width: 32,
-          height: 32,
-          border: `2.5px solid rgba(30,42,90,0.08)`,
-          borderTopColor: T.coral,
-          borderRadius: "50%",
-          animation: "spin 0.7s linear infinite",
-        }}
-      />
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "5rem 0", gap: 14 }}>
+      <div style={{ width: 32, height: 32, border: `2.5px solid rgba(30,42,90,0.08)`, borderTopColor: T.coral, borderRadius: "50%", animation: "spin 0.7s linear infinite" }} />
       <p style={{ color: T.hint, fontSize: 13 }}>Loading…</p>
     </div>
   );
@@ -317,18 +293,8 @@ function Spinner() {
 function SkeletonCard() {
   return (
     <div style={{ ...card, padding: 18, animation: "pulse 1.4s ease-in-out infinite" }}>
-      <div
-        style={{
-          height: 11,
-          background: "rgba(30,42,90,0.06)",
-          borderRadius: 6,
-          marginBottom: 12,
-          width: "55%",
-        }}
-      />
-      <div
-        style={{ height: 22, background: "rgba(30,42,90,0.04)", borderRadius: 6, width: "38%" }}
-      />
+      <div style={{ height: 11, background: "rgba(30,42,90,0.06)", borderRadius: 6, marginBottom: 12, width: "55%" }} />
+      <div style={{ height: 22, background: "rgba(30,42,90,0.04)", borderRadius: 6, width: "38%" }} />
     </div>
   );
 }
@@ -345,21 +311,11 @@ function Empty({ icon, text }) {
 function Field({ label, children, hint }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-      <label
-        style={{
-          fontSize: 12,
-          fontWeight: 600,
-          color: T.navy,
-          fontFamily: "'DM Sans', sans-serif",
-          letterSpacing: "0.1px",
-        }}
-      >
+      <label style={{ fontSize: 12, fontWeight: 600, color: T.navy, fontFamily: "'DM Sans', sans-serif", letterSpacing: "0.1px" }}>
         {label}
       </label>
       {children}
-      {hint && (
-        <p style={{ fontSize: 11.5, color: T.hint, fontFamily: "'DM Sans', sans-serif" }}>{hint}</p>
-      )}
+      {hint && <p style={{ fontSize: 11.5, color: T.hint, fontFamily: "'DM Sans', sans-serif" }}>{hint}</p>}
     </div>
   );
 }
@@ -369,15 +325,7 @@ function Divider({ label }) {
     <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "4px 0" }}>
       <div style={{ flex: 1, height: 1, background: T.border }} />
       {label && (
-        <span
-          style={{
-            fontSize: 11,
-            color: T.hint,
-            fontFamily: "'DM Sans', sans-serif",
-            fontWeight: 600,
-            whiteSpace: "nowrap",
-          }}
-        >
+        <span style={{ fontSize: 11, color: T.hint, fontFamily: "'DM Sans', sans-serif", fontWeight: 600, whiteSpace: "nowrap" }}>
           {label}
         </span>
       )}
@@ -388,33 +336,9 @@ function Divider({ label }) {
 
 function StatCard({ label, value, icon, accent, delay = 0, sub }) {
   return (
-    <div
-      style={{
-        ...card,
-        padding: "16px 18px",
-        animation: `fadeUp 0.4s ease ${delay}ms both`,
-        borderTop: `2.5px solid ${accent || T.border2}`,
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "flex-start",
-          marginBottom: 10,
-        }}
-      >
-        <p
-          style={{
-            fontSize: 11,
-            color: T.hint,
-            fontWeight: 600,
-            textTransform: "uppercase",
-            letterSpacing: "0.4px",
-          }}
-        >
-          {label}
-        </p>
+    <div style={{ ...card, padding: "16px 18px", animation: `fadeUp 0.4s ease ${delay}ms both`, borderTop: `2.5px solid ${accent || T.border2}` }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10 }}>
+        <p style={{ fontSize: 11, color: T.hint, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.4px" }}>{label}</p>
         {icon && <span style={{ fontSize: 16 }}>{icon}</span>}
       </div>
       <p style={{ fontSize: 20, fontWeight: 700, color: accent || T.navy }}>{value}</p>
@@ -429,91 +353,30 @@ function Modal({ title, subtitle, onClose, children, width = 540 }) {
     <div
       onClick={(e) => e.target === e.currentTarget && onClose()}
       style={{
-        position: "fixed",
-        inset: 0,
-        background: "rgba(10,14,30,0.45)",
-        backdropFilter: "blur(6px)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        zIndex: 1000,
-        padding: 16,
+        position: "fixed", inset: 0, background: "rgba(10,14,30,0.45)", backdropFilter: "blur(6px)",
+        display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: 16,
       }}
     >
       <div
         style={{
-          background: "#fff",
-          borderRadius: 14,
-          width: "100%",
-          maxWidth: width,
-          maxHeight: "92vh",
-          display: "flex",
-          flexDirection: "column",
-          boxShadow: "0 20px 60px rgba(10,14,30,0.18)",
-          border: `1px solid ${T.border}`,
-          animation: "modalIn 0.25s cubic-bezier(.22,1,.36,1) both",
-          overflow: "hidden",
+          background: "#fff", borderRadius: 14, width: "100%", maxWidth: width, maxHeight: "92vh",
+          display: "flex", flexDirection: "column", boxShadow: "0 20px 60px rgba(10,14,30,0.18)",
+          border: `1px solid ${T.border}`, animation: "modalIn 0.25s cubic-bezier(.22,1,.36,1) both", overflow: "hidden",
         }}
       >
-        <div
-          style={{
-            padding: "18px 22px 16px",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            borderBottom: `1px solid ${T.border}`,
-            flexShrink: 0,
-          }}
-        >
+        <div style={{ padding: "18px 22px 16px", display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: `1px solid ${T.border}`, flexShrink: 0 }}>
           <div>
-            <h3
-              style={{
-                fontSize: 15,
-                fontWeight: 700,
-                color: T.navy,
-                fontFamily: "'DM Sans', sans-serif",
-              }}
-            >
-              {title}
-            </h3>
-            {subtitle && (
-              <p
-                style={{
-                  fontSize: 12,
-                  color: T.hint,
-                  fontFamily: "'DM Sans', sans-serif",
-                  marginTop: 2,
-                }}
-              >
-                {subtitle}
-              </p>
-            )}
+            <h3 style={{ fontSize: 15, fontWeight: 700, color: T.navy, fontFamily: "'DM Sans', sans-serif" }}>{title}</h3>
+            {subtitle && <p style={{ fontSize: 12, color: T.hint, fontFamily: "'DM Sans', sans-serif", marginTop: 2 }}>{subtitle}</p>}
           </div>
           <button
             onClick={onClose}
-            style={{
-              width: 28,
-              height: 28,
-              borderRadius: 7,
-              background: "rgba(30,42,90,0.05)",
-              border: `1px solid ${T.border}`,
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              flexShrink: 0,
-              transition: "background 0.15s",
-            }}
+            style={{ width: 28, height: 28, borderRadius: 7, background: "rgba(30,42,90,0.05)", border: `1px solid ${T.border}`, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "background 0.15s" }}
             onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(227,74,47,0.08)")}
             onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(30,42,90,0.05)")}
           >
             <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
-              <path
-                d="M1 1l10 10M11 1L1 11"
-                stroke={T.navy}
-                strokeWidth="1.8"
-                strokeLinecap="round"
-              />
+              <path d="M1 1l10 10M11 1L1 11" stroke={T.navy} strokeWidth="1.8" strokeLinecap="round" />
             </svg>
           </button>
         </div>
@@ -540,119 +403,33 @@ function DeleteConfirmModal({ name, receiptNo, onConfirm, onCancel, loading }) {
   }
 
   return (
-    <div
-      style={{
-        position: "fixed",
-        inset: 0,
-        background: "rgba(10,14,30,0.5)",
-        backdropFilter: "blur(6px)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        zIndex: 1500,
-        padding: 16,
-      }}
-    >
-      <div
-        style={{
-          background: "#fff",
-          borderRadius: 14,
-          maxWidth: 420,
-          width: "100%",
-          boxShadow: "0 20px 60px rgba(10,14,30,0.20)",
-          border: `1px solid ${T.border}`,
-          animation: "modalIn 0.25s cubic-bezier(.22,1,.36,1) both",
-          overflow: "hidden",
-        }}
-      >
+    <div style={{ position: "fixed", inset: 0, background: "rgba(10,14,30,0.5)", backdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1500, padding: 16 }}>
+      <div style={{ background: "#fff", borderRadius: 14, maxWidth: 420, width: "100%", boxShadow: "0 20px 60px rgba(10,14,30,0.20)", border: `1px solid ${T.border}`, animation: "modalIn 0.25s cubic-bezier(.22,1,.36,1) both", overflow: "hidden" }}>
         <div style={{ height: 3, background: T.coral }} />
         <div style={{ padding: "22px 24px 24px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
-            <div
-              style={{
-                width: 40,
-                height: 40,
-                borderRadius: 10,
-                background: "rgba(227,74,47,0.07)",
-                border: `1px solid rgba(227,74,47,0.15)`,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                flexShrink: 0,
-              }}
-            >
+            <div style={{ width: 40, height: 40, borderRadius: 10, background: "rgba(227,74,47,0.07)", border: `1px solid rgba(227,74,47,0.15)`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                <polyline
-                  points="3 6 5 6 21 6"
-                  stroke={T.coral}
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                />
-                <path
-                  d="M19 6l-1 14H6L5 6M10 11v6M14 11v6M9 6V4h6v2"
-                  stroke={T.coral}
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
+                <polyline points="3 6 5 6 21 6" stroke={T.coral} strokeWidth="2" strokeLinecap="round" />
+                <path d="M19 6l-1 14H6L5 6M10 11v6M14 11v6M9 6V4h6v2" stroke={T.coral} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </div>
             <div>
-              <h3
-                style={{
-                  fontSize: 15,
-                  fontWeight: 700,
-                  color: T.navy,
-                  fontFamily: "'DM Sans', sans-serif",
-                }}
-              >
-                Delete Sale Record
-              </h3>
-              <p
-                style={{
-                  fontSize: 12.5,
-                  color: T.hint,
-                  fontFamily: "'DM Sans', sans-serif",
-                  marginTop: 2,
-                }}
-              >
+              <h3 style={{ fontSize: 15, fontWeight: 700, color: T.navy, fontFamily: "'DM Sans', sans-serif" }}>Delete Sale Record</h3>
+              <p style={{ fontSize: 12.5, color: T.hint, fontFamily: "'DM Sans', sans-serif", marginTop: 2 }}>
                 This flat sale record and all associated payments will be permanently deleted.
               </p>
             </div>
           </div>
-          <div
-            style={{
-              background: "rgba(227,74,47,0.04)",
-              borderRadius: 8,
-              padding: "10px 14px",
-              marginBottom: 16,
-              border: `1px solid rgba(227,74,47,0.12)`,
-            }}
-          >
+          <div style={{ background: "rgba(227,74,47,0.04)", borderRadius: 8, padding: "10px 14px", marginBottom: 16, border: `1px solid rgba(227,74,47,0.12)` }}>
             <p style={{ fontSize: 11, color: T.hint }}>Receipt No.</p>
-            <p
-              style={{
-                fontSize: 13.5,
-                fontWeight: 700,
-                color: T.coral,
-                fontFamily: "'DM Mono', monospace",
-              }}
-            >
-              {matchValue}
-            </p>
+            <p style={{ fontSize: 13.5, fontWeight: 700, color: T.coral, fontFamily: "'DM Mono', monospace" }}>{matchValue}</p>
           </div>
           <Field label={`Type "${matchValue}" to confirm deletion`}>
             <input
-              style={{
-                ...inp,
-                borderColor: mismatch ? T.coral : T.border2,
-                boxShadow: mismatch ? `0 0 0 3px rgba(227,74,47,0.10)` : "none",
-              }}
+              style={{ ...inp, borderColor: mismatch ? T.coral : T.border2, boxShadow: mismatch ? `0 0 0 3px rgba(227,74,47,0.10)` : "none" }}
               value={input}
-              onChange={(e) => {
-                setInput(e.target.value);
-                setMismatch(false);
-              }}
+              onChange={(e) => { setInput(e.target.value); setMismatch(false); }}
               placeholder="Type to confirm…"
               onFocus={focusOn}
               onBlur={focusOff}
@@ -660,22 +437,10 @@ function DeleteConfirmModal({ name, receiptNo, onConfirm, onCancel, loading }) {
               autoFocus
             />
           </Field>
-          {mismatch && (
-            <p style={{ fontSize: 12, color: T.coral, marginTop: 8 }}>
-              Text doesn't match. Try again.
-            </p>
-          )}
-          <div
-            style={{ display: "flex", gap: 8, marginTop: 20, justifyContent: "flex-end" }}
-          >
-            <button style={btn("default")} onClick={onCancel} disabled={loading}>
-              Cancel
-            </button>
-            <button
-              style={btn("primary", { opacity: matches ? 1 : 0.4 })}
-              onClick={handleDelete}
-              disabled={loading || !matches}
-            >
+          {mismatch && <p style={{ fontSize: 12, color: T.coral, marginTop: 8 }}>Text doesn't match. Try again.</p>}
+          <div style={{ display: "flex", gap: 8, marginTop: 20, justifyContent: "flex-end" }}>
+            <button style={btn("default")} onClick={onCancel} disabled={loading}>Cancel</button>
+            <button style={btn("primary", { opacity: matches ? 1 : 0.4 })} onClick={handleDelete} disabled={loading || !matches}>
               {loading ? "Deleting…" : "Delete Sale"}
             </button>
           </div>
@@ -688,59 +453,13 @@ function DeleteConfirmModal({ name, receiptNo, onConfirm, onCancel, loading }) {
 /* ─── Session Expired Banner ─────────────────────────────────────────────── */
 function SessionExpiredBanner({ onRelogin }) {
   return (
-    <div
-      style={{
-        position: "fixed",
-        inset: 0,
-        background: "rgba(10,14,30,0.60)",
-        backdropFilter: "blur(8px)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        zIndex: 3000,
-        padding: 16,
-      }}
-    >
-      <div
-        style={{
-          background: "#fff",
-          borderRadius: 14,
-          maxWidth: 360,
-          width: "100%",
-          padding: "2rem",
-          textAlign: "center",
-          boxShadow: "0 20px 60px rgba(10,14,30,0.22)",
-          border: `1px solid ${T.border}`,
-          overflow: "hidden",
-          position: "relative",
-        }}
-      >
-        <div
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            height: 3,
-            background: T.coral,
-          }}
-        />
+    <div style={{ position: "fixed", inset: 0, background: "rgba(10,14,30,0.60)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 3000, padding: 16 }}>
+      <div style={{ background: "#fff", borderRadius: 14, maxWidth: 360, width: "100%", padding: "2rem", textAlign: "center", boxShadow: "0 20px 60px rgba(10,14,30,0.22)", border: `1px solid ${T.border}`, overflow: "hidden", position: "relative" }}>
+        <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: T.coral }} />
         <div style={{ fontSize: 36, marginBottom: 14 }}>⏱</div>
-        <h2 style={{ fontSize: 18, fontWeight: 700, color: T.navy, marginBottom: 8 }}>
-          Session Expired
-        </h2>
-        <p style={{ color: T.hint, fontSize: 13.5, lineHeight: 1.6, marginBottom: 22 }}>
-          Please sign in again to continue.
-        </p>
-        <button
-          style={{
-            ...btn("primary"),
-            width: "100%",
-            justifyContent: "center",
-            padding: "11px 20px",
-          }}
-          onClick={onRelogin}
-        >
+        <h2 style={{ fontSize: 18, fontWeight: 700, color: T.navy, marginBottom: 8 }}>Session Expired</h2>
+        <p style={{ color: T.hint, fontSize: 13.5, lineHeight: 1.6, marginBottom: 22 }}>Please sign in again to continue.</p>
+        <button style={{ ...btn("primary"), width: "100%", justifyContent: "center", padding: "11px 20px" }} onClick={onRelogin}>
           Go to Login
         </button>
       </div>
@@ -753,185 +472,59 @@ function Navbar({ user, onLogout, onBackToDashboard }) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <header
-      style={{
-        background: "#fff",
-        borderBottom: `1px solid ${T.border}`,
-        position: "sticky",
-        top: 0,
-        zIndex: 500,
-      }}
-    >
+    <header style={{ background: "#fff", borderBottom: `1px solid ${T.border}`, position: "sticky", top: 0, zIndex: 500 }}>
       <div style={{ maxWidth: 1280, margin: "0 auto", padding: "0 20px" }}>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            height: 56,
-          }}
-        >
-          {/* Logo */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", height: 56 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
             <img src={logo} alt="logo" style={{ width: 36, height: 36, objectFit: "contain" }} />
-            <img
-              src={logo1}
-              alt="logo text"
-              style={{ height: 40, width: 60, objectFit: "contain" }}
-            />
+            <img src={logo1} alt="logo text" style={{ height: 40, width: 60, objectFit: "contain" }} />
           </div>
-
-          {/* Right actions */}
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <div
-              className="user-pill"
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 7,
-                background: T.bg,
-                borderRadius: 8,
-                padding: "5px 10px 5px 7px",
-                border: `1px solid ${T.border}`,
-              }}
-            >
-              <div
-                style={{
-                  width: 22,
-                  height: 22,
-                  borderRadius: "50%",
-                  background: T.navy,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
+            <div className="user-pill" style={{ display: "flex", alignItems: "center", gap: 7, background: T.bg, borderRadius: 8, padding: "5px 10px 5px 7px", border: `1px solid ${T.border}` }}>
+              <div style={{ width: 22, height: 22, borderRadius: "50%", background: T.navy, display: "flex", alignItems: "center", justifyContent: "center" }}>
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none">
                   <circle cx="12" cy="8" r="4" stroke="#fff" strokeWidth="2" />
                   <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="#fff" strokeWidth="2" strokeLinecap="round" />
                 </svg>
               </div>
-              <span
-                style={{
-                  fontSize: 12,
-                  color: T.muted,
-                  maxWidth: 150,
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                }}
-              >
+              <span style={{ fontSize: 12, color: T.muted, maxWidth: 150, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                 {user?.email}
               </span>
             </div>
-
             <button
               onClick={onLogout}
               title="Logout"
-              style={{
-                width: 32,
-                height: 32,
-                borderRadius: 8,
-                background: "rgba(227,74,47,0.06)",
-                border: `1px solid rgba(227,74,47,0.18)`,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                cursor: "pointer",
-                transition: "all 0.15s",
-              }}
+              style={{ width: 32, height: 32, borderRadius: 8, background: "rgba(227,74,47,0.06)", border: `1px solid rgba(227,74,47,0.18)`, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", transition: "all 0.15s" }}
               onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(227,74,47,0.12)")}
               onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(227,74,47,0.06)")}
             >
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
-                <path
-                  d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"
-                  stroke={T.coral}
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
+                <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" stroke={T.coral} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </button>
-
-            {/* Hamburger */}
             <button
               onClick={() => setMobileOpen((o) => !o)}
               className="hamburger"
-              style={{
-                width: 32,
-                height: 32,
-                borderRadius: 8,
-                background: T.bg,
-                border: `1px solid ${T.border}`,
-                display: "none",
-                alignItems: "center",
-                justifyContent: "center",
-                cursor: "pointer",
-              }}
+              style={{ width: 32, height: 32, borderRadius: 8, background: T.bg, border: `1px solid ${T.border}`, display: "none", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
             >
               <svg viewBox="0 0 24 24" fill="none" stroke={T.navy} strokeWidth="2" width="14" height="14">
                 {mobileOpen ? (
-                  <>
-                    <line x1="18" y1="6" x2="6" y2="18" />
-                    <line x1="6" y1="6" x2="18" y2="18" />
-                  </>
+                  <><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></>
                 ) : (
-                  <>
-                    <line x1="3" y1="7" x2="21" y2="7" />
-                    <line x1="3" y1="12" x2="21" y2="12" />
-                    <line x1="3" y1="17" x2="21" y2="17" />
-                  </>
+                  <><line x1="3" y1="7" x2="21" y2="7" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="17" x2="21" y2="17" /></>
                 )}
               </svg>
             </button>
           </div>
         </div>
-
-        {/* Mobile menu */}
         {mobileOpen && (
-          <div
-            style={{
-              borderTop: `1px solid ${T.border}`,
-              padding: "10px 0 14px",
-              display: "flex",
-              flexDirection: "column",
-              gap: 6,
-            }}
-          >
-            <div
-              style={{
-                padding: "8px 12px",
-                fontSize: 13,
-                color: T.teal,
-                fontWeight: 700,
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-              }}
-            >
+          <div style={{ borderTop: `1px solid ${T.border}`, padding: "10px 0 14px", display: "flex", flexDirection: "column", gap: 6 }}>
+            <div style={{ padding: "8px 12px", fontSize: 13, color: T.teal, fontWeight: 700, display: "flex", alignItems: "center", gap: 8 }}>
               🏠 Flat Sales & Customer Receipts
             </div>
             <button
-              onClick={() => {
-                onBackToDashboard();
-                setMobileOpen(false);
-              }}
-              style={{
-                background: "transparent",
-                border: "none",
-                borderRadius: 8,
-                padding: "10px 12px",
-                color: T.muted,
-                fontWeight: 500,
-                fontSize: 13.5,
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                gap: 9,
-                width: "100%",
-                fontFamily: "'DM Sans', sans-serif",
-              }}
+              onClick={() => { onBackToDashboard(); setMobileOpen(false); }}
+              style={{ background: "transparent", border: "none", borderRadius: 8, padding: "10px 12px", color: T.muted, fontWeight: 500, fontSize: 13.5, cursor: "pointer", display: "flex", alignItems: "center", gap: 9, width: "100%", fontFamily: "'DM Sans', sans-serif" }}
             >
               ← Back to Dashboard
             </button>
@@ -944,14 +537,9 @@ function Navbar({ user, onLogout, onBackToDashboard }) {
 
 /* ─── PDF Receipt Generator ──────────────────────────────────────────────── */
 async function generateSaleReceiptPDF(sale, payment, paymentIndex = 0) {
-  if (!payment) {
-    alert("Payment not found.");
-    return;
-  }
+  if (!payment) { alert("Payment not found."); return; }
   const doc = new jsPDF("p", "mm", "a4");
-  const W = 210,
-    H = 297,
-    HEADER_H = 58;
+  const W = 210, H = 297, HEADER_H = 58;
   doc.addImage(header, "PNG", 0, 0, W, HEADER_H);
   doc.setTextColor(18, 30, 90);
   doc.setFontSize(16);
@@ -967,17 +555,9 @@ async function generateSaleReceiptPDF(sale, payment, paymentIndex = 0) {
   doc.text("Shubh Suramaya Group", 14, y);
   y += 7;
   const formattedDate = payment.paymentDate
-    ? new Date(payment.paymentDate).toLocaleDateString("en-GB", {
-        day: "2-digit",
-        month: "long",
-        year: "numeric",
-      })
+    ? new Date(payment.paymentDate).toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" })
     : sale.bookingDate
-    ? new Date(sale.bookingDate).toLocaleDateString("en-GB", {
-        day: "2-digit",
-        month: "long",
-        year: "numeric",
-      })
+    ? new Date(sale.bookingDate).toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" })
     : "—";
   doc.setFont("helvetica", "normal");
   doc.setTextColor(60, 60, 60);
@@ -1001,19 +581,9 @@ async function generateSaleReceiptPDF(sale, payment, paymentIndex = 0) {
     theme: "grid",
     tableWidth: W - 28,
     margin: { left: 14, right: 14 },
-    styles: {
-      fontSize: 10,
-      cellPadding: 5,
-      lineColor: [210, 215, 230],
-      lineWidth: 0.3,
-    },
+    styles: { fontSize: 10, cellPadding: 5, lineColor: [210, 215, 230], lineWidth: 0.3 },
     columnStyles: {
-      0: {
-        fontStyle: "bold",
-        textColor: [100, 115, 150],
-        cellWidth: 68,
-        fillColor: [245, 247, 252],
-      },
+      0: { fontStyle: "bold", textColor: [100, 115, 150], cellWidth: 68, fillColor: [245, 247, 252] },
       1: { fontStyle: "normal", textColor: [18, 30, 90], fillColor: [255, 255, 255] },
     },
     body: [
@@ -1023,12 +593,7 @@ async function generateSaleReceiptPDF(sale, payment, paymentIndex = 0) {
       ["Amount Paid:", fmtINR(payment.amount || 0)],
       ["Total (incl. GST):", fmtINR((payment.amount || 0) + (payment.gstAmount || 0))],
       ["Payment Method:", payment.paymentMode || "—"],
-      [
-        "Shop/Flat:",
-        `Flat ${sale.flatNo || "—"}, ${sale.wing || ""} Wing, Floor ${sale.floorNo || "—"}, ${
-          sale.buildingName || ""
-        } — ${sale.projectName || ""}`,
-      ],
+      ["Shop/Flat:", `Flat ${sale.flatNo || "—"}, ${sale.wing || ""} Wing, Floor ${sale.floorNo || "—"}, ${sale.buildingName || ""} — ${sale.projectName || ""}`],
     ],
   });
   y = doc.lastAutoTable.finalY + 16;
@@ -1036,18 +601,9 @@ async function generateSaleReceiptPDF(sale, payment, paymentIndex = 0) {
     doc.setFontSize(9);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(120, 130, 155);
-    if (payment.transactionId) {
-      doc.text(`Transaction ID: ${payment.transactionId}`, 14, y);
-      y += 5;
-    }
-    if (payment.bankName) {
-      doc.text(`Bank: ${payment.bankName}`, 14, y);
-      y += 5;
-    }
-    if (payment.notes) {
-      doc.text(`Notes: ${payment.notes}`, 14, y);
-      y += 5;
-    }
+    if (payment.transactionId) { doc.text(`Transaction ID: ${payment.transactionId}`, 14, y); y += 5; }
+    if (payment.bankName) { doc.text(`Bank: ${payment.bankName}`, 14, y); y += 5; }
+    if (payment.notes) { doc.text(`Notes: ${payment.notes}`, 14, y); y += 5; }
     y += 6;
   }
   doc.setFontSize(10);
@@ -1071,18 +627,8 @@ async function generateSaleReceiptPDF(sale, payment, paymentIndex = 0) {
   doc.setFontSize(8);
   doc.setFont("helvetica", "normal");
   doc.setTextColor(200, 210, 240);
-  doc.text(
-    "Shubh Suramya Group  |  Shubh Suramya Corporate House opp suramaya dreams, Suramya Road, Near Eklingji Road, Sanand-382110",
-    W / 2,
-    footerY + 8,
-    { align: "center" }
-  );
-  doc.text(
-    "www.shubhsuramya.com  |  shubhsuramayagroup@gmail.com  |  +91 96872 58222",
-    W / 2,
-    footerY + 14,
-    { align: "center" }
-  );
+  doc.text("Shubh Suramya Group  |  Shubh Suramya Corporate House opp suramaya dreams, Suramya Road, Near Eklingji Road, Sanand-382110", W / 2, footerY + 8, { align: "center" });
+  doc.text("www.shubhsuramya.com  |  shubhsuramayagroup@gmail.com  |  +91 96872 58222", W / 2, footerY + 14, { align: "center" });
   doc.setTextColor(150, 165, 200);
   doc.setFontSize(8);
   doc.text("01", W - 14, footerY + 15, { align: "right" });
@@ -1125,9 +671,7 @@ const exportFlatSalesExcel = (sales) => {
   XLSX.utils.book_append_sheet(workbook, worksheet, "Flat Sales");
   const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
   saveAs(
-    new Blob([excelBuffer], {
-      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    }),
+    new Blob([excelBuffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }),
     "Flat_Sales_Report.xlsx"
   );
 };
@@ -1180,283 +724,80 @@ function FlatSaleForm({ initial, existingSales, onSave, onClose, saving }) {
       Number(f.stampDuty || 0) +
       Number(f.otherCharges || 0);
     const remaining = total - Number(f.paidAmount || 0);
-    setF((p) => ({
-      ...p,
-      totalAmount: total,
-      remainingAmount: remaining < 0 ? 0 : remaining,
-    }));
+    setF((p) => ({ ...p, totalAmount: total, remainingAmount: remaining < 0 ? 0 : remaining }));
   }, [f.flatPrice, f.gstAmount, f.registrationAmount, f.stampDuty, f.otherCharges, f.paidAmount]);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-      {/* Receipt No */}
-      <div
-        style={{
-          background: T.bg,
-          borderRadius: 9,
-          padding: "10px 14px",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          border: `1px solid ${T.border}`,
-        }}
-      >
+      <div style={{ background: T.bg, borderRadius: 9, padding: "10px 14px", display: "flex", justifyContent: "space-between", alignItems: "center", border: `1px solid ${T.border}` }}>
         <span style={{ fontSize: 12, color: T.hint, fontWeight: 600 }}>Receipt Number</span>
-        <span
-          style={{
-            fontSize: 15,
-            fontWeight: 700,
-            color: T.coral,
-            fontFamily: "'DM Mono', monospace",
-          }}
-        >
-          {f.receiptNo}
-        </span>
+        <span style={{ fontSize: 15, fontWeight: 700, color: T.coral, fontFamily: "'DM Mono', monospace" }}>{f.receiptNo}</span>
       </div>
 
       <Divider label="Customer Information" />
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit,minmax(170px,1fr))",
-          gap: 12,
-        }}
-      >
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(170px,1fr))", gap: 12 }}>
         <Field label="Customer Name">
-          <input
-            style={inp}
-            value={f.customerName}
-            onChange={set("customerName")}
-            onFocus={focusOn}
-            onBlur={focusOff}
-            placeholder="Full name"
-          />
+          <input style={inp} value={f.customerName} onChange={set("customerName")} onFocus={focusOn} onBlur={focusOff} placeholder="Full name" />
         </Field>
         <Field label="Mobile Number">
-          <input
-            style={inp}
-            type="tel"
-            value={f.mobile}
-            onChange={set("mobile")}
-            onFocus={focusOn}
-            onBlur={focusOff}
-            placeholder="10-digit number"
-          />
+          <input style={inp} type="tel" value={f.mobile} onChange={set("mobile")} onFocus={focusOn} onBlur={focusOff} placeholder="10-digit number" />
         </Field>
         <Field label="Email">
-          <input
-            style={inp}
-            type="email"
-            value={f.email}
-            onChange={set("email")}
-            onFocus={focusOn}
-            onBlur={focusOff}
-            placeholder="email@example.com"
-          />
+          <input style={inp} type="email" value={f.email} onChange={set("email")} onFocus={focusOn} onBlur={focusOff} placeholder="email@example.com" />
         </Field>
         <Field label="PAN Number">
-          <input
-            style={inp}
-            value={f.pan}
-            onChange={set("pan")}
-            onFocus={focusOn}
-            onBlur={focusOff}
-            placeholder="ABCDE1234F"
-          />
+          <input style={inp} value={f.pan} onChange={set("pan")} onFocus={focusOn} onBlur={focusOff} placeholder="ABCDE1234F" />
         </Field>
         <Field label="Aadhaar Number">
-          <input
-            style={inp}
-            value={f.aadhaar}
-            onChange={set("aadhaar")}
-            onFocus={focusOn}
-            onBlur={focusOff}
-            placeholder="XXXX XXXX XXXX"
-          />
+          <input style={inp} value={f.aadhaar} onChange={set("aadhaar")} onFocus={focusOn} onBlur={focusOff} placeholder="XXXX XXXX XXXX" />
         </Field>
       </div>
       <Field label="Address">
-        <input
-          style={inp}
-          value={f.address}
-          onChange={set("address")}
-          onFocus={focusOn}
-          onBlur={focusOff}
-          placeholder="Full address"
-        />
+        <input style={inp} value={f.address} onChange={set("address")} onFocus={focusOn} onBlur={focusOff} placeholder="Full address" />
       </Field>
 
       <Divider label="Property Information" />
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))",
-          gap: 12,
-        }}
-      >
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", gap: 12 }}>
         <Field label="Project Name">
-          <input
-            style={inp}
-            value={f.projectName}
-            onChange={set("projectName")}
-            onFocus={focusOn}
-            onBlur={focusOff}
-            placeholder="e.g. Shubh Suramya"
-          />
+          <input style={inp} value={f.projectName} onChange={set("projectName")} onFocus={focusOn} onBlur={focusOff} placeholder="e.g. Shubh Suramya" />
         </Field>
         <Field label="Building Name">
-          <input
-            style={inp}
-            value={f.buildingName}
-            onChange={set("buildingName")}
-            onFocus={focusOn}
-            onBlur={focusOff}
-            placeholder="Building / Tower"
-          />
+          <input style={inp} value={f.buildingName} onChange={set("buildingName")} onFocus={focusOn} onBlur={focusOff} placeholder="Building / Tower" />
         </Field>
         <Field label="Wing">
-          <input
-            style={inp}
-            value={f.wing}
-            onChange={set("wing")}
-            onFocus={focusOn}
-            onBlur={focusOff}
-            placeholder="A / B / C"
-          />
+          <input style={inp} value={f.wing} onChange={set("wing")} onFocus={focusOn} onBlur={focusOff} placeholder="A / B / C" />
         </Field>
         <Field label="Floor Number">
-          <input
-            style={inp}
-            value={f.floorNo}
-            onChange={set("floorNo")}
-            onFocus={focusOn}
-            onBlur={focusOff}
-            placeholder="e.g. 3"
-          />
+          <input style={inp} value={f.floorNo} onChange={set("floorNo")} onFocus={focusOn} onBlur={focusOff} placeholder="e.g. 3" />
         </Field>
         <Field label="Flat Number">
-          <input
-            style={inp}
-            value={f.flatNo}
-            onChange={set("flatNo")}
-            onFocus={focusOn}
-            onBlur={focusOff}
-            placeholder="e.g. 301"
-          />
+          <input style={inp} value={f.flatNo} onChange={set("flatNo")} onFocus={focusOn} onBlur={focusOff} placeholder="e.g. 301" />
         </Field>
         <Field label="Flat Type">
-          <input
-            style={inp}
-            value={f.flatType}
-            onChange={set("flatType")}
-            onFocus={focusOn}
-            onBlur={focusOff}
-            placeholder="2BHK / 3BHK"
-          />
+          <input style={inp} value={f.flatType} onChange={set("flatType")} onFocus={focusOn} onBlur={focusOff} placeholder="2BHK / 3BHK" />
         </Field>
         <Field label="Carpet Area (sq.ft)">
-          <input
-            style={inp}
-            type="number"
-            value={f.carpetArea}
-            onChange={set("carpetArea")}
-            onFocus={focusOn}
-            onBlur={focusOff}
-            placeholder="0"
-          />
+          <input style={inp} type="number" value={f.carpetArea} onChange={set("carpetArea")} onFocus={focusOn} onBlur={focusOff} placeholder="0" />
         </Field>
         <Field label="Built-up Area (sq.ft)">
-          <input
-            style={inp}
-            type="number"
-            value={f.builtUpArea}
-            onChange={set("builtUpArea")}
-            onFocus={focusOn}
-            onBlur={focusOff}
-            placeholder="0"
-          />
+          <input style={inp} type="number" value={f.builtUpArea} onChange={set("builtUpArea")} onFocus={focusOn} onBlur={focusOff} placeholder="0" />
         </Field>
       </div>
 
       <Divider label="Sale Information" />
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit,minmax(160px,1fr))",
-          gap: 12,
-        }}
-      >
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(160px,1fr))", gap: 12 }}>
         <Field label="Booking Date">
-          <input
-            style={inp}
-            type="date"
-            value={f.bookingDate}
-            onChange={set("bookingDate")}
-            onFocus={focusOn}
-            onBlur={focusOff}
-          />
+          <input style={inp} type="date" value={f.bookingDate} onChange={set("bookingDate")} onFocus={focusOn} onBlur={focusOff} />
         </Field>
         <Field label="Agreement Date">
-          <input
-            style={inp}
-            type="date"
-            value={f.agreementDate}
-            onChange={set("agreementDate")}
-            onFocus={focusOn}
-            onBlur={focusOff}
-          />
+          <input style={inp} type="date" value={f.agreementDate} onChange={set("agreementDate")} onFocus={focusOn} onBlur={focusOff} />
         </Field>
         <Field label="Possession Date">
-          <input
-            style={inp}
-            type="date"
-            value={f.possessionDate}
-            onChange={set("possessionDate")}
-            onFocus={focusOn}
-            onBlur={focusOff}
-          />
+          <input style={inp} type="date" value={f.possessionDate} onChange={set("possessionDate")} onFocus={focusOn} onBlur={focusOff} />
         </Field>
         <Field label="Sales Executive">
-          <input
-            style={inp}
-            value={f.salesExecutive}
-            onChange={set("salesExecutive")}
-            onFocus={focusOn}
-            onBlur={focusOff}
-            placeholder="Executive name"
-          />
+          <input style={inp} value={f.salesExecutive} onChange={set("salesExecutive")} onFocus={focusOn} onBlur={focusOff} placeholder="Executive name" />
         </Field>
-      </div>
-
-      <Divider label="Pricing & Payment" />
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))",
-          gap: 12,
-        }}
-      >
-        {[
-          ["Flat Price (₹)", "flatPrice"],
-          ["GST Amount (₹)", "gstAmount"],
-          ["Registration (₹)", "registrationAmount"],
-          ["Stamp Duty (₹)", "stampDuty"],
-          ["Other Charges (₹)", "otherCharges"],
-          ["Booking Amount (₹)", "bookingAmount"],
-          ["Paid Amount (₹)", "paidAmount"],
-        ].map(([label, key]) => (
-          <Field key={key} label={label}>
-            <input
-              style={inp}
-              type="number"
-              value={f[key]}
-              onChange={set(key)}
-              onFocus={focusOn}
-              onBlur={focusOff}
-              placeholder="0.00"
-            />
-          </Field>
-        ))}
       </div>
 
       <Divider label="Status & Notes" />
@@ -1468,21 +809,9 @@ function FlatSaleForm({ initial, existingSales, onSave, onClose, saving }) {
               type="button"
               onClick={() => setF((p) => ({ ...p, status: s }))}
               style={{
-                flex: 1,
-                padding: "9px 6px",
-                borderRadius: 8,
-                fontSize: 12.5,
-                fontWeight: 600,
-                cursor: "pointer",
+                flex: 1, padding: "9px 6px", borderRadius: 8, fontSize: 12.5, fontWeight: 600, cursor: "pointer",
                 border: f.status === s ? "none" : `1.5px solid ${T.border2}`,
-                background:
-                  f.status === s
-                    ? s === "Sold"
-                      ? T.success
-                      : s === "Cancelled"
-                      ? T.coral
-                      : T.blue
-                    : "#fff",
+                background: f.status === s ? (s === "Sold" ? T.success : s === "Cancelled" ? T.coral : T.blue) : "#fff",
                 color: f.status === s ? "#fff" : T.muted,
                 transition: "all 0.15s",
               }}
@@ -1493,28 +822,11 @@ function FlatSaleForm({ initial, existingSales, onSave, onClose, saving }) {
         </div>
       </Field>
       <Field label="Notes">
-        <textarea
-          style={{ ...inp, minHeight: 70, resize: "vertical" }}
-          value={f.notes}
-          onChange={set("notes")}
-          onFocus={focusOn}
-          onBlur={focusOff}
-          placeholder="Any additional notes…"
-        />
+        <textarea style={{ ...inp, minHeight: 70, resize: "vertical" }} value={f.notes} onChange={set("notes")} onFocus={focusOn} onBlur={focusOff} placeholder="Any additional notes…" />
       </Field>
 
-      <div
-        style={{
-          display: "flex",
-          gap: 8,
-          justifyContent: "flex-end",
-          paddingTop: 16,
-          borderTop: `1px solid ${T.border}`,
-        }}
-      >
-        <button style={btn("default")} onClick={onClose}>
-          Cancel
-        </button>
+      <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", paddingTop: 16, borderTop: `1px solid ${T.border}` }}>
+        <button style={btn("default")} onClick={onClose}>Cancel</button>
         <button style={btn("primary")} onClick={() => onSave(f)} disabled={saving}>
           {saving ? "Saving…" : initial ? "Update Sale" : "Add Sale"}
         </button>
@@ -1531,23 +843,32 @@ function FlatPaymentForm({ sale, onSave, onClose, saving }) {
     amount: remaining > 0 ? String(remaining.toFixed(2)) : "",
     paymentMode: "NEFT",
     transactionId: "",
+    bankName: "",
     notes: "",
   });
+  const [errors, setErrors] = useState({});
   const set = (k) => (e) => setF((p) => ({ ...p, [k]: e.target.value }));
+
+  function validate() {
+    const errs = {};
+    if (!f.paymentDate) errs.paymentDate = "Payment date is required.";
+    if (!f.amount || isNaN(f.amount) || Number(f.amount) <= 0)
+      errs.amount = "Enter a valid amount greater than 0.";
+    if (Number(f.amount) > remaining + 0.01)
+      errs.amount = `Amount cannot exceed outstanding balance of ${fmtINR(remaining)}.`;
+    setErrors(errs);
+    return Object.keys(errs).length === 0;
+  }
+
+  function handleSave() {
+    if (!validate()) return;
+    onSave(f);
+  }
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
       <div style={{ background: T.navy, borderRadius: 10, padding: "16px 18px" }}>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "flex-start",
-            gap: 12,
-            flexWrap: "wrap",
-            marginBottom: 10,
-          }}
-        >
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, flexWrap: "wrap", marginBottom: 10 }}>
           <div>
             <p style={{ fontSize: 14, fontWeight: 700, color: "#fff" }}>{sale.customerName}</p>
             <p style={{ fontSize: 11.5, color: "rgba(255,255,255,0.45)", marginTop: 2 }}>
@@ -1556,41 +877,30 @@ function FlatPaymentForm({ sale, onSave, onClose, saving }) {
           </div>
           <div style={{ textAlign: "right" }}>
             <p style={{ fontSize: 10.5, color: "rgba(255,255,255,0.45)" }}>Outstanding</p>
-            <p style={{ fontSize: 18, fontWeight: 700, color: "#ff8a75" }}>
-              {fmtINR(remaining)}
-            </p>
+            <p style={{ fontSize: 18, fontWeight: 700, color: "#ff8a75" }}>{fmtINR(remaining)}</p>
           </div>
         </div>
         <ProgressBar
-          pct={
-            Number(sale.totalAmount) > 0
-              ? (Number(sale.paidAmount) / Number(sale.totalAmount)) * 100
-              : 0
-          }
+          pct={Number(sale.totalAmount) > 0 ? (Number(sale.paidAmount) / Number(sale.totalAmount)) * 100 : 0}
           color="rgba(255,255,255,0.35)"
         />
       </div>
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit,minmax(160px,1fr))",
-          gap: 12,
-        }}
-      >
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(160px,1fr))", gap: 12 }}>
         <Field label="Payment Date *">
           <input
-            style={inp}
+            style={{ ...inp, borderColor: errors.paymentDate ? T.coral : T.border2 }}
             type="date"
             value={f.paymentDate}
             onChange={set("paymentDate")}
             onFocus={focusOn}
             onBlur={focusOff}
           />
+          {errors.paymentDate && <p style={{ fontSize: 11.5, color: T.coral, marginTop: 2 }}>{errors.paymentDate}</p>}
         </Field>
         <Field label="Amount (₹) *">
           <input
-            style={inp}
+            style={{ ...inp, borderColor: errors.amount ? T.coral : T.border2 }}
             type="number"
             value={f.amount}
             onChange={set("amount")}
@@ -1598,61 +908,29 @@ function FlatPaymentForm({ sale, onSave, onClose, saving }) {
             onBlur={focusOff}
             placeholder="0.00"
           />
+          {errors.amount && <p style={{ fontSize: 11.5, color: T.coral, marginTop: 2 }}>{errors.amount}</p>}
         </Field>
         <Field label="Payment Mode">
-          <select
-            style={inp}
-            value={f.paymentMode}
-            onChange={set("paymentMode")}
-            onFocus={focusOn}
-            onBlur={focusOff}
-          >
+          <select style={inp} value={f.paymentMode} onChange={set("paymentMode")} onFocus={focusOn} onBlur={focusOff}>
             {["Cash", "Cheque", "NEFT", "RTGS", "UPI", "DD", "Online Transfer"].map((m) => (
-              <option key={m} value={m}>
-                {m}
-              </option>
+              <option key={m} value={m}>{m}</option>
             ))}
           </select>
         </Field>
         <Field label="Transaction ID / Cheque No.">
-          <input
-            style={inp}
-            value={f.transactionId}
-            onChange={set("transactionId")}
-            onFocus={focusOn}
-            onBlur={focusOff}
-            placeholder="Optional"
-          />
+          <input style={inp} value={f.transactionId} onChange={set("transactionId")} onFocus={focusOn} onBlur={focusOff} placeholder="Optional" />
+        </Field>
+        <Field label="Bank Name">
+          <input style={inp} value={f.bankName} onChange={set("bankName")} onFocus={focusOn} onBlur={focusOff} placeholder="Optional" />
         </Field>
       </div>
       <Field label="Notes">
-        <textarea
-          style={{ ...inp, minHeight: 60, resize: "vertical" }}
-          value={f.notes}
-          onChange={set("notes")}
-          onFocus={focusOn}
-          onBlur={focusOff}
-          placeholder="Any notes…"
-        />
+        <textarea style={{ ...inp, minHeight: 60, resize: "vertical" }} value={f.notes} onChange={set("notes")} onFocus={focusOn} onBlur={focusOff} placeholder="Any notes…" />
       </Field>
 
-      <div
-        style={{
-          display: "flex",
-          gap: 8,
-          justifyContent: "flex-end",
-          paddingTop: 16,
-          borderTop: `1px solid ${T.border}`,
-        }}
-      >
-        <button style={btn("default")} onClick={onClose}>
-          Cancel
-        </button>
-        <button
-          style={btn("primary")}
-          onClick={() => onSave(f)}
-          disabled={saving || !f.amount}
-        >
+      <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", paddingTop: 16, borderTop: `1px solid ${T.border}` }}>
+        <button style={btn("default")} onClick={onClose}>Cancel</button>
+        <button style={btn("primary")} onClick={handleSave} disabled={saving}>
           {saving ? "Recording…" : "Record Payment"}
         </button>
       </div>
@@ -1660,96 +938,139 @@ function FlatPaymentForm({ sale, onSave, onClose, saving }) {
   );
 }
 
+/* ─── Edit Payment Form ──────────────────────────────────────────────────── */
+function EditPaymentForm({ payment, onSave, onClose, saving }) {
+  const [f, setF] = useState({
+    paymentDate: payment.paymentDate || today(),
+    amount: String(payment.amount || ""),
+    paymentMode: payment.paymentMode || "NEFT",
+    transactionId: payment.transactionId || "",
+    bankName: payment.bankName || "",
+    notes: payment.notes || "",
+  });
+  const [errors, setErrors] = useState({});
+  const set = (k) => (e) => setF((p) => ({ ...p, [k]: e.target.value }));
+
+  function validate() {
+    const errs = {};
+    if (!f.paymentDate) errs.paymentDate = "Payment date is required.";
+    if (!f.amount || isNaN(f.amount) || Number(f.amount) <= 0)
+      errs.amount = "Enter a valid amount greater than 0.";
+    setErrors(errs);
+    return Object.keys(errs).length === 0;
+  }
+
+  function handleSave() {
+    if (!validate()) return;
+    onSave({ ...f, amount: Number(f.amount) });
+  }
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(160px,1fr))", gap: 12 }}>
+        <Field label="Payment Date *">
+          <input
+            style={{ ...inp, borderColor: errors.paymentDate ? T.coral : T.border2, boxShadow: errors.paymentDate ? `0 0 0 3px rgba(227,74,47,0.10)` : "none" }}
+            type="date"
+            value={f.paymentDate}
+            onChange={set("paymentDate")}
+            onFocus={focusOn}
+            onBlur={focusOff}
+          />
+          {errors.paymentDate && <p style={{ fontSize: 11.5, color: T.coral, marginTop: 2 }}>{errors.paymentDate}</p>}
+        </Field>
+        <Field label="Amount (₹) *">
+          <input
+            style={{ ...inp, borderColor: errors.amount ? T.coral : T.border2, boxShadow: errors.amount ? `0 0 0 3px rgba(227,74,47,0.10)` : "none" }}
+            type="number"
+            value={f.amount}
+            onChange={set("amount")}
+            onFocus={focusOn}
+            onBlur={focusOff}
+            placeholder="0.00"
+          />
+          {errors.amount && <p style={{ fontSize: 11.5, color: T.coral, marginTop: 2 }}>{errors.amount}</p>}
+        </Field>
+        <Field label="Payment Mode">
+          <select style={inp} value={f.paymentMode} onChange={set("paymentMode")} onFocus={focusOn} onBlur={focusOff}>
+            {["Cash", "Cheque", "NEFT", "RTGS", "UPI", "DD", "Online Transfer"].map((m) => (
+              <option key={m} value={m}>{m}</option>
+            ))}
+          </select>
+        </Field>
+        <Field label="Transaction ID / Cheque No.">
+          <input style={inp} value={f.transactionId} onChange={set("transactionId")} onFocus={focusOn} onBlur={focusOff} placeholder="Optional" />
+        </Field>
+        <Field label="Bank Name">
+          <input style={inp} value={f.bankName} onChange={set("bankName")} onFocus={focusOn} onBlur={focusOff} placeholder="Optional" />
+        </Field>
+      </div>
+      <Field label="Notes">
+        <textarea style={{ ...inp, minHeight: 60, resize: "vertical" }} value={f.notes} onChange={set("notes")} onFocus={focusOn} onBlur={focusOff} placeholder="Any notes…" />
+      </Field>
+      <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", paddingTop: 14, borderTop: `1px solid ${T.border}` }}>
+        <button style={btn("default")} onClick={onClose}>Cancel</button>
+        <button style={btn("primary")} onClick={handleSave} disabled={saving}>
+          {saving ? "Saving…" : "Save Changes"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 /* ─── Sale Detail View ───────────────────────────────────────────────────── */
-function SaleDetailView({ sale, salePayments, onClose, onAddPayment }) {
+function SaleDetailView({ sale, salePayments, onClose, onAddPayment, onEditPayment, onDeletePayment, editPaymentSaving }) {
   const statusBadge = { Sold: "green", Booked: "blue", Cancelled: "red" };
+  const [editingPayment, setEditingPayment] = useState(null);
+  const [deletingPayment, setDeletingPayment] = useState(null);
+  const [deleteInput, setDeleteInput] = useState("");
+  const [deleteError, setDeleteError] = useState(false);
 
   const DetailRow = ({ label, value }) => (
-    <div
-      style={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "flex-start",
-        gap: 10,
-        padding: "8px 0",
-        borderBottom: `1px solid ${T.border}`,
-        flexWrap: "wrap",
-      }}
-    >
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10, padding: "8px 0", borderBottom: `1px solid ${T.border}`, flexWrap: "wrap" }}>
       <span style={{ fontSize: 12, color: T.hint, fontWeight: 500, minWidth: 70 }}>{label}</span>
-      <span
-        style={{
-          fontSize: 12.5,
-          fontWeight: 600,
-          color: T.navy,
-          textAlign: "right",
-          flex: 1,
-          wordBreak: "break-word",
-          overflowWrap: "break-word",
-        }}
-      >
+      <span style={{ fontSize: 12.5, fontWeight: 600, color: T.navy, textAlign: "right", flex: 1, wordBreak: "break-word", overflowWrap: "break-word" }}>
         {value || "—"}
       </span>
     </div>
   );
 
-  const totalPaid = salePayments.reduce((s, p) => s + Number(p.amount || 0), 0);
-  const pct =
-    Number(sale.totalAmount) > 0 ? (Number(sale.paidAmount) / Number(sale.totalAmount)) * 100 : 0;
+  const pct = Number(sale.totalAmount) > 0 ? (Number(sale.paidAmount) / Number(sale.totalAmount)) * 100 : 0;
+
+  function handleDeleteConfirm() {
+    if (deleteInput !== deletingPayment.receiptLabel) {
+      setDeleteError(true);
+      setTimeout(() => setDeleteError(false), 2500);
+      return;
+    }
+    onDeletePayment(deletingPayment);
+    setDeletingPayment(null);
+    setDeleteInput("");
+  }
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
       {/* Hero */}
       <div style={{ background: T.navy, borderRadius: 10, padding: "16px 18px" }}>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "flex-start",
-            flexWrap: "wrap",
-            gap: 10,
-            marginBottom: 12,
-          }}
-        >
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 10, marginBottom: 12 }}>
           <div>
             <p style={{ fontSize: 17, fontWeight: 700, color: "#fff" }}>{sale.customerName}</p>
             <p style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", marginTop: 3 }}>
               Flat {sale.flatNo} · {sale.wing} Wing · Floor {sale.floorNo} · {sale.buildingName}
             </p>
-            <p style={{ fontSize: 11.5, color: "rgba(255,255,255,0.4)", marginTop: 2 }}>
-              {sale.projectName}
-            </p>
+            <p style={{ fontSize: 11.5, color: "rgba(255,255,255,0.4)", marginTop: 2 }}>{sale.projectName}</p>
           </div>
           <div style={{ textAlign: "right" }}>
             <p style={{ fontSize: 10, color: "rgba(255,255,255,0.4)" }}>Receipt No.</p>
-            <p
-              style={{
-                fontSize: 15,
-                fontWeight: 700,
-                color: T.gold,
-                fontFamily: "'DM Mono', monospace",
-              }}
-            >
-              {sale.receiptNo}
-            </p>
+            <p style={{ fontSize: 15, fontWeight: 700, color: T.gold, fontFamily: "'DM Mono', monospace" }}>{sale.receiptNo}</p>
             <div style={{ marginTop: 6 }}>
               <Badge color={statusBadge[sale.status] || "navy"}>{sale.status}</Badge>
             </div>
           </div>
         </div>
         <ProgressBar pct={pct} color="rgba(255,255,255,0.35)" />
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            marginTop: 6,
-            flexWrap: "wrap",
-            gap: 6,
-          }}
-        >
-          <p style={{ fontSize: 10.5, color: "rgba(255,255,255,0.4)" }}>
-            {pct.toFixed(1)}% paid
-          </p>
+        <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6, flexWrap: "wrap", gap: 6 }}>
+          <p style={{ fontSize: 10.5, color: "rgba(255,255,255,0.4)" }}>{pct.toFixed(1)}% paid</p>
           <p style={{ fontSize: 10.5, color: "rgba(255,255,255,0.4)" }}>
             {fmtINR(sale.paidAmount)} / {fmtINR(sale.totalAmount)}
           </p>
@@ -1757,26 +1078,9 @@ function SaleDetailView({ sale, salePayments, onClose, onAddPayment }) {
       </div>
 
       {/* Details grid */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))",
-          gap: 12,
-        }}
-      >
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))", gap: 12 }}>
         <div style={{ ...card, padding: "14px 16px" }}>
-          <p
-            style={{
-              fontSize: 11,
-              fontWeight: 700,
-              color: T.hint,
-              textTransform: "uppercase",
-              letterSpacing: "0.4px",
-              marginBottom: 10,
-            }}
-          >
-            Customer
-          </p>
+          <p style={{ fontSize: 11, fontWeight: 700, color: T.hint, textTransform: "uppercase", letterSpacing: "0.4px", marginBottom: 10 }}>Customer</p>
           <DetailRow label="Mobile" value={sale.mobile} />
           <DetailRow label="Email" value={sale.email} />
           <DetailRow label="PAN" value={sale.pan} />
@@ -1784,39 +1088,11 @@ function SaleDetailView({ sale, salePayments, onClose, onAddPayment }) {
           <DetailRow label="Address" value={sale.address} />
         </div>
         <div style={{ ...card, padding: "14px 16px" }}>
-          <p
-            style={{
-              fontSize: 11,
-              fontWeight: 700,
-              color: T.hint,
-              textTransform: "uppercase",
-              letterSpacing: "0.4px",
-              marginBottom: 10,
-            }}
-          >
-            Property
-          </p>
+          <p style={{ fontSize: 11, fontWeight: 700, color: T.hint, textTransform: "uppercase", letterSpacing: "0.4px", marginBottom: 10 }}>Property</p>
           <DetailRow label="Flat Type" value={sale.flatType} />
-          <DetailRow
-            label="Carpet Area"
-            value={sale.carpetArea ? `${sale.carpetArea} sq.ft` : null}
-          />
-          <DetailRow
-            label="Built-up"
-            value={sale.builtUpArea ? `${sale.builtUpArea} sq.ft` : null}
-          />
-          <DetailRow
-            label="Booking Date"
-            value={
-              sale.bookingDate
-                ? new Date(sale.bookingDate).toLocaleDateString("en-GB", {
-                    day: "2-digit",
-                    month: "long",
-                    year: "numeric",
-                  })
-                : "-"
-            }
-          />
+          <DetailRow label="Carpet Area" value={sale.carpetArea ? `${sale.carpetArea} sq.ft` : null} />
+          <DetailRow label="Built-up" value={sale.builtUpArea ? `${sale.builtUpArea} sq.ft` : null} />
+          <DetailRow label="Booking Date" value={sale.bookingDate ? new Date(sale.bookingDate).toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" }) : "-"} />
           <DetailRow label="Agreement" value={sale.agreementDate} />
           <DetailRow label="Possession" value={sale.possessionDate} />
           <DetailRow label="Sales Executive" value={sale.salesExecutive} />
@@ -1825,153 +1101,420 @@ function SaleDetailView({ sale, salePayments, onClose, onAddPayment }) {
 
       {/* Payment History */}
       <div style={{ ...card, padding: "14px 16px" }}>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: 12,
-            flexWrap: "wrap",
-            gap: 8,
-          }}
-        >
-          <p
-            style={{
-              fontSize: 11,
-              fontWeight: 700,
-              color: T.hint,
-              textTransform: "uppercase",
-              letterSpacing: "0.4px",
-            }}
-          >
-            Payment History ({salePayments.length})
-          </p>
-          <button
-            style={btn("primary", { fontSize: 11.5, padding: "6px 12px" })}
-            onClick={onAddPayment}
-          >
-            + Add Payment
-          </button>
-        </div>
-        {salePayments.length === 0 ? (
-          <p
-            style={{ color: T.hint, fontSize: 12.5, textAlign: "center", padding: "1rem 0" }}
-          >
-            No payments recorded yet.
-          </p>
-        ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            {salePayments.map((p, i) => (
+  <div
+    style={{
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: 12,
+      flexWrap: "wrap",
+      gap: 8,
+    }}
+  >
+    <p
+      style={{
+        fontSize: 11,
+        fontWeight: 700,
+        color: T.hint,
+        textTransform: "uppercase",
+        letterSpacing: "0.4px",
+      }}
+    >
+      Payment History ({salePayments.length})
+    </p>
+    <button
+      style={btn("primary", { fontSize: 11.5, padding: "6px 12px" })}
+      onClick={onAddPayment}
+    >
+      + Add Payment
+    </button>
+  </div>
+
+  {salePayments.length === 0 ? (
+    <p
+      style={{
+        color: T.hint,
+        fontSize: 12.5,
+        textAlign: "center",
+        padding: "1rem 0",
+      }}
+    >
+      No payments recorded yet.
+    </p>
+  ) : (
+    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      {salePayments.map((p, i) => {
+        const receiptLabel = `${sale.receiptNo}-P${String(i + 1).padStart(2, "0")}`;
+        const isDeleting = deletingPayment?.id === p.id;
+        const isEditing = editingPayment?.id === p.id;
+
+        /* ── Delete confirmation row ── */
+        if (isDeleting) {
+          return (
+            <div
+              key={p.id}
+              style={{
+                background: "rgba(227,74,47,0.04)",
+                border: `1.5px solid rgba(227,74,47,0.25)`,
+                borderRadius: 9,
+                padding: "14px 16px",
+              }}
+            >
               <div
-                key={i}
+                style={{
+                  display: "flex",
+                  alignItems: "flex-start",
+                  gap: 10,
+                  marginBottom: 10,
+                  flexWrap: "wrap",
+                }}
+              >
+                <div
+                  style={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: 8,
+                    background: "rgba(227,74,47,0.08)",
+                    border: `1px solid rgba(227,74,47,0.18)`,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flexShrink: 0,
+                  }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                    <polyline
+                      points="3 6 5 6 21 6"
+                      stroke={T.coral}
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                    />
+                    <path
+                      d="M19 6l-1 14H6L5 6M10 11v6M14 11v6M9 6V4h6v2"
+                      stroke={T.coral}
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </div>
+                <div style={{ flex: "1 1 200px", minWidth: 0 }}>
+                  <p
+                    style={{ fontSize: 13, fontWeight: 700, color: T.coral }}
+                  >
+                    Delete payment {receiptLabel}?
+                  </p>
+                  <p
+                    style={{
+                      fontSize: 11.5,
+                      color: T.hint,
+                      marginTop: 1,
+                      lineHeight: 1.5,
+                    }}
+                  >
+                    This will permanently remove{" "}
+                    <strong style={{ color: T.navy }}>
+                      {fmtINR(p.amount)}
+                    </strong>{" "}
+                    and adjust the outstanding balance.
+                  </p>
+                </div>
+              </div>
+              <p style={{ fontSize: 12, color: T.hint, marginBottom: 8 }}>
+                Type{" "}
+                <strong
+                  style={{
+                    fontFamily: "'DM Mono', monospace",
+                    color: T.coral,
+                  }}
+                >
+                  {receiptLabel}
+                </strong>{" "}
+                to confirm deletion.
+              </p>
+              <input
+                style={{
+                  ...inp,
+                  borderColor: deleteError ? T.coral : T.border2,
+                  boxShadow: deleteError
+                    ? `0 0 0 3px rgba(227,74,47,0.10)`
+                    : "none",
+                  marginBottom: 4,
+                  width: "100%",
+                  boxSizing: "border-box",
+                }}
+                placeholder={`Type ${receiptLabel} to confirm`}
+                value={deleteInput}
+                onChange={(e) => {
+                  setDeleteInput(e.target.value);
+                  setDeleteError(false);
+                }}
+                onFocus={focusOn}
+                onBlur={focusOff}
+                onKeyDown={(e) => e.key === "Enter" && handleDeleteConfirm()}
+                autoFocus
+              />
+              {deleteError && (
+                <p
+                  style={{
+                    fontSize: 11.5,
+                    color: T.coral,
+                    marginBottom: 6,
+                  }}
+                >
+                  Text doesn't match. Try again.
+                </p>
+              )}
+              <div
+                style={{
+                  display: "flex",
+                  gap: 6,
+                  justifyContent: "flex-end",
+                  marginTop: 10,
+                  flexWrap: "wrap",
+                }}
+              >
+                <button
+                  style={btn("default", { flex: "1 1 auto", maxWidth: 120 })}
+                  onClick={() => {
+                    setDeletingPayment(null);
+                    setDeleteInput("");
+                    setDeleteError(false);
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  style={btn("primary", {
+                    opacity: deleteInput === receiptLabel ? 1 : 0.4,
+                    flex: "1 1 auto",
+                    maxWidth: 160,
+                  })}
+                  onClick={handleDeleteConfirm}
+                  disabled={deleteInput !== receiptLabel}
+                >
+                  Delete Payment
+                </button>
+              </div>
+            </div>
+          );
+        }
+
+        /* ── Edit row ── */
+        if (isEditing) {
+          return (
+            <div
+              key={p.id}
+              style={{
+                border: `1.5px solid rgba(55,138,221,0.35)`,
+                borderRadius: 9,
+                padding: "14px 16px",
+                background: "rgba(55,138,221,0.03)",
+              }}
+            >
+              <div
                 style={{
                   display: "flex",
                   justifyContent: "space-between",
                   alignItems: "flex-start",
-                  flexWrap: "wrap",
+                  marginBottom: 12,
                   gap: 8,
-                  background: T.bg,
-                  borderRadius: 8,
-                  padding: "9px 12px",
-                  border: `1px solid ${T.border}`,
+                  flexWrap: "wrap",
                 }}
               >
                 <div style={{ flex: "1 1 160px", minWidth: 0 }}>
                   <p
-                    style={{
-                      fontSize: 12.5,
-                      fontWeight: 600,
-                      color: T.navy,
-                      whiteSpace: "nowrap",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                    }}
+                    style={{ fontSize: 13, fontWeight: 700, color: T.blue }}
                   >
-                    {p.paymentDate
-                      ? new Date(p.paymentDate).toLocaleDateString("en-GB", {
-                          day: "2-digit",
-                          month: "long",
-                          year: "numeric",
-                        })
-                      : "—"}
+                    Editing {receiptLabel}
                   </p>
                   <p
-                    style={{
-                      fontSize: 11,
-                      color: T.hint,
-                      marginTop: 2,
-                      whiteSpace: "nowrap",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                    }}
+                    style={{ fontSize: 11.5, color: T.hint, marginTop: 1 }}
                   >
-                    {p.paymentMode}
-                    {p.transactionId ? ` · ${p.transactionId}` : ""}
+                    Update payment details below
                   </p>
-                  {p.notes && (
-                    <p
-                      style={{
-                        fontSize: 11,
-                        color: T.hint,
-                        marginTop: 1,
-                        whiteSpace: "nowrap",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                      }}
-                    >
-                      {p.notes}
-                    </p>
-                  )}
                 </div>
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 8,
+                <button
+                  style={btn("ghost", {
+                    fontSize: 11.5,
+                    padding: "5px 10px",
+                    color: T.hint,
                     flexShrink: 0,
-                    flexWrap: "wrap",
+                  })}
+                  onClick={() => setEditingPayment(null)}
+                >
+                  Cancel
+                </button>
+              </div>
+              <EditPaymentForm
+                payment={p}
+                onSave={(updated) => {
+                  onEditPayment(p, updated, i);
+                  setEditingPayment(null);
+                }}
+                onClose={() => setEditingPayment(null)}
+                saving={editPaymentSaving}
+              />
+            </div>
+          );
+        }
+
+        /* ── Normal row ── */
+        return (
+          <div
+            key={p.id}
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "flex-start",
+              flexWrap: "wrap",
+              gap: 10,
+              background: T.bg,
+              borderRadius: 8,
+              padding: "10px 14px",
+              border: `1px solid ${T.border}`,
+            }}
+          >
+            {/* Info block */}
+            <div style={{ flex: "1 1 160px", minWidth: 0 }}>
+              <p
+                style={{
+                  fontSize: 11.5,
+                  fontWeight: 700,
+                  color: T.hint,
+                  fontFamily: "'DM Mono', monospace",
+                  marginBottom: 3,
+                }}
+              >
+                {receiptLabel}
+              </p>
+              <p style={{ fontSize: 13, fontWeight: 600, color: T.navy }}>
+                {p.paymentDate
+                  ? new Date(p.paymentDate).toLocaleDateString("en-GB", {
+                      day: "2-digit",
+                      month: "long",
+                      year: "numeric",
+                    })
+                  : "—"}
+              </p>
+              <p style={{ fontSize: 11.5, color: T.hint, marginTop: 2 }}>
+                {p.paymentMode}
+                {p.transactionId ? ` · ${p.transactionId}` : ""}
+                {p.bankName ? ` · ${p.bankName}` : ""}
+              </p>
+              {p.notes && (
+                <p
+                  style={{
+                    fontSize: 11,
+                    color: T.hint,
+                    marginTop: 1,
+                    fontStyle: "italic",
                   }}
                 >
-                  <span
-                    style={{
-                      fontWeight: 700,
-                      color: T.success,
-                      fontSize: 14,
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    {fmtINR(p.amount)}
-                  </span>
-                  <button
-                    style={btn("primary", { fontSize: 11, padding: "5px 10px" })}
-                    onClick={() => generateSaleReceiptPDF(sale, p, i)}
-                  >
-                    Receipt
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+                  {p.notes}
+                </p>
+              )}
+            </div>
 
-      {sale.notes && (
-        <div
+            {/* Actions block */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                flexShrink: 0,
+                flexWrap: "wrap",
+                width: "100%",
+                maxWidth: "100%",
+              }}
+            >
+              <span
+                style={{
+                  fontWeight: 700,
+                  color: T.success,
+                  fontSize: 14,
+                  whiteSpace: "nowrap",
+                  marginRight: "auto",
+                }}
+              >
+                {fmtINR(p.amount)}
+              </span>
+              <button
+                style={btn("primary", { fontSize: 11, padding: "5px 10px" })}
+                onClick={() => generateSaleReceiptPDF(sale, p, i)}
+                title="Download receipt PDF"
+              >
+                Receipt
+              </button>
+              <button
+                style={btn("outline", { fontSize: 11, padding: "5px 10px" })}
+                onClick={() => {
+                  setEditingPayment(p);
+                  setDeletingPayment(null);
+                  setDeleteInput("");
+                }}
+                title="Edit this payment"
+              >
+                ✏️ Edit
+              </button>
+              <button
+                style={btn("danger", { fontSize: 11, padding: "5px 10px" })}
+                onClick={() => {
+                  setDeletingPayment({ ...p, receiptLabel });
+                  setEditingPayment(null);
+                  setDeleteInput("");
+                  setDeleteError(false);
+                }}
+                title="Delete this payment"
+              >
+                🗑 Delete
+              </button>
+            </div>
+          </div>
+        );
+      })}
+
+      {/* Payment total row */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          flexWrap: "wrap",
+          gap: 6,
+          padding: "10px 14px",
+          borderTop: `1.5px solid ${T.border2}`,
+          marginTop: 4,
+        }}
+      >
+        <span
           style={{
-            ...card,
-            padding: "12px 16px",
-            borderLeft: `3px solid ${T.amber}`,
+            fontSize: 12,
+            fontWeight: 700,
+            color: T.hint,
+            textTransform: "uppercase",
+            letterSpacing: "0.3px",
           }}
         >
+          Total Payments Recorded
+        </span>
+        <span style={{ fontSize: 15, fontWeight: 700, color: T.success }}>
+          {fmtINR(salePayments.reduce((s, p) => s + Number(p.amount || 0), 0))}
+        </span>
+      </div>
+    </div>
+  )}
+</div>
+
+      {sale.notes && (
+        <div style={{ ...card, padding: "12px 16px", borderLeft: `3px solid ${T.amber}` }}>
           <p style={{ fontSize: 11, fontWeight: 600, color: T.hint, marginBottom: 4 }}>NOTES</p>
           <p style={{ fontSize: 13, color: T.navy }}>{sale.notes}</p>
         </div>
       )}
 
       <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
-        <button style={btn("default")} onClick={onClose}>
-          Close
-        </button>
+        <button style={btn("default")} onClick={onClose}>Close</button>
       </div>
     </div>
   );
@@ -1997,14 +1540,13 @@ export default function FlatSalePage() {
   const [deleteModal, setDeleteModal] = useState(null);
   const [toast, setToast] = useState(null);
 
-  // Filters
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
   const [filterProject, setFilterProject] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
 
-  /* ─── Auth Bootstrap ───────────────────────────────────────────────────── */
+  /* ─── Auth Bootstrap ─────────────────────────────────────────────────── */
   useEffect(() => {
     const session = loadSession();
     if (session) {
@@ -2033,10 +1575,7 @@ export default function FlatSalePage() {
     async (tok) => {
       setLoading(true);
       try {
-        const [fsD, fpD] = await Promise.all([
-          fsList(tok, "flatSales"),
-          fsList(tok, "flatPayments"),
-        ]);
+        const [fsD, fpD] = await Promise.all([fsList(tok, "flatSales"), fsList(tok, "flatPayments")]);
         setFlatSales(fsD.map(docToObj).filter(Boolean));
         setFlatPayments(fpD.map(docToObj).filter(Boolean));
       } catch (e) {
@@ -2060,7 +1599,7 @@ export default function FlatSalePage() {
     navigate("/sales");
   }
 
-  /* ─── Derived data ─────────────────────────────────────────────────────── */
+  /* ─── Derived data ───────────────────────────────────────────────────── */
   const projects = useMemo(
     () => [...new Set(flatSales.map((s) => s.projectName).filter(Boolean))],
     [flatSales]
@@ -2088,29 +1627,19 @@ export default function FlatSalePage() {
     [flatSales, filterStatus, filterProject, dateFrom, dateTo, search]
   );
 
-  /* ─── Stats ────────────────────────────────────────────────────────────── */
+  /* ─── Stats ──────────────────────────────────────────────────────────── */
   const totalFlats = flatSales.length;
   const soldFlats = flatSales.filter((s) => s.status === "Sold").length;
   const bookedFlats = flatSales.filter((s) => s.status === "Booked").length;
   const cancelledFlats = flatSales.filter((s) => s.status === "Cancelled").length;
-  const todaySales = flatSales.filter((s) => isToday(s.bookingDate)).length;
-  const todayRevenue = flatSales
-    .filter((s) => isToday(s.bookingDate))
-    .reduce((acc, s) => acc + Number(s.totalAmount || 0), 0);
   const totalRevenue = flatSales.reduce((acc, s) => acc + Number(s.totalAmount || 0), 0);
   const totalPaidRevenue = flatSales.reduce((acc, s) => acc + Number(s.paidAmount || 0), 0);
   const totalPending = flatSales.reduce((acc, s) => acc + Number(s.remainingAmount || 0), 0);
 
-  /* ─── CRUD ─────────────────────────────────────────────────────────────── */
+  /* ─── CRUD: Sale ─────────────────────────────────────────────────────── */
   async function saveFlatSale(form, existing) {
-    if (!form.customerName?.trim()) {
-      showToast("Customer name is required", "error");
-      return;
-    }
-    if (!form.flatNo?.trim()) {
-      showToast("Flat number is required", "error");
-      return;
-    }
+    if (!form.customerName?.trim()) { showToast("Customer name is required", "error"); return; }
+    if (!form.flatNo?.trim()) { showToast("Flat number is required", "error"); return; }
     setSaving(true);
     try {
       const data = {
@@ -2131,39 +1660,25 @@ export default function FlatSalePage() {
       };
       if (existing) {
         await fsSet(token, `flatSales/${existing.id}`, data);
-        await logActivity(
-          token,
-          "flat_sale_added",
-          `Flat sale updated for ${form.customerName} – ${form.projectName} Flat ${form.flatNo}`,
-          { amount: form.totalAmount }
-        );
+        await logActivity(token, "flat_sale_updated", `Flat sale updated for ${form.customerName} – ${form.projectName} Flat ${form.flatNo}`, { amount: form.totalAmount });
       } else {
         await fsCreate(token, "flatSales", data);
-        await logActivity(
-          token,
-          "flat_sale_added",
-          `New flat sale: ${form.customerName} – ${form.projectName} Flat ${form.flatNo} (${form.receiptNo})`,
-          { amount: form.totalAmount }
-        );
+        await logActivity(token, "flat_sale_added", `New flat sale: ${form.customerName} – ${form.projectName} Flat ${form.flatNo} (${form.receiptNo})`, { amount: form.totalAmount });
       }
       showToast(existing ? "Sale updated" : "Sale added successfully");
       await loadAll(token);
       setModal(null);
     } catch (e) {
-      e.message?.includes("401")
-        ? handleAuthError()
-        : showToast(e.message || "Failed to save", "error");
+      e.message?.includes("401") ? handleAuthError() : showToast(e.message || "Failed to save", "error");
     } finally {
       setSaving(false);
     }
   }
 
+  /* ─── CRUD: Add Payment ──────────────────────────────────────────────── */
   async function saveFlatPayment(sale, form) {
     const amount = Number(form.amount || 0);
-    if (!amount || amount <= 0) {
-      showToast("Enter a valid amount", "error");
-      return;
-    }
+    if (!amount || amount <= 0) { showToast("Enter a valid amount", "error"); return; }
     setSaving(true);
     try {
       await fsCreate(token, "flatPayments", {
@@ -2176,6 +1691,7 @@ export default function FlatSalePage() {
         amount,
         paymentMode: form.paymentMode,
         transactionId: form.transactionId || "",
+        bankName: form.bankName || "",
         notes: form.notes || "",
         createdAt: new Date().toISOString(),
       });
@@ -2186,35 +1702,88 @@ export default function FlatSalePage() {
         paidAmount: newPaid,
         remainingAmount: newRemaining < 0 ? 0 : newRemaining,
       });
-      await logActivity(
-        token,
-        "flat_payment_added",
-        `Payment of ${fmtINR(amount)} recorded for ${sale.customerName} – ${sale.receiptNo}`,
-        { amount }
-      );
+      await logActivity(token, "flat_payment_added", `Payment of ${fmtINR(amount)} recorded for ${sale.customerName} – ${sale.receiptNo}`, { amount });
       showToast("Payment recorded");
       await loadAll(token);
       setModal(null);
     } catch (e) {
-      e.message?.includes("401")
-        ? handleAuthError()
-        : showToast(e.message || "Failed to record payment", "error");
+      e.message?.includes("401") ? handleAuthError() : showToast(e.message || "Failed to record payment", "error");
     } finally {
       setSaving(false);
     }
   }
 
+  /* ─── CRUD: Edit Payment ─────────────────────────────────────────────── */
+  async function editFlatPayment(payment, updatedForm) {
+    const oldAmount = Number(payment.amount || 0);
+    const newAmount = Number(updatedForm.amount || 0);
+    setSaving(true);
+    try {
+      await fsSet(token, `flatPayments/${payment.id}`, {
+        ...payment,
+        paymentDate: updatedForm.paymentDate,
+        amount: newAmount,
+        paymentMode: updatedForm.paymentMode,
+        transactionId: updatedForm.transactionId || "",
+        bankName: updatedForm.bankName || "",
+        notes: updatedForm.notes || "",
+        updatedAt: new Date().toISOString(),
+      });
+      const sale = flatSales.find((s) => s.id === payment.saleId);
+      if (sale) {
+        const newPaid = Number(sale.paidAmount || 0) - oldAmount + newAmount;
+        const newRemaining = Number(sale.totalAmount || 0) - newPaid;
+        await fsSet(token, `flatSales/${sale.id}`, {
+          ...sale,
+          paidAmount: newPaid < 0 ? 0 : newPaid,
+          remainingAmount: newRemaining < 0 ? 0 : newRemaining,
+          updatedAt: new Date().toISOString(),
+        });
+      }
+      await logActivity(token, "flat_payment_edited", `Payment updated for ${payment.customerName} – ${payment.receiptNo} (${fmtINR(oldAmount)} → ${fmtINR(newAmount)})`, { amount: newAmount });
+      showToast("Payment updated successfully");
+      await loadAll(token);
+    } catch (e) {
+      e.message?.includes("401") ? handleAuthError() : showToast(e.message || "Failed to update payment", "error");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  /* ─── CRUD: Delete Payment ───────────────────────────────────────────── */
+  async function deleteFlatPayment(payment) {
+    setSaving(true);
+    try {
+      await fsDelete(token, `flatPayments/${payment.id}`);
+      const sale = flatSales.find((s) => s.id === payment.saleId);
+      if (sale) {
+        const newPaid = Number(sale.paidAmount || 0) - Number(payment.amount || 0);
+        const newRemaining = Number(sale.totalAmount || 0) - newPaid;
+        await fsSet(token, `flatSales/${sale.id}`, {
+          ...sale,
+          paidAmount: newPaid < 0 ? 0 : newPaid,
+          remainingAmount: newRemaining < 0 ? 0 : newRemaining,
+          updatedAt: new Date().toISOString(),
+        });
+      }
+      await logActivity(token, "flat_payment_deleted", `Payment of ${fmtINR(payment.amount)} deleted for ${payment.customerName} – ${payment.receiptNo}`, { amount: payment.amount });
+      showToast("Payment deleted");
+      await loadAll(token);
+    } catch (e) {
+      e.message?.includes("401") ? handleAuthError() : showToast(e.message || "Failed to delete payment", "error");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  /* ─── CRUD: Delete Sale ──────────────────────────────────────────────── */
   async function confirmDeleteFlatSale(sale) {
     setDeleting(true);
     try {
       const salePmts = flatPayments.filter((p) => p.saleId === sale.id);
       await Promise.all(salePmts.map((p) => fsDelete(token, `flatPayments/${p.id}`)));
       await fsDelete(token, `flatSales/${sale.id}`);
-      await logActivity(
-        token,
-        "flat_sale_deleted",
-        `Flat sale deleted: ${sale.customerName} – ${sale.receiptNo}`
-      );
+      await logActivity(token, "flat_sale_deleted", `Flat sale deleted: ${sale.customerName} – ${sale.receiptNo}`);
       await loadAll(token);
       showToast("Sale record deleted");
       setDeleteModal(null);
@@ -2233,51 +1802,22 @@ export default function FlatSalePage() {
     <div style={{ minHeight: "100vh", background: T.bg, fontFamily: "'DM Sans', sans-serif" }}>
       <style>{GLOBAL_CSS}</style>
 
-      {sessionExpired && (
-        <SessionExpiredBanner onRelogin={() => navigate("/sales")} />
-      )}
+      {sessionExpired && <SessionExpiredBanner onRelogin={() => navigate("/sales")} />}
 
-      <Navbar
-        user={user}
-        onLogout={handleLogout}
-        onBackToDashboard={() => navigate("/dashboard")}
-      />
+      <Navbar user={user} onLogout={handleLogout} onBackToDashboard={() => navigate("/dashboard")} />
 
       <main style={{ maxWidth: 1280, margin: "0 auto", padding: "24px 20px 60px" }}>
         {loading ? (
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit,minmax(160px,1fr))",
-              gap: 10,
-            }}
-          >
-            {Array.from({ length: 6 }).map((_, i) => (
-              <SkeletonCard key={i} />
-            ))}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(160px,1fr))", gap: 10 }}>
+            {Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}
           </div>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
 
             {/* Page Header */}
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                flexWrap: "wrap",
-                gap: 10,
-              }}
-            >
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
               <div>
-                <h1
-                  style={{
-                    fontSize: 22,
-                    fontWeight: 700,
-                    color: T.navy,
-                    fontFamily: "'DM Sans', sans-serif",
-                  }}
-                >
+                <h1 style={{ fontSize: 22, fontWeight: 700, color: T.navy, fontFamily: "'DM Sans', sans-serif" }}>
                   Flat Sales & Customer Receipts
                 </h1>
                 <p style={{ fontSize: 13, color: T.hint, marginTop: 3 }}>
@@ -2285,51 +1825,26 @@ export default function FlatSalePage() {
                 </p>
               </div>
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                <button
-                  style={btn("success")}
-                  onClick={() => exportFlatSalesExcel(filtered)}
-                >
+                <button style={btn("success")} onClick={() => exportFlatSalesExcel(filtered)}>
                   📊 Export Excel
                 </button>
-                <button
-                  style={btn("primary")}
-                  onClick={() => setModal({ type: "addFlatSale" })}
-                >
+                <button style={btn("primary")} onClick={() => setModal({ type: "addFlatSale" })}>
                   + New Sale
                 </button>
               </div>
             </div>
 
             {/* Stats */}
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))",
-                gap: 10,
-              }}
-            >
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", gap: 10 }}>
               <StatCard label="Total Sales" value={totalFlats} icon="🏠" accent={T.navy} delay={0} />
               <StatCard label="Sold" value={soldFlats} icon="✅" accent={T.success} delay={50} />
               <StatCard label="Booked" value={bookedFlats} icon="📋" accent={T.blue} delay={100} />
-              <StatCard
-                label="Cancelled"
-                value={cancelledFlats}
-                icon="❌"
-                accent={T.coral}
-                delay={150}
-              />
+              <StatCard label="Cancelled" value={cancelledFlats} icon="❌" accent={T.coral} delay={150} />
             </div>
 
             {/* Filters */}
             <div style={{ ...card, padding: "14px 16px" }}>
-              <div
-                style={{
-                  display: "flex",
-                  gap: 10,
-                  flexWrap: "wrap",
-                  alignItems: "center",
-                }}
-              >
+              <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
                 <input
                   style={{ ...inp, flex: "2 1 200px", maxWidth: 280 }}
                   placeholder="Search by name, receipt no, mobile, flat…"
@@ -2338,59 +1853,23 @@ export default function FlatSalePage() {
                   onFocus={focusOn}
                   onBlur={focusOff}
                 />
-                <select
-                  style={{ ...inp, width: "auto", minWidth: 140 }}
-                  value={filterStatus}
-                  onChange={(e) => setFilterStatus(e.target.value)}
-                  onFocus={focusOn}
-                  onBlur={focusOff}
-                >
+                <select style={{ ...inp, width: "auto", minWidth: 140 }} value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} onFocus={focusOn} onBlur={focusOff}>
                   <option value="">All Status</option>
                   <option value="Booked">Booked</option>
                   <option value="Sold">Sold</option>
                   <option value="Cancelled">Cancelled</option>
                 </select>
-                <select
-                  style={{ ...inp, width: "auto", minWidth: 150 }}
-                  value={filterProject}
-                  onChange={(e) => setFilterProject(e.target.value)}
-                  onFocus={focusOn}
-                  onBlur={focusOff}
-                >
+                <select style={{ ...inp, width: "auto", minWidth: 150 }} value={filterProject} onChange={(e) => setFilterProject(e.target.value)} onFocus={focusOn} onBlur={focusOff}>
                   <option value="">All Projects</option>
-                  {projects.map((p) => (
-                    <option key={p} value={p}>
-                      {p}
-                    </option>
-                  ))}
+                  {projects.map((p) => <option key={p} value={p}>{p}</option>)}
                 </select>
-                <input
-                  style={{ ...inp, width: "auto", flex: "1 1 130px" }}
-                  type="date"
-                  value={dateFrom}
-                  onChange={(e) => setDateFrom(e.target.value)}
-                  onFocus={focusOn}
-                  onBlur={focusOff}
-                />
+                <input style={{ ...inp, width: "auto", flex: "1 1 130px" }} type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} onFocus={focusOn} onBlur={focusOff} />
                 <span style={{ color: T.hint, fontSize: 12 }}>to</span>
-                <input
-                  style={{ ...inp, width: "auto", flex: "1 1 130px" }}
-                  type="date"
-                  value={dateTo}
-                  onChange={(e) => setDateTo(e.target.value)}
-                  onFocus={focusOn}
-                  onBlur={focusOff}
-                />
+                <input style={{ ...inp, width: "auto", flex: "1 1 130px" }} type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} onFocus={focusOn} onBlur={focusOff} />
                 {(search || filterStatus || filterProject || dateFrom || dateTo) && (
                   <button
                     style={btn("ghost", { padding: "8px 12px", color: T.coral, fontSize: 12 })}
-                    onClick={() => {
-                      setSearch("");
-                      setFilterStatus("");
-                      setFilterProject("");
-                      setDateFrom("");
-                      setDateTo("");
-                    }}
+                    onClick={() => { setSearch(""); setFilterStatus(""); setFilterProject(""); setDateFrom(""); setDateTo(""); }}
                   >
                     Clear ×
                   </button>
@@ -2410,39 +1889,11 @@ export default function FlatSalePage() {
               <div style={{ ...card, padding: 0, overflow: "hidden" }}>
                 {/* Desktop Table */}
                 <div style={{ overflowX: "auto" }} className="flat-table">
-                  <table
-                    style={{
-                      width: "100%",
-                      borderCollapse: "collapse",
-                      fontSize: 13,
-                      fontFamily: "'DM Sans', sans-serif",
-                    }}
-                  >
+                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, fontFamily: "'DM Sans', sans-serif" }}>
                     <thead>
-                      <tr
-                        style={{ background: T.bg, borderBottom: `1px solid ${T.border}` }}
-                      >
-                        {[
-                          "Receipt No",
-                          "Customer",
-                          "Project / Flat",
-                          "Booking Date",
-                          "Status",
-                          "Actions",
-                        ].map((h) => (
-                          <th
-                            key={h}
-                            style={{
-                              textAlign: "left",
-                              padding: "11px 14px",
-                              color: T.hint,
-                              fontWeight: 600,
-                              fontSize: 11,
-                              letterSpacing: "0.3px",
-                              textTransform: "uppercase",
-                              whiteSpace: "nowrap",
-                            }}
-                          >
+                      <tr style={{ background: T.bg, borderBottom: `1px solid ${T.border}` }}>
+                        {["Receipt No", "Customer", "Project / Flat", "Booking Date", "Status", "Actions"].map((h) => (
+                          <th key={h} style={{ textAlign: "left", padding: "11px 14px", color: T.hint, fontWeight: 600, fontSize: 11, letterSpacing: "0.3px", textTransform: "uppercase", whiteSpace: "nowrap" }}>
                             {h}
                           </th>
                         ))}
@@ -2452,114 +1903,35 @@ export default function FlatSalePage() {
                       {filtered.map((s, i) => (
                         <tr
                           key={s.id}
-                          style={{
-                            borderBottom:
-                              i < filtered.length - 1 ? `1px solid ${T.border}` : "none",
-                            transition: "background 0.1s",
-                          }}
+                          style={{ borderBottom: i < filtered.length - 1 ? `1px solid ${T.border}` : "none", transition: "background 0.1s" }}
                           onMouseEnter={(e) => (e.currentTarget.style.background = T.bg)}
-                          onMouseLeave={(e) =>
-                            (e.currentTarget.style.background = "transparent")
-                          }
+                          onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
                         >
-                          <td
-                            style={{
-                              padding: "13px 14px",
-                              fontSize: 12,
-                              color: T.coral,
-                              fontWeight: 700,
-                              fontFamily: "'DM Mono', monospace",
-                              whiteSpace: "nowrap",
-                            }}
-                          >
+                          <td style={{ padding: "13px 14px", fontSize: 12, color: T.coral, fontWeight: 700, fontFamily: "'DM Mono', monospace", whiteSpace: "nowrap" }}>
                             {s.receiptNo}
                           </td>
                           <td style={{ padding: "13px 14px" }}>
-                            <p
-                              style={{ fontWeight: 600, color: T.navy, fontSize: 13 }}
-                            >
-                              {s.customerName}
-                            </p>
-                            <p style={{ fontSize: 11, color: T.hint, marginTop: 1 }}>
-                              {s.mobile}
-                            </p>
+                            <p style={{ fontWeight: 600, color: T.navy, fontSize: 13 }}>{s.customerName}</p>
+                            <p style={{ fontSize: 11, color: T.hint, marginTop: 1 }}>{s.mobile}</p>
                           </td>
                           <td style={{ padding: "13px 14px" }}>
-                            <p
-                              style={{
-                                fontWeight: 600,
-                                color: T.navy,
-                                fontSize: 12.5,
-                              }}
-                            >
-                              {s.projectName}
-                            </p>
+                            <p style={{ fontWeight: 600, color: T.navy, fontSize: 12.5 }}>{s.projectName}</p>
                             <p style={{ fontSize: 11, color: T.hint, marginTop: 1 }}>
-                              Flat {s.flatNo}
-                              {s.wing ? ` · Wing ${s.wing}` : ""}
-                              {s.buildingName ? ` · ${s.buildingName}` : ""}
+                              Flat {s.flatNo}{s.wing ? ` · Wing ${s.wing}` : ""}{s.buildingName ? ` · ${s.buildingName}` : ""}
                             </p>
                           </td>
-                          <td
-                            style={{
-                              padding: "13px 14px",
-                              color: T.hint,
-                              fontSize: 12,
-                              fontFamily: "'DM Mono', monospace",
-                              whiteSpace: "nowrap",
-                            }}
-                          >
-                            {s.bookingDate
-                              ? new Date(s.bookingDate).toLocaleDateString("en-GB", {
-                                  day: "2-digit",
-                                  month: "short",
-                                  year: "numeric",
-                                })
-                              : "-"}
+                          <td style={{ padding: "13px 14px", color: T.hint, fontSize: 12, fontFamily: "'DM Mono', monospace", whiteSpace: "nowrap" }}>
+                            {s.bookingDate ? new Date(s.bookingDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "-"}
                           </td>
                           <td style={{ padding: "13px 14px" }}>
-                            <Badge color={statusBadgeMap[s.status] || "navy"}>
-                              {s.status}
-                            </Badge>
+                            <Badge color={statusBadgeMap[s.status] || "navy"}>{s.status}</Badge>
                           </td>
                           <td style={{ padding: "13px 14px" }}>
                             <div style={{ display: "flex", gap: 4 }}>
-                              <button
-                                style={btn("default", { fontSize: 11, padding: "5px 9px" })}
-                                onClick={() => setModal({ type: "viewFlatSale", data: s })}
-                                title="View"
-                              >
-                                👁
-                              </button>
-                              <button
-                                style={btn("primary", { fontSize: 11, padding: "5px 9px" })}
-                                onClick={() => setModal({ type: "flatPayment", sale: s })}
-                                title="Add Payment"
-                              >
-                                ₹
-                              </button>
-                              <button
-                                style={btn("outline", { fontSize: 11, padding: "5px 9px" })}
-                                onClick={() =>
-                                  setModal({ type: "editFlatSale", data: s })
-                                }
-                                title="Edit"
-                              >
-                                ✏️
-                              </button>
-                              <button
-                                style={btn("danger", { fontSize: 11, padding: "5px 9px" })}
-                                onClick={() =>
-                                  setDeleteModal({
-                                    sale: s,
-                                    name: s.customerName,
-                                    receiptNo: s.receiptNo,
-                                  })
-                                }
-                                title="Delete"
-                              >
-                                🗑
-                              </button>
+                              <button style={btn("default", { fontSize: 11, padding: "5px 9px" })} onClick={() => setModal({ type: "viewFlatSale", data: s })} title="View">👁</button>
+                              <button style={btn("primary", { fontSize: 11, padding: "5px 9px" })} onClick={() => setModal({ type: "flatPayment", sale: s })} title="Add Payment">₹</button>
+                              <button style={btn("outline", { fontSize: 11, padding: "5px 9px" })} onClick={() => setModal({ type: "editFlatSale", data: s })} title="Edit">✏️</button>
+                              <button style={btn("danger", { fontSize: 11, padding: "5px 9px" })} onClick={() => setDeleteModal({ sale: s, name: s.customerName, receiptNo: s.receiptNo })} title="Delete">🗑</button>
                             </div>
                           </td>
                         </tr>
@@ -2569,97 +1941,29 @@ export default function FlatSalePage() {
                 </div>
 
                 {/* Mobile Cards */}
-                <div
-                  className="flat-mobile"
-                  style={{ display: "none", flexDirection: "column" }}
-                >
+                <div className="flat-mobile" style={{ display: "none", flexDirection: "column" }}>
                   {filtered.map((s, i) => (
-                    <div
-                      key={s.id}
-                      style={{
-                        padding: "14px 15px",
-                        borderBottom:
-                          i < filtered.length - 1 ? `1px solid ${T.border}` : "none",
-                      }}
-                    >
-                      <div
-                        style={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "flex-start",
-                          gap: 10,
-                          marginBottom: 8,
-                        }}
-                      >
+                    <div key={s.id} style={{ padding: "14px 15px", borderBottom: i < filtered.length - 1 ? `1px solid ${T.border}` : "none" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10, marginBottom: 8 }}>
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <div
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: 6,
-                              flexWrap: "wrap",
-                              marginBottom: 3,
-                            }}
-                          >
-                            <p
-                              style={{
-                                fontWeight: 700,
-                                fontSize: 13.5,
-                                color: T.navy,
-                              }}
-                            >
-                              {s.customerName}
-                            </p>
-                            <Badge color={statusBadgeMap[s.status] || "navy"}>
-                              {s.status}
-                            </Badge>
+                          <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", marginBottom: 3 }}>
+                            <p style={{ fontWeight: 700, fontSize: 13.5, color: T.navy }}>{s.customerName}</p>
+                            <Badge color={statusBadgeMap[s.status] || "navy"}>{s.status}</Badge>
                           </div>
-                          <p style={{ fontSize: 11.5, color: T.hint }}>
-                            {s.receiptNo} · Flat {s.flatNo} · {s.projectName}
-                          </p>
+                          <p style={{ fontSize: 11.5, color: T.hint }}>{s.receiptNo} · Flat {s.flatNo} · {s.projectName}</p>
                           <p style={{ fontSize: 11.5, color: T.hint, marginTop: 1 }}>
-                            {s.mobile} ·{" "}
-                            {s.bookingDate
-                              ? new Date(s.bookingDate).toLocaleDateString("en-GB", {
-                                  day: "2-digit",
-                                  month: "short",
-                                  year: "numeric",
-                                })
-                              : "-"}
+                            {s.mobile} · {s.bookingDate ? new Date(s.bookingDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "-"}
+                          </p>
+                          <p style={{ fontSize: 12, fontWeight: 600, color: T.coral, marginTop: 4 }}>
+                            {fmtINR(s.remainingAmount)} due
                           </p>
                         </div>
                       </div>
                       <div style={{ display: "flex", gap: 5, marginTop: 8 }}>
-                        <button
-                          style={btn("default", { fontSize: 11, padding: "5px 10px" })}
-                          onClick={() => setModal({ type: "viewFlatSale", data: s })}
-                        >
-                          View
-                        </button>
-                        <button
-                          style={btn("primary", { fontSize: 11, padding: "5px 10px" })}
-                          onClick={() => setModal({ type: "flatPayment", sale: s })}
-                        >
-                          Pay
-                        </button>
-                        <button
-                          style={btn("outline", { fontSize: 11, padding: "5px 10px" })}
-                          onClick={() => setModal({ type: "editFlatSale", data: s })}
-                        >
-                          Edit
-                        </button>
-                        <button
-                          style={btn("danger", { fontSize: 11, padding: "5px 10px" })}
-                          onClick={() =>
-                            setDeleteModal({
-                              sale: s,
-                              name: s.customerName,
-                              receiptNo: s.receiptNo,
-                            })
-                          }
-                        >
-                          Del
-                        </button>
+                        <button style={btn("default", { fontSize: 11, padding: "5px 10px" })} onClick={() => setModal({ type: "viewFlatSale", data: s })}>View</button>
+                        <button style={btn("primary", { fontSize: 11, padding: "5px 10px" })} onClick={() => setModal({ type: "flatPayment", sale: s })}>Pay</button>
+                        <button style={btn("outline", { fontSize: 11, padding: "5px 10px" })} onClick={() => setModal({ type: "editFlatSale", data: s })}>Edit</button>
+                        <button style={btn("danger", { fontSize: 11, padding: "5px 10px" })} onClick={() => setDeleteModal({ sale: s, name: s.customerName, receiptNo: s.receiptNo })}>Del</button>
                       </div>
                     </div>
                   ))}
@@ -2672,76 +1976,45 @@ export default function FlatSalePage() {
 
       {/* ── Modals ── */}
       {modal?.type === "addFlatSale" && (
-        <Modal
-          title="New Flat Sale"
-          subtitle="Add customer flat sale record"
-          onClose={() => setModal(null)}
-          width={720}
-        >
-          <FlatSaleForm
-            existingSales={flatSales}
-            onSave={(f) => saveFlatSale(f, null)}
-            onClose={() => setModal(null)}
-            saving={saving}
-          />
+        <Modal title="New Flat Sale" subtitle="Add customer flat sale record" onClose={() => setModal(null)} width={720}>
+          <FlatSaleForm existingSales={flatSales} onSave={(f) => saveFlatSale(f, null)} onClose={() => setModal(null)} saving={saving} />
         </Modal>
       )}
 
       {modal?.type === "editFlatSale" && (
-        <Modal
-          title="Edit Flat Sale"
-          subtitle={`${modal.data.customerName} · ${modal.data.receiptNo}`}
-          onClose={() => setModal(null)}
-          width={720}
-        >
-          <FlatSaleForm
-            initial={modal.data}
-            existingSales={flatSales.filter((s) => s.id !== modal.data.id)}
-            onSave={(f) => saveFlatSale(f, modal.data)}
-            onClose={() => setModal(null)}
-            saving={saving}
-          />
+        <Modal title="Edit Flat Sale" subtitle={`${modal.data.customerName} · ${modal.data.receiptNo}`} onClose={() => setModal(null)} width={720}>
+          <FlatSaleForm initial={modal.data} existingSales={flatSales.filter((s) => s.id !== modal.data.id)} onSave={(f) => saveFlatSale(f, modal.data)} onClose={() => setModal(null)} saving={saving} />
         </Modal>
       )}
 
       {modal?.type === "flatPayment" && (
-        <Modal
-          title="Record Customer Payment"
-          subtitle={`${modal.sale.customerName} · ${modal.sale.receiptNo}`}
-          onClose={() => setModal(null)}
-          width={500}
-        >
-          <FlatPaymentForm
-            sale={modal.sale}
-            onSave={(f) => saveFlatPayment(modal.sale, f)}
-            onClose={() => setModal(null)}
-            saving={saving}
-          />
+        <Modal title="Record Customer Payment" subtitle={`${modal.sale.customerName} · ${modal.sale.receiptNo}`} onClose={() => setModal(null)} width={500}>
+          <FlatPaymentForm sale={modal.sale} onSave={(f) => saveFlatPayment(modal.sale, f)} onClose={() => setModal(null)} saving={saving} />
         </Modal>
       )}
 
       {modal?.type === "viewFlatSale" &&
         (() => {
           const sale = modal.data;
+          // Re-read sale from flatSales to get the latest paidAmount after edits
+          const liveSale = flatSales.find((s) => s.id === sale.id) || sale;
           const salePmts = flatPayments.filter((p) => p.saleId === sale.id);
           return (
-            <Modal
-              title={`Sale Detail — ${sale.receiptNo}`}
-              subtitle={sale.customerName}
-              onClose={() => setModal(null)}
-              width={720}
-            >
+            <Modal title={`Sale Detail — ${sale.receiptNo}`} subtitle={sale.customerName} onClose={() => setModal(null)} width={740}>
               <SaleDetailView
-                sale={sale}
+                sale={liveSale}
                 salePayments={salePmts}
                 onClose={() => setModal(null)}
-                onAddPayment={() => setModal({ type: "flatPayment", sale })}
+                onAddPayment={() => setModal({ type: "flatPayment", sale: liveSale })}
+                onEditPayment={(payment, updatedForm) => editFlatPayment(payment, updatedForm)}
+                onDeletePayment={(payment) => deleteFlatPayment(payment)}
+                editPaymentSaving={saving}
               />
             </Modal>
           );
         })()}
 
-      {/* ── Delete Confirm ── */}
+      {/* ── Delete Sale Confirm ── */}
       {deleteModal && (
         <DeleteConfirmModal
           name={deleteModal.name}
@@ -2754,27 +2027,7 @@ export default function FlatSalePage() {
 
       {/* ── Toast ── */}
       {toast && (
-        <div
-          style={{
-            position: "fixed",
-            bottom: 22,
-            left: "50%",
-            transform: "translateX(-50%)",
-            background: toast.type === "error" ? T.coral : T.success,
-            color: "#fff",
-            padding: "10px 18px",
-            borderRadius: 9,
-            fontSize: 13,
-            fontWeight: 600,
-            zIndex: 3000,
-            display: "flex",
-            alignItems: "center",
-            gap: 7,
-            boxShadow: `0 4px 16px rgba(0,0,0,0.18)`,
-            animation: "toastIn 0.25s ease both",
-            whiteSpace: "nowrap",
-          }}
-        >
+        <div style={{ position: "fixed", bottom: 22, left: "50%", transform: "translateX(-50%)", background: toast.type === "error" ? T.coral : T.success, color: "#fff", padding: "10px 18px", borderRadius: 9, fontSize: 13, fontWeight: 600, zIndex: 3000, display: "flex", alignItems: "center", gap: 7, boxShadow: `0 4px 16px rgba(0,0,0,0.18)`, animation: "toastIn 0.25s ease both", whiteSpace: "nowrap" }}>
           <span>{toast.type === "error" ? "⚠️" : "✓"}</span>
           {toast.msg}
         </div>

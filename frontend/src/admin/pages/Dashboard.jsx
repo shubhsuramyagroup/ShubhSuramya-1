@@ -382,7 +382,7 @@ export default function Dashboard() {
                 Contacts
               </button>
             </Link>
-            <Link to="/vendors?tab=vendors">
+            <Link to="/vendors">
               <button
                 className="inline-flex items-center gap-1.5 bg-white border border-gray-200 text-[#1F2A44]
                                  px-4 py-2 rounded-full text-[12px] font-semibold
@@ -391,7 +391,7 @@ export default function Dashboard() {
                 Vendors
               </button>
             </Link>
-            <Link to="/sales?tab=sales">
+            <Link to="/sales">
               <button
                 className="inline-flex items-center gap-1.5 bg-white border border-gray-200 text-[#1F2A44]
                                  px-4 py-2 rounded-full text-[12px] font-semibold
@@ -464,7 +464,7 @@ export default function Dashboard() {
               </button>
             </Link>
             <Link
-              to="/vendors?tab=vendors"
+              to="/vendors"
               onClick={() => setMobileMenuOpen(false)}
             >
               <button className="w-full text-left border border-gray-200 text-[#1F2A44] px-4 py-3 rounded-xl text-sm font-semibold">
@@ -472,11 +472,11 @@ export default function Dashboard() {
               </button>
             </Link>
             <Link
-              to="/admin/vendors?tab=vendors"
+              to="/sales"
               onClick={() => setMobileMenuOpen(false)}
             >
               <button className="w-full text-left border border-gray-200 text-[#1F2A44] px-4 py-3 rounded-xl text-sm font-semibold">
-                Vendors
+                Sales
               </button>
             </Link>
             <button
