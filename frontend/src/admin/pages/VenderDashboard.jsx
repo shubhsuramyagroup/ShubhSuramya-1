@@ -711,7 +711,7 @@ function DashboardTab({ companies, vendors, bills, payments, activityLog, flatSa
         </div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(210px,10fr))", gap: 10 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(280px,10fr))", gap: 10 }}>
         <StatCard label="Companies"       value={companies.length}  icon="🏢" delay={0} />
         <StatCard label="Vendors"         value={vendors.length}    icon="👥" delay={40} />
         <StatCard label="Total Bills"     value={bills.length}      icon="📋" delay={80} />
@@ -720,8 +720,6 @@ function DashboardTab({ companies, vendors, bills, payments, activityLog, flatSa
         <StatCard label="Net Payable"     value={fmtINR(totalNet)}  icon="💼" accent={T.navy} delay={200} />
         <StatCard label="Amount Paid"     value={fmtINR(totalPaid)} icon="💚" accent={T.success} delay={240} />
         <StatCard label="Outstanding"     value={fmtINR(totalDue)}  accent={totalDue > 0 ? T.coral : T.success} icon={totalDue > 0 ? "⚠️" : "🎉"} delay={280} />
-        <StatCard label="Today's Revenue" value={fmtINR(todayRev)}  icon="📅" accent={T.blue} delay={320} />
-        <StatCard label="This Month"      value={fmtINR(monthRev)}  icon="📆" accent={T.purple} delay={360} />
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(300px,1fr))", gap: 16 }}>
@@ -1027,6 +1025,271 @@ function CompaniesTab({ companies, vendors, bills, onAdd, onEdit, onDelete }) {
   );
 }
 
+async function generateVendorStatementPDF(vendor, company, vendorBills, dateFrom, dateTo) {
+  if (!vendorBills || vendorBills.length === 0) { alert("No bills found for this vendor."); return; }
+
+  const doc = new jsPDF("p", "mm", "a4");
+  const W = 210, H = 297, HEADER_H = 58;
+
+  doc.addImage(header, "PNG", 0, 0, W, HEADER_H);
+
+  doc.setTextColor(18, 30, 90);
+  doc.setFontSize(16);
+  doc.setFont("helvetica", "bold");
+  doc.text("Vendor Payment Statement", W / 2, HEADER_H + 16, { align: "center" });
+
+  doc.setDrawColor(18, 30, 90);
+  doc.setLineWidth(0.4);
+  doc.line(40, HEADER_H + 18.5, W - 40, HEADER_H + 18.5);
+
+  let y = HEADER_H + 30;
+
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(60, 60, 60);
+  doc.text("Generated Date:", 14, y);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(18, 30, 90);
+  doc.text(new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" }), 45, y);
+  y += 6;
+
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(60, 60, 60);
+  doc.text("Company:", 14, y);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(18, 30, 90);
+  doc.text(company?.name || "—", 36, y);
+  y += 6;
+
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(60, 60, 60);
+  doc.text("Vendor:", 14, y);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(18, 30, 90);
+  doc.text(vendor?.name || "—", 36, y);
+  y += 6;
+
+  if (dateFrom || dateTo) {
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(60, 60, 60);
+    doc.text("Invoice Date Range:", 14, y);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(18, 30, 90);
+    const fromTxt = dateFrom ? new Date(dateFrom).toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" }) : "—";
+    const toTxt = dateTo ? new Date(dateTo).toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" }) : "—";
+    doc.text(`${fromTxt}  to  ${toTxt}`, 52, y);
+    y += 6;
+  }
+
+  y += 8;
+
+  const totalNet = vendorBills.reduce((s, b) => s + Number(b.netAmount || 0), 0);
+  const totalPaid = vendorBills.reduce((s, b) => s + Number(b.amountPaid || 0), 0);
+  const totalRemaining = totalNet - totalPaid;
+
+  /* ── Summary row: Total / Paid / Remaining ── */
+  autoTable(doc, {
+    startY: y,
+    theme: "grid",
+    tableWidth: W - 28,
+    margin: { left: 14, right: 14 },
+    styles: { fontSize: 11, cellPadding: 8, lineColor: [210, 215, 230], lineWidth: 0.3, halign: "center" },
+    headStyles: { fillColor: [18, 30, 90], textColor: [255, 255, 255], fontStyle: "bold", fontSize: 10 },
+    bodyStyles: { fontStyle: "bold", fontSize: 13 },
+    columnStyles: {
+      0: { textColor: [18, 30, 90] },
+      1: { textColor: [29, 158, 117] },
+      2: { textColor: totalRemaining > 0 ? [227, 74, 47] : [29, 158, 117] },
+    },
+    head: [["Total Bill Amount", "Total Paid Amount", "Total Remaining Amount"]],
+    body: [[fmtINR(totalNet), fmtINR(totalPaid), fmtINR(totalRemaining)]],
+  });
+
+  y = doc.lastAutoTable.finalY + 14;
+
+  /* ── Bill-wise breakdown ── */
+  const body = vendorBills.map((b, i) => [
+    i + 1,
+    b.invoiceNo || "—",
+    b.invoiceDate
+      ? new Date(b.invoiceDate).toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" })
+      : "—",
+    fmtINR(b.totalBill),
+    fmtINR(b.netAmount),
+    fmtINR(b.amountPaid),
+    fmtINR(Number(b.netAmount || 0) - Number(b.amountPaid || 0)),
+  ]);
+
+  autoTable(doc, {
+    startY: y,
+    theme: "grid",
+    margin: { left: 14, right: 14 },
+    styles: { fontSize: 8.5, cellPadding: 4, lineColor: [210, 215, 230], lineWidth: 0.3 },
+    headStyles: { fillColor: [18, 30, 90], textColor: [255, 255, 255], fontStyle: "bold", fontSize: 8.5 },
+    columnStyles: {
+      0: { cellWidth: 12, halign: "center" },
+      3: { halign: "right" },
+      4: { halign: "right" },
+      5: { halign: "right" },
+      6: { halign: "right" },
+    },
+    head: [["Sr No", "Invoice No", "Invoice Date", "Sub Total", "Net Amount", "Paid Amount", "Remaining"]],
+    body,
+    didDrawPage: () => {
+      const footerY = H - 22;
+      doc.setFillColor(22, 34, 94);
+      doc.rect(0, footerY, W, 22, "F");
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(200, 210, 240);
+      doc.text(
+        "Shubh Suramya Group  |  Shubh Suramya Corporate House opp suramaya dreams, Suramya Road, Near Eklingji Road, Sanand-382110",
+        W / 2,
+        footerY + 8,
+        { align: "center" }
+      );
+      doc.text(
+        "www.shubhsuramya.com  |  shubhsuramayagroup@gmail.com  |  +91 96872 58222",
+        W / 2,
+        footerY + 14,
+        { align: "center" }
+      );
+      doc.setTextColor(150, 165, 200);
+      doc.setFontSize(8);
+      doc.text(
+        String(doc.internal.getCurrentPageInfo().pageNumber).padStart(2, "0"),
+        W - 14,
+        footerY + 15,
+        { align: "right" }
+      );
+    },
+  });
+
+  const safeName = (vendor?.name || "Vendor").replace(/[^a-z0-9]+/gi, "_");
+  doc.save(`Vendor_Statement_${safeName}_${today()}.pdf`);
+}
+
+/* ─── Vendor Outstanding Report PDF (Total / Paid / Remaining per vendor) ──── */
+/* ─── Vendor Outstanding Report PDF (Total / Paid / Remaining per vendor) ──── */
+async function generateVendorOutstandingPDF(rows, dateFrom, dateTo) {
+  if (!rows || rows.length === 0) { alert("No outstanding vendor payments found."); return; }
+
+  const doc = new jsPDF("p", "mm", "a4");
+  const W = 210, H = 297, HEADER_H = 58;
+
+  doc.addImage(header, "PNG", 0, 0, W, HEADER_H);
+
+  doc.setTextColor(18, 30, 90);
+  doc.setFontSize(16);
+  doc.setFont("helvetica", "bold");
+  doc.text("Vendor Outstanding Payment Report", W / 2, HEADER_H + 16, { align: "center" });
+
+  doc.setDrawColor(18, 30, 90);
+  doc.setLineWidth(0.4);
+  doc.line(40, HEADER_H + 18.5, W - 40, HEADER_H + 18.5);
+
+  let y = HEADER_H + 30;
+
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(60, 60, 60);
+  doc.text("Generated Date:", 14, y);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(18, 30, 90);
+  doc.text(
+    new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" }),
+    45,
+    y
+  );
+
+  if (dateFrom || dateTo) {
+    y += 6;
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(60, 60, 60);
+    doc.text("Invoice Date Range:", 14, y);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(18, 30, 90);
+    const fromTxt = dateFrom ? new Date(dateFrom).toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" }) : "—";
+    const toTxt = dateTo ? new Date(dateTo).toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" }) : "—";
+    doc.text(`${fromTxt}  to  ${toTxt}`, 52, y);
+  }
+
+  y += 12;
+
+  const body = rows.map((r, i) => [
+    i + 1,
+    r.company,
+    r.vendor,
+    r.gstin || "—",
+    r.billCount,
+    fmtINR(r.totalAmount),
+    fmtINR(r.paidAmount),
+    fmtINR(r.remaining),
+  ]);
+
+  const grandTotal = rows.reduce((s, r) => s + r.totalAmount, 0);
+  const grandPaid = rows.reduce((s, r) => s + r.paidAmount, 0);
+  const grandRemaining = rows.reduce((s, r) => s + r.remaining, 0);
+
+  autoTable(doc, {
+    startY: y,
+    theme: "grid",
+    margin: { left: 14, right: 14 },
+    styles: { fontSize: 8.5, cellPadding: 4, lineColor: [210, 215, 230], lineWidth: 0.3 },
+    headStyles: { fillColor: [18, 30, 90], textColor: [255, 255, 255], fontStyle: "bold", fontSize: 8.5 },
+    columnStyles: {
+      0: { cellWidth: 10, halign: "center" },
+      4: { halign: "center", cellWidth: 14 },
+      5: { halign: "right" },
+      6: { halign: "right" },
+      7: { halign: "right" },
+    },
+    head: [["Sr No", "Company", "Vendor", "GSTIN", "Bills", "Total Amount", "Paid Amount", "Remaining Amount"]],
+    body,
+    foot: [["", "", "", "", "Grand Total", fmtINR(grandTotal), fmtINR(grandPaid), fmtINR(grandRemaining)]],
+    footStyles: { fillColor: [245, 247, 252], textColor: [18, 30, 90], fontStyle: "bold", fontSize: 9.5 },
+    didDrawPage: () => {
+      const footerY = H - 22;
+      doc.setFillColor(22, 34, 94);
+      doc.rect(0, footerY, W, 22, "F");
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(200, 210, 240);
+      doc.text(
+        "Shubh Suramya Group  |  Shubh Suramya Corporate House opp suramaya dreams, Suramya Road, Near Eklingji Road, Sanand-382110",
+        W / 2,
+        footerY + 8,
+        { align: "center" }
+      );
+      doc.text(
+        "www.shubhsuramya.com  |  shubhsuramayagroup@gmail.com  |  +91 96872 58222",
+        W / 2,
+        footerY + 14,
+        { align: "center" }
+      );
+      doc.setTextColor(150, 165, 200);
+      doc.setFontSize(8);
+      doc.text(
+        String(doc.internal.getCurrentPageInfo().pageNumber).padStart(2, "0"),
+        W - 14,
+        footerY + 15,
+        { align: "right" }
+      );
+    },
+  });
+
+  doc.save(`Vendor_Outstanding_Report_${today()}.pdf`);
+}
+
+/* ─── Date Formatter: YYYY-MM-DD → DD-MM-YYYY ───────────────────────────── */
+function formatDMY(dateStr) {
+  if (!dateStr) return "—";
+  const parts = dateStr.split("-");
+  if (parts.length !== 3) return dateStr;
+  const [y, m, d] = parts;
+  return `${d}-${m}-${y}`;
+}
+
 /* ═══════════════════════════════════════════════════════════════════════════
    VENDORS TAB
 ═══════════════════════════════════════════════════════════════════════════ */
@@ -1034,21 +1297,87 @@ function VendorsTab({ vendors, companies, bills, onAdd, onEdit, onDelete, onAddB
   const [filterCo, setFilterCo] = useState("");
   const [search, setSearch] = useState("");
   const [expanded, setExpanded] = useState({});
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [sortOrder, setSortOrder] = useState("desc"); // "desc" = Newest to Oldest, "asc" = Oldest to Newest
+
   const toggle = (id) => setExpanded(p => ({ ...p, [id]: !p[id] }));
+
   const filtered = vendors.filter(v => !filterCo || v.companyId === filterCo).filter(v => !search || v.name?.toLowerCase().includes(search.toLowerCase()));
+
+  /* ── Date-filtered & sorted bills (applies to all bill tables / vendor lists) ── */
+  const sortedFilteredBills = useMemo(() => {
+    let result = bills.filter(b => {
+      if (dateFrom || dateTo) {
+        if (!b.invoiceDate) return false;
+        if (dateFrom && b.invoiceDate < dateFrom) return false;
+        if (dateTo && b.invoiceDate > dateTo) return false;
+      }
+      return true;
+    });
+    result = [...result].sort((a, b) => {
+      const da = a.invoiceDate || "", db = b.invoiceDate || "";
+      if (!da && !db) return 0;
+      if (!da) return 1;
+      if (!db) return -1;
+      return sortOrder === "asc" ? da.localeCompare(db) : db.localeCompare(da);
+    });
+    return result;
+  }, [bills, dateFrom, dateTo, sortOrder]);
+
+  /* ── Outstanding rows for the all-vendors PDF report (grouped per vendor) ── */
+  const outstandingRows = useMemo(() => {
+    const grouped = {};
+    sortedFilteredBills.forEach(b => {
+      const v = vendors.find(vv => vv.id === b.vendorId);
+      if (!v) return;
+      if (filterCo && v.companyId !== filterCo) return;
+      if (search && !(v.name || "").toLowerCase().includes(search.toLowerCase())) return;
+
+      const comp = companies.find(c => c.id === v.companyId);
+      const key = v.id;
+      if (!grouped[key]) {
+        grouped[key] = {
+          company: comp?.name || "—",
+          vendor: v.name || "—",
+          gstin: v.gstin || "—",
+          billCount: 0,
+          totalAmount: 0,
+          paidAmount: 0,
+        };
+      }
+      grouped[key].billCount += 1;
+      grouped[key].totalAmount += Number(b.netAmount || 0);
+      grouped[key].paidAmount += Number(b.amountPaid || 0);
+    });
+
+    return Object.values(grouped)
+      .map(r => ({ ...r, remaining: r.totalAmount - r.paidAmount }))
+      .filter(r => r.remaining > 0.01);
+  }, [sortedFilteredBills, vendors, companies, filterCo, search]);
+
+  const handleClearDateFilter = () => { setDateFrom(""); setDateTo(""); };
+
+  const handleDownloadReport = () => {
+    if (outstandingRows.length === 0) { alert("No outstanding vendor payments found."); return; }
+    generateVendorOutstandingPDF(outstandingRows, dateFrom, dateTo);
+  };
 
   return (
     <div>
       <SectionHeader
         title="Vendors"
         action={
-          <div style={{ display: "flex", gap: "10px" }}>
+          <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
             <button style={btn("success")} onClick={() => exportVendorBillsExcel(vendors, bills, companies)}>📊 Download Excel</button>
+            <button style={btn("navy")} onClick={handleDownloadReport}>📄 Download PDF Report</button>
             <button style={btn("primary")} onClick={onAdd} disabled={companies.length === 0}>+ Add Vendor</button>
           </div>
         }
       />
-      <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 16 }}>
+
+      {/* ── Vendor Search / Company Filter ── */}
+      <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
         <input style={{ ...inp, flex: "1 1 200px", maxWidth: 280 }} placeholder="Search vendors…" value={search} onChange={e => setSearch(e.target.value)} onFocus={focusOn} onBlur={focusOff} />
         <select style={{ ...inp, width: "auto", minWidth: 160 }} value={filterCo} onChange={e => setFilterCo(e.target.value)} onFocus={focusOn} onBlur={focusOff}>
           <option value="">All Companies</option>
@@ -1060,7 +1389,29 @@ function VendorsTab({ vendors, companies, bills, onAdd, onEdit, onDelete, onAddB
           </div>
         )}
       </div>
+
+      {/* ── Bill Date Filter & Sorting ── */}
+      <div style={{ ...card, padding: "14px 16px", marginBottom: 16 }}>
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+          <span style={{ fontSize: 11.5, fontWeight: 600, color: T.hint, flexShrink: 0 }}>Filter bills by Invoice Date</span>
+          <input style={{ ...inp, width: "auto" }} type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} onFocus={focusOn} onBlur={focusOff} />
+          <span style={{ color: T.hint, fontSize: 12 }}>to</span>
+          <input style={{ ...inp, width: "auto" }} type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} onFocus={focusOn} onBlur={focusOff} />
+          {(dateFrom || dateTo) && (
+            <button style={btn("ghost", { padding: "8px 12px", color: T.coral, fontSize: 12 })} onClick={handleClearDateFilter}>Clear Filter ×</button>
+          )}
+          <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+            <span style={{ fontSize: 11.5, fontWeight: 600, color: T.hint, flexShrink: 0 }}>Sort by Invoice Date</span>
+            <select style={{ ...inp, width: "auto", minWidth: 170 }} value={sortOrder} onChange={e => setSortOrder(e.target.value)} onFocus={focusOn} onBlur={focusOff}>
+              <option value="desc">Newest to Oldest</option>
+              <option value="asc">Oldest to Newest</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
       {filtered.length === 0 && <Empty icon="👥" text={search ? "No vendors match your search." : "No vendors yet."} />}
+
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         {filtered.map((v, i) => {
           const comp = companies.find(c => c.id === v.companyId);
@@ -1072,6 +1423,9 @@ function VendorsTab({ vendors, companies, bills, onAdd, onEdit, onDelete, onAddB
           const sColor = { paid: T.success, partial: T.amber, unpaid: T.coral }[status];
           const sBadge = { paid: "green", partial: "amber", unpaid: "red" }[status];
           const isOpen = expanded[v.id];
+
+          // Bills for this vendor, with date filter + sort applied
+          const vFilteredBills = sortedFilteredBills.filter(b => b.vendorId === v.id);
 
           return (
             <div key={v.id} style={{ ...card, padding: 0, overflow: "hidden", borderLeft: `3px solid ${sColor}`, animation: `fadeUp 0.4s ease ${i * 45}ms both` }}>
@@ -1097,6 +1451,15 @@ function VendorsTab({ vendors, companies, bills, onAdd, onEdit, onDelete, onAddB
                   </div>
                   <div style={{ display: "flex", flexDirection: "column", gap: 5, flexShrink: 0 }}>
                     <button style={btn("default", { fontSize: 11.5, padding: "6px 11px" })} onClick={() => toggle(v.id)}>{isOpen ? "▲ Hide" : "▼ Bills"}</button>
+                    <button
+                      style={btn("teal", { fontSize: 11.5, padding: "6px 11px" })}
+                      onClick={() => {
+                        if (vFilteredBills.length === 0) { alert("No bills found for this vendor."); return; }
+                        generateVendorStatementPDF(v, comp, vFilteredBills, dateFrom, dateTo);
+                      }}
+                    >
+                      ⬇ Download
+                    </button>
                     <button style={btn("primary", { fontSize: 11.5, padding: "6px 11px" })} onClick={() => onAddBill(v)}>+ Bill</button>
                     <button style={btn("outline", { fontSize: 11.5, padding: "6px 11px" })} onClick={() => onEdit(v)}>Edit</button>
                     <button style={btn("danger", { fontSize: 11.5, padding: "6px 10px" })} onClick={() => onDelete(v)}>Delete</button>
@@ -1106,12 +1469,16 @@ function VendorsTab({ vendors, companies, bills, onAdd, onEdit, onDelete, onAddB
 
               {isOpen && (
                 <div style={{ borderTop: `1px solid ${T.border}`, background: T.bg, padding: "14px 16px" }}>
-                  <p style={{ fontSize: 11, fontWeight: 600, color: T.hint, textTransform: "uppercase", letterSpacing: "0.4px", marginBottom: 10 }}>Bills ({vBills.length})</p>
-                  {vBills.length === 0 ? (
-                    <p style={{ color: T.hint, fontSize: 12.5 }}>No bills yet. Click "+ Bill" to add one.</p>
+                  <p style={{ fontSize: 11, fontWeight: 600, color: T.hint, textTransform: "uppercase", letterSpacing: "0.4px", marginBottom: 10 }}>
+                    Bills ({vFilteredBills.length}{(dateFrom || dateTo) ? ` of ${vBills.length}` : ""})
+                  </p>
+                  {vFilteredBills.length === 0 ? (
+                    <p style={{ color: T.hint, fontSize: 12.5 }}>
+                      {(dateFrom || dateTo) ? "No bills match the selected date range." : "No bills yet. Click \"+ Bill\" to add one."}
+                    </p>
                   ) : (
                     <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                      {vBills.map((b) => {
+                      {vFilteredBills.map((b) => {
                         const bDue = Number(b.netAmount || 0) - Number(b.amountPaid || 0);
                         const bPct = Number(b.netAmount) > 0 ? (Number(b.amountPaid) / Number(b.netAmount)) * 100 : 0;
                         const bStat = bDue <= 0 && Number(b.netAmount) > 0 ? "paid" : Number(b.amountPaid) > 0 ? "partial" : "unpaid";
@@ -1122,7 +1489,7 @@ function VendorsTab({ vendors, companies, bills, onAdd, onEdit, onDelete, onAddB
                               <div style={{ flex: 1, minWidth: 0 }}>
                                 <div style={{ display: "flex", alignItems: "center", gap: 7, flexWrap: "wrap", marginBottom: 8 }}>
                                   {b.invoiceNo && <span style={{ fontSize: 12.5, fontWeight: 700, color: T.navy, fontFamily: "'DM Mono', monospace" }}>#{b.invoiceNo}</span>}
-                                  {b.invoiceDate && <span style={{ fontSize: 11.5, color: T.hint }}>{b.invoiceDate}</span>}
+                                  {b.invoiceDate && <span style={{ fontSize: 11.5, color: T.hint }}>{formatDMY(b.invoiceDate)}</span>}
                                   <Badge color={bStat === "paid" ? "green" : bStat === "partial" ? "amber" : "red"}>{bStat === "paid" ? "Paid" : bStat === "partial" ? "Partial" : "Unpaid"}</Badge>
                                 </div>
                                 {b.description && <p style={{ fontSize: 12, color: T.hint, marginBottom: 8 }}>{b.description}</p>}
