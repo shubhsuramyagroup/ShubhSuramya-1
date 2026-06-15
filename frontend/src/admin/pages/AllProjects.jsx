@@ -137,7 +137,7 @@ export default function AllProjects() {
                 {/* Image */}
                 <div className="relative overflow-hidden h-[220px]">
                   <img
-                    src={project.mainImage || "https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=600&q=80"}
+                    src={project.mainImage}
                     alt={project.title}
                     className="w-full h-full object-cover transition-transform duration-700
                                group-hover:scale-105"
