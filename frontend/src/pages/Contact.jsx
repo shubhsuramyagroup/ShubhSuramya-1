@@ -711,7 +711,7 @@ export default function Contact() {
                 </svg>
               </span>
               <span className="text-gray-700 font-semibold text-sm">
-                +91 80 4567 8900
+                +91 96872 58222
               </span>
             </a>
 
@@ -725,7 +725,7 @@ export default function Contact() {
                 </svg>
               </span>
               <span className="text-gray-700 font-semibold text-sm">
-                hello@realestate.com
+                shubhsuramyagroup@gmail.com
               </span>
             </a>
           </div>
