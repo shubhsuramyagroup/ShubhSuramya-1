@@ -1,240 +1,599 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import * as XLSX from "xlsx";
-import { getContacts } from "../../services/contactService";
-import { Toast, BackButton, PageHeader } from "../components/Adminshared ";
+import { Plus, Pencil, Trash2, Search, Loader2, X } from "lucide-react";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
-function formatDate(timestamp) {
-  if (!timestamp) return "N/A";
-  return new Date(timestamp.seconds * 1000).toLocaleString("en-IN", {
-    day: "numeric", month: "short", year: "numeric",
-    hour: "2-digit", minute: "2-digit",
+import {
+  addContact,
+  getContacts,
+  updateContact,
+  deleteContact,
+} from "../../services/contactService";
+
+const emptyForm = {
+  fullName: "",
+  email: "",
+  phone: "",
+  dob: "",
+  subject: "",
+  message: "",
+};
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const PHONE_REGEX = /^\+?[0-9]{7,15}$/;
+
+const formatDate = (date) => {
+  if (!date) return "—";
+  const d = date instanceof Date ? date : new Date(date);
+  if (isNaN(d.getTime())) return "—";
+  return d.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+};
+
+const formatDateTime = (date) => {
+  if (!date) return "—";
+  const d = date instanceof Date ? date : new Date(date);
+  if (isNaN(d.getTime())) return "—";
+  return d.toLocaleString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
   });
-}
+};
 
-function formatDOB(dob) {
-  if (!dob) return "N/A";
-  if (dob && (typeof dob.toDate === "function" || dob.seconds)) {
-    const date = typeof dob.toDate === "function" ? dob.toDate() : new Date(dob.seconds * 1000);
-    const day = String(date.getUTCDate()).padStart(2, "0");
-    const month = String(date.getUTCMonth() + 1).padStart(2, "0");
-    const year = date.getUTCFullYear();
-    return `${day}-${month}-${year}`;
-  }
-  return dob;
-}
+const toDateInputValue = (date) => {
+  if (!date) return "";
+  const d = date instanceof Date ? date : new Date(date);
+  if (isNaN(d.getTime())) return "";
+  return d.toISOString().split("T")[0];
+};
 
-export default function Contacts() {
-  const navigate = useNavigate();
-  const [contacts, setContacts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
-  const [toast, setToast] = useState(null);
-  const [expanded, setExpanded] = useState(null); // row id for mobile expand
+/* ---------------- Contact Modal (Add/Edit) ---------------- */
+const ContactModal = ({ isOpen, onClose, onSubmit, initialData, mode }) => {
+  const [form, setForm] = useState(emptyForm);
+  const [errors, setErrors] = useState({});
+  const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => { fetchContacts(); }, []);
+  useEffect(() => {
+    if (isOpen) {
+      if (mode === "edit" && initialData) {
+        setForm({
+          fullName: initialData.fullName || "",
+          email: initialData.email || "",
+          phone: initialData.phone || "",
+          dob: toDateInputValue(initialData.dob),
+          subject: initialData.subject || "",
+          message: initialData.message || "",
+        });
+      } else {
+        setForm(emptyForm);
+      }
+      setErrors({});
+    }
+  }, [isOpen, initialData, mode]);
 
-  const fetchContacts = async () => {
+  const validate = useCallback(() => {
+    const newErrors = {};
+    if (!form.fullName.trim()) newErrors.fullName = "Full name is required";
+    if (!form.email.trim()) newErrors.email = "Email is required";
+    else if (!EMAIL_REGEX.test(form.email)) newErrors.email = "Invalid email format";
+    if (!form.phone.trim()) newErrors.phone = "Phone number is required";
+    else if (!PHONE_REGEX.test(form.phone)) newErrors.phone = "Invalid phone number";
+    if (!form.dob) newErrors.dob = "Date of birth is required";
+    if (!form.subject.trim()) newErrors.subject = "Subject is required";
+    if (!form.message.trim()) newErrors.message = "Message is required";
+    return newErrors;
+  }, [form]);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+    setErrors((prev) => ({ ...prev, [name]: "" }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const validationErrors = validate();
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      return;
+    }
+    setSubmitting(true);
     try {
-      const data = await getContacts();
-      const sortedData = data.sort((a, b) => {
-        const dateA = a.createdAt?.seconds || 0;
-        const dateB = b.createdAt?.seconds || 0;
-        return dateB - dateA;
-      });
-      setContacts(sortedData);
-    } catch (error) {
-      console.log(error);
-      setToast({ type: "error", message: "Failed to load contacts." });
+      await onSubmit(form);
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
   };
 
-  const exportExcel = () => {
-    const data = contacts.map((item) => ({
-      FullName: item.fullName || "",
-      Email: item.email || "",
-      Phone: item.phone || "",
-      DateOfBirth: formatDOB(item.dob),
-      Subject: item.subject || "",
-      Message: item.message || "",
-      CreatedDate: formatDate(item.createdAt),
-    }));
-    const worksheet = XLSX.utils.json_to_sheet(data);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Contacts");
-    XLSX.writeFile(workbook, "contacts.xlsx");
-    setToast({ type: "success", message: "Excel file downloaded successfully." });
-  };
-
-  const filteredContacts = contacts.filter((item) =>
-    item.fullName?.toLowerCase().includes(search.toLowerCase())
-  );
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-[#F8F7F4] flex flex-col items-center justify-center gap-4">
-        <div className="w-9 h-9 rounded-full border-[3px] border-[#E4572E]/20 border-t-[#E4572E]"
-             style={{ animation: "spin 0.8s linear infinite" }} />
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-        <p className="text-[#1F2A44] font-semibold text-sm">Loading contacts…</p>
-      </div>
-    );
-  }
+  if (!isOpen) return null;
 
   return (
-    <div className="min-h-screen bg-[#F8F7F4]">
-      <Toast show={toast} onClose={() => setToast(null)} />
-
-      {/* Top bar */}
-      <div className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-gray-100
-                      px-4 sm:px-8 h-14 flex items-center gap-4">
-        <BackButton onClick={() => navigate("/admin/dashboard")} label="Dashboard" />
-        <span className="text-gray-200 text-lg">|</span>
-        <span className="text-[#1F2A44] font-semibold text-sm">Contacts</span>
-      </div>
-
-      <div className="max-w-[1500px] mx-auto px-4 sm:px-8 py-8 sm:py-12">
-        <PageHeader
-          eyebrow="Inquiries"
-          title="Contact Requests"
-          subtitle="Manage all contact inquiries from your website"
-          actions={
-            <button
-              onClick={exportExcel}
-              className="inline-flex items-center gap-1.5 bg-emerald-600 text-white
-                         px-5 py-2.5 rounded-full text-[12px] font-semibold tracking-wide
-                         hover:bg-emerald-700 hover:scale-[1.03] transition-all duration-200"
-            >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
-                   strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                <polyline points="7 10 12 15 17 10" />
-                <line x1="12" y1="15" x2="12" y2="3" />
-              </svg>
-              Download Excel
-            </button>
-          }
-        />
-
-        {/* Stat card */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
-          <div className="bg-[#1F2A44] text-white rounded-2xl p-5 sm:p-6">
-            <p className="text-white/60 text-[10px] font-bold tracking-[1.5px] uppercase">Total</p>
-            <h2 className="text-4xl font-bold mt-1">{contacts.length}</h2>
-            <p className="text-white/40 text-[10px] mt-1">All contacts</p>
-          </div>
-          <div className="bg-white rounded-2xl p-5 sm:p-6 border border-gray-100 shadow-sm">
-            <p className="text-gray-400 text-[10px] font-bold tracking-[1.5px] uppercase">Showing</p>
-            <h2 className="text-4xl font-bold mt-1 text-[#1F2A44]">{filteredContacts.length}</h2>
-            <p className="text-gray-300 text-[10px] mt-1">In search results</p>
-          </div>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-[fadeIn_0.2s_ease]">
+      <div
+        className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-xl bg-white shadow-2xl animate-[slideUp_0.25s_ease]"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
+          <h2 className="text-lg font-semibold text-gray-900">
+            {mode === "edit" ? "Edit Contact" : "Add Contact"}
+          </h2>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-700 transition-colors"
+            aria-label="Close"
+          >
+            <X size={20} />
+          </button>
         </div>
 
-        {/* Search */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 mb-6">
-          <div className="relative">
-            <svg viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2"
-                 strokeLinecap="round" strokeLinejoin="round"
-                 className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none">
-              <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
-            </svg>
+        <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
+          <div className="flex flex-col">
+            <label htmlFor="fullName" className="mb-1.5 text-sm font-medium text-gray-700">
+              Full Name *
+            </label>
             <input
+              id="fullName"
+              name="fullName"
               type="text"
-              placeholder="Search by name…"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm
-                         text-[#1F2A44] placeholder:text-gray-300 outline-none
-                         focus:border-[#E4572E] focus:ring-2 focus:ring-[#E4572E]/10
-                         transition-all duration-200"
+              value={form.fullName}
+              onChange={handleChange}
+              placeholder="Enter full name"
+              className={`rounded-lg border px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 ${
+                errors.fullName ? "border-red-500" : "border-gray-300 focus:border-blue-500"
+              }`}
             />
+            {errors.fullName && <span className="mt-1 text-xs text-red-500">{errors.fullName}</span>}
           </div>
-        </div>
 
-        {/* Table */}
-        <div className="bg-white rounded-2xl sm:rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
-          {/* Header */}
-          <div className="px-5 sm:px-8 py-4 border-b border-gray-100 flex items-center justify-between">
-            <div>
-              <p className="text-[#E34A2F] text-[10px] font-bold tracking-[2.5px] uppercase">Records</p>
-              <h3 className="text-[#1F2A44] font-semibold text-base mt-0.5">
-                {filteredContacts.length} {filteredContacts.length === 1 ? "contact" : "contacts"} found
-              </h3>
+          <div className="flex flex-col">
+            <label htmlFor="email" className="mb-1.5 text-sm font-medium text-gray-700">
+              Email *
+            </label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              value={form.email}
+              onChange={handleChange}
+              placeholder="Enter email address"
+              className={`rounded-lg border px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 ${
+                errors.email ? "border-red-500" : "border-gray-300 focus:border-blue-500"
+              }`}
+            />
+            {errors.email && <span className="mt-1 text-xs text-red-500">{errors.email}</span>}
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="flex flex-col">
+              <label htmlFor="phone" className="mb-1.5 text-sm font-medium text-gray-700">
+                Phone Number *
+              </label>
+              <input
+                id="phone"
+                name="phone"
+                type="text"
+                value={form.phone}
+                onChange={handleChange}
+                placeholder="+91XXXXXXXXXX"
+                className={`rounded-lg border px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 ${
+                  errors.phone ? "border-red-500" : "border-gray-300 focus:border-blue-500"
+                }`}
+              />
+              {errors.phone && <span className="mt-1 text-xs text-red-500">{errors.phone}</span>}
+            </div>
+
+            <div className="flex flex-col">
+              <label htmlFor="dob" className="mb-1.5 text-sm font-medium text-gray-700">
+                Date of Birth *
+              </label>
+              <input
+                id="dob"
+                name="dob"
+                type="date"
+                value={form.dob}
+                onChange={handleChange}
+                className={`rounded-lg border px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 ${
+                  errors.dob ? "border-red-500" : "border-gray-300 focus:border-blue-500"
+                }`}
+              />
+              {errors.dob && <span className="mt-1 text-xs text-red-500">{errors.dob}</span>}
             </div>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[900px]">
-              <thead>
-                <tr className="bg-[#F8F7F4]">
-                  {["Full Name", "Email", "Phone", "DOB", "Subject", "Message", "Date"].map((h) => (
-                    <th key={h} className="px-5 sm:px-6 py-3.5 text-left
-                                           text-[10px] font-bold tracking-[1.5px] uppercase text-gray-400">
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {filteredContacts.length === 0 ? (
-                  <tr>
-                    <td colSpan="7" className="text-center py-16 text-gray-400 text-sm">
-                      No contacts found
-                    </td>
-                  </tr>
-                ) : (
-                  filteredContacts.map((contact, i) => (
-                    <tr
-                      key={contact.id}
-                      className="border-b border-gray-50 hover:bg-[#FDFAF6] transition-colors duration-150"
-                      style={{ animation: `fadeUp 0.4s ease ${i * 30}ms both` }}
-                    >
-                      <td className="px-5 sm:px-6 py-4">
-                        <div className="flex items-center gap-2.5">
-                          <div className="w-7 h-7 rounded-full bg-[#FFF0EC] flex items-center
-                                          justify-center flex-shrink-0">
-                            <span className="text-[#E4572E] text-[10px] font-bold">
-                              {contact.fullName?.[0]?.toUpperCase() || "?"}
-                            </span>
-                          </div>
-                          <span className="text-[#1F2A44] text-sm font-medium whitespace-nowrap">
-                            {contact.fullName}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-5 sm:px-6 py-4 text-gray-500 text-sm">{contact.email}</td>
-                      <td className="px-5 sm:px-6 py-4 text-gray-500 text-sm whitespace-nowrap">{contact.phone}</td>
-                      <td className="px-5 sm:px-6 py-4 text-gray-500 text-sm whitespace-nowrap">{formatDOB(contact.dob)}</td>
-                      <td className="px-5 sm:px-6 py-4">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full
-                                         bg-[#FFF0EC] text-[#E4572E] text-[10px] font-bold
-                                         tracking-[1px] uppercase whitespace-nowrap">
-                          {contact.subject}
-                        </span>
-                      </td>
-                      <td className="px-5 sm:px-6 py-4 text-gray-500 text-sm max-w-[220px]">
-                        <p className="line-clamp-2 text-xs leading-relaxed">{contact.message}</p>
-                      </td>
-                      <td className="px-5 sm:px-6 py-4 text-gray-400 text-xs whitespace-nowrap">
-                        {formatDate(contact.createdAt)}
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+          <div className="flex flex-col">
+            <label htmlFor="subject" className="mb-1.5 text-sm font-medium text-gray-700">
+              Subject *
+            </label>
+            <input
+              id="subject"
+              name="subject"
+              type="text"
+              value={form.subject}
+              onChange={handleChange}
+              placeholder="Enter subject"
+              className={`rounded-lg border px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 ${
+                errors.subject ? "border-red-500" : "border-gray-300 focus:border-blue-500"
+              }`}
+            />
+            {errors.subject && <span className="mt-1 text-xs text-red-500">{errors.subject}</span>}
           </div>
+
+          <div className="flex flex-col">
+            <label htmlFor="message" className="mb-1.5 text-sm font-medium text-gray-700">
+              Message *
+            </label>
+            <textarea
+              id="message"
+              name="message"
+              rows={4}
+              value={form.message}
+              onChange={handleChange}
+              placeholder="Enter message"
+              className={`rounded-lg border px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 resize-none ${
+                errors.message ? "border-red-500" : "border-gray-300 focus:border-blue-500"
+              }`}
+            />
+            {errors.message && <span className="mt-1 text-xs text-red-500">{errors.message}</span>}
+          </div>
+
+          <div className="flex justify-end gap-3 border-t border-gray-200 pt-4">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={submitting}
+              className="rounded-lg bg-gray-100 px-5 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200 disabled:opacity-60"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={submitting}
+              className="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-60 flex items-center gap-2"
+            >
+              {submitting && <Loader2 size={16} className="animate-spin" />}
+              {submitting
+                ? mode === "edit"
+                  ? "Saving..."
+                  : "Adding..."
+                : mode === "edit"
+                ? "Save Changes"
+                : "Add Contact"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+/* ---------------- Delete Confirmation Modal ---------------- */
+const DeleteConfirmationModal = ({ isOpen, onClose, onConfirm }) => {
+  const [deleting, setDeleting] = useState(false);
+
+  if (!isOpen) return null;
+
+  const handleConfirm = async () => {
+    setDeleting(true);
+    try {
+      await onConfirm();
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-[fadeIn_0.2s_ease]">
+      <div
+        className="w-full max-w-sm rounded-xl bg-white shadow-2xl animate-[slideUp_0.25s_ease]"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
+          <h2 className="text-lg font-semibold text-gray-900">Delete Contact</h2>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-700 transition-colors" aria-label="Close">
+            <X size={20} />
+          </button>
+        </div>
+        <div className="px-6 py-5">
+          <p className="text-sm text-gray-600">Are you sure you want to delete this contact?</p>
+        </div>
+        <div className="flex justify-end gap-3 border-t border-gray-200 px-6 py-4">
+          <button
+            onClick={onClose}
+            disabled={deleting}
+            className="rounded-lg bg-gray-100 px-5 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200 disabled:opacity-60"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleConfirm}
+            disabled={deleting}
+            className="rounded-lg bg-red-600 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:opacity-60 flex items-center gap-2"
+          >
+            {deleting && <Loader2 size={16} className="animate-spin" />}
+            {deleting ? "Deleting..." : "Delete"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/* ---------------- Main Contacts Page ---------------- */
+const Contacts = () => {
+  const [contacts, setContacts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [selectedContact, setSelectedContact] = useState(null);
+
+  const fetchContacts = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await getContacts();
+      setContacts(data);
+    } catch (error) {
+      console.error("Error fetching contacts:", error);
+      toast.error("Failed to load contacts.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchContacts();
+  }, [fetchContacts]);
+
+  const filteredContacts = useMemo(() => {
+    if (!searchTerm.trim()) return contacts;
+    const term = searchTerm.toLowerCase();
+    return contacts.filter(
+      (c) =>
+        c.fullName?.toLowerCase().includes(term) ||
+        c.email?.toLowerCase().includes(term) ||
+        c.subject?.toLowerCase().includes(term) ||
+        c.phone?.toLowerCase().includes(term)
+    );
+  }, [contacts, searchTerm]);
+
+  /* Add */
+  const handleAddContact = useCallback(async (formData) => {
+    try {
+      const docRef = await addContact(formData);
+      const newContact = {
+        id: docRef.id,
+        ...formData,
+        dob: new Date(formData.dob),
+        createdAt: new Date(),
+      };
+      setContacts((prev) => [newContact, ...prev]);
+      setIsAddModalOpen(false);
+      toast.success("Contact added successfully!");
+    } catch (error) {
+      console.error("Error adding contact:", error);
+      toast.error("Failed to add contact.");
+    }
+  }, []);
+
+  /* Edit */
+  const openEditModal = useCallback((contact) => {
+    setSelectedContact(contact);
+    setIsEditModalOpen(true);
+  }, []);
+
+  const handleUpdateContact = useCallback(
+    async (formData) => {
+      if (!selectedContact) return;
+      try {
+        await updateContact(selectedContact.id, formData);
+        setContacts((prev) =>
+          prev.map((c) =>
+            c.id === selectedContact.id
+              ? { ...c, ...formData, dob: new Date(formData.dob) }
+              : c
+          )
+        );
+        setIsEditModalOpen(false);
+        setSelectedContact(null);
+        toast.success("Contact updated successfully!");
+      } catch (error) {
+        console.error("Error updating contact:", error);
+        toast.error("Failed to update contact.");
+      }
+    },
+    [selectedContact]
+  );
+
+  /* Delete */
+  const openDeleteModal = useCallback((contact) => {
+    setSelectedContact(contact);
+    setIsDeleteModalOpen(true);
+  }, []);
+
+  const handleDeleteContact = useCallback(async () => {
+    if (!selectedContact) return;
+    const prevContacts = contacts;
+    setContacts((prev) => prev.filter((c) => c.id !== selectedContact.id));
+    try {
+      await deleteContact(selectedContact.id);
+      toast.success("Contact deleted successfully!");
+      setIsDeleteModalOpen(false);
+      setSelectedContact(null);
+    } catch (error) {
+      console.error("Error deleting contact:", error);
+      setContacts(prevContacts);
+      toast.error("Failed to delete contact.");
+    }
+  }, [selectedContact, contacts]);
+
+  /* Excel Export */
+  const handleExport = useCallback(() => {
+    const exportData = filteredContacts.map((c) => ({
+      "Full Name": c.fullName,
+      Email: c.email,
+      Phone: c.phone,
+      "Date of Birth": formatDate(c.dob),
+      Subject: c.subject,
+      Message: c.message,
+      "Created Date": formatDateTime(c.createdAt),
+    }));
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Contacts");
+    XLSX.writeFile(workbook, `contacts_${new Date().toISOString().split("T")[0]}.xlsx`);
+  }, [filteredContacts]);
+
+  return (
+    <div className="p-4 sm:p-6">
+      <ToastContainer position="top-right" autoClose={3000} />
+
+      {/* Header */}
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Contacts Management</h1>
+          <p className="mt-1 text-sm text-gray-500">Manage all contact form submissions</p>
+        </div>
+        <button
+          onClick={() => setIsAddModalOpen(true)}
+          className="flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-green-700"
+        >
+          <Plus size={18} />
+          Add Contact
+        </button>
+      </div>
+
+      {/* Stats */}
+      <div className="mb-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+          <p className="text-xs font-medium text-gray-500">Total Contacts</p>
+          <p className="mt-1 text-2xl font-bold text-gray-900">{contacts.length}</p>
+        </div>
+        <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+          <p className="text-xs font-medium text-gray-500">Filtered Contacts</p>
+          <p className="mt-1 text-2xl font-bold text-gray-900">{filteredContacts.length}</p>
+        </div>
+        <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+          <p className="text-xs font-medium text-gray-500">Search Results</p>
+          <p className="mt-1 text-2xl font-bold text-gray-900">
+            {searchTerm ? filteredContacts.length : 0}
+          </p>
         </div>
       </div>
 
-      <style>{`
-        @keyframes fadeUp {
-          from { opacity: 0; transform: translateY(10px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
-      `}</style>
+      {/* Toolbar */}
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div className="relative w-full max-w-md">
+          <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search by name, email, subject, or phone..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full rounded-lg border border-gray-300 py-2.5 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500"
+          />
+        </div>
+        <button
+          onClick={handleExport}
+          className="rounded-lg bg-gray-900 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-gray-800"
+        >
+          Export to Excel
+        </button>
+      </div>
+
+      {/* Table */}
+      <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm">
+        {loading ? (
+          <div className="flex flex-col items-center gap-3 py-16 text-gray-500">
+            <Loader2 size={32} className="animate-spin" />
+            <p className="text-sm">Loading contacts...</p>
+          </div>
+        ) : filteredContacts.length === 0 ? (
+          <div className="flex flex-col items-center gap-2 py-16 text-gray-500">
+            <p className="text-sm">No contacts found.</p>
+          </div>
+        ) : (
+          <table className="min-w-[900px] w-full text-left text-sm">
+            <thead>
+              <tr className="bg-gray-50">
+                <th className="px-4 py-3 text-xs font-semibold text-gray-700 whitespace-nowrap">Full Name</th>
+                <th className="px-4 py-3 text-xs font-semibold text-gray-700 whitespace-nowrap">Email</th>
+                <th className="px-4 py-3 text-xs font-semibold text-gray-700 whitespace-nowrap">Phone</th>
+                <th className="px-4 py-3 text-xs font-semibold text-gray-700 whitespace-nowrap">DOB</th>
+                <th className="px-4 py-3 text-xs font-semibold text-gray-700 whitespace-nowrap">Subject</th>
+                <th className="px-4 py-3 text-xs font-semibold text-gray-700 whitespace-nowrap">Message</th>
+                <th className="px-4 py-3 text-xs font-semibold text-gray-700 whitespace-nowrap">Created At</th>
+                <th className="px-4 py-3 text-xs font-semibold text-gray-700 whitespace-nowrap">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredContacts.map((contact) => (
+                <tr key={contact.id} className="border-t border-gray-100 transition-colors hover:bg-gray-50">
+                  <td className="px-4 py-3 font-medium text-gray-900">{contact.fullName}</td>
+                  <td className="px-4 py-3 text-gray-600">{contact.email}</td>
+                  <td className="px-4 py-3 text-gray-600">{contact.phone}</td>
+                  <td className="px-4 py-3 text-gray-600">{formatDate(contact.dob)}</td>
+                  <td className="px-4 py-3 text-gray-600">{contact.subject}</td>
+                  <td className="px-4 py-3 max-w-[250px] truncate text-gray-600">{contact.message}</td>
+                  <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{formatDateTime(contact.createdAt)}</td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => openEditModal(contact)}
+                        title="Edit"
+                        className="flex h-8 w-8 items-center justify-center rounded-md bg-blue-100 text-blue-600 transition-transform hover:scale-105 hover:bg-blue-200"
+                      >
+                        <Pencil size={16} />
+                      </button>
+                      <button
+                        onClick={() => openDeleteModal(contact)}
+                        title="Delete"
+                        className="flex h-8 w-8 items-center justify-center rounded-md bg-red-100 text-red-600 transition-transform hover:scale-105 hover:bg-red-200"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      {/* Modals */}
+      <ContactModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        onSubmit={handleAddContact}
+        mode="add"
+      />
+
+      <ContactModal
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setSelectedContact(null);
+        }}
+        onSubmit={handleUpdateContact}
+        initialData={selectedContact}
+        mode="edit"
+      />
+
+      <DeleteConfirmationModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setSelectedContact(null);
+        }}
+        onConfirm={handleDeleteContact}
+      />
     </div>
   );
-}
+};
+
+export default Contacts;
