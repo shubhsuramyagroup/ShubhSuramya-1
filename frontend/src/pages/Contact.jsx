@@ -421,10 +421,10 @@ export default function Contact() {
 
   const offices = [
     {
-      city: "Bengaluru HQ",
-      address: "No. 12, MG Road, Bengaluru, Karnataka 560001",
-      phone: "+91 80 4567 8900",
-      mapUrl: "https://maps.google.com/?q=MG+Road+Bengaluru",
+      city: "Sanand Gujarat",
+      address: "Shubh Suramya Corporate House opp suramaya dreams Suramya Road, Near Eklingji Road, Sanand-382110",
+      phone: "+91 96872 58222",
+      mapUrl: "https://www.google.com/maps/place/Suramya+Dreams/@22.9920203,72.388455,17z/data=!3m1!4b1!4m6!3m5!1s0x395e99392581641f:0x6fa830106b7b4fa6!8m2!3d22.9920154!4d72.3910299!16s%2Fg%2F11vl4tjcqb?entry=ttu&g_ep=EgoyMDI2MDYxMC4wIKXMDSoASAFQAw%3D%3D",
     },
   ];
 
@@ -780,7 +780,7 @@ export default function Contact() {
               className="relative rounded-2xl overflow-hidden shadow-lg flex-1 min-h-[180px]"
             >
               <img
-                src="https://images.unsplash.com/photo-1486325212027-8081e485255e?w=800&q=80"
+                src="https://lh3.googleusercontent.com/gps-cs-s/APNQkAFIgP5aW6XIoyMa5JzGl96Tr-QoTc6Afzq8suAiRzUwt9NFs64kNc-EjsPcHtfbPVYRq94Mr3XYP0sEPRamdlEet5qLvHNa3A9feJsGM3SL3fxmnQFVFKyGRZQ-2SnUAQLOQ9dgFPXK84Ez=w408-h363-k-no"
                 alt="Our office building"
                 className="absolute inset-0 w-full h-full object-cover"
               />
@@ -788,11 +788,7 @@ export default function Contact() {
               <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
 
               <div className="absolute bottom-4 left-5 text-white">
-                <p className="text-xs font-bold uppercase tracking-widest text-white/70">
-                  Headquarter
-                </p>
-
-                <p className="text-sm font-semibold">Bengaluru, Karnataka</p>
+                <p className="text-sm font-semibold">Sanand, Gujarat</p>
               </div>
             </div>
           </div>
@@ -829,7 +825,7 @@ function MapSection({ offices }) {
   const [active, setActive] = useState(0);
   const [mapRef, inView] = useInView(0.1);
 
-  const mapQueries = ["MG+Road+Bengaluru+Karnataka"];
+  const mapQueries = ["Eklingji+Road+Narmada+Vasahat+Sanand+Gujarat"];
 
   return (
     <div
