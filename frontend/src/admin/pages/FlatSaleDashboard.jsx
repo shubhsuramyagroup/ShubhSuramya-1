@@ -716,7 +716,7 @@ function FlatSaleForm({ initial, existingSales, onSave, onClose, saving }) {
   const [f, setF] = useState(initial || blankForm);
   const set = (k) => (e) => setF((p) => ({ ...p, [k]: e.target.value }));
 
-  useEffect(() => {
+useEffect(() => {
     const total =
       Number(f.flatPrice || 0) +
       Number(f.gstAmount || 0) +
@@ -724,7 +724,7 @@ function FlatSaleForm({ initial, existingSales, onSave, onClose, saving }) {
       Number(f.stampDuty || 0) +
       Number(f.otherCharges || 0);
     const remaining = total - Number(f.paidAmount || 0);
-    setF((p) => ({ ...p, totalAmount: total, remainingAmount: remaining < 0 ? 0 : remaining }));
+    setF((p) => ({ ...p, totalAmount: total, remainingAmount: remaining }));
   }, [f.flatPrice, f.gstAmount, f.registrationAmount, f.stampDuty, f.otherCharges, f.paidAmount]);
 
   return (
@@ -840,7 +840,7 @@ function FlatPaymentForm({ sale, onSave, onClose, saving }) {
   const remaining = Number(sale.remainingAmount || 0);
   const [f, setF] = useState({
     paymentDate: today(),
-    amount: remaining > 0 ? String(remaining.toFixed(2)) : "",
+    amount: "",
     paymentMode: "NEFT",
     transactionId: "",
     bankName: "",
@@ -854,8 +854,6 @@ function FlatPaymentForm({ sale, onSave, onClose, saving }) {
     if (!f.paymentDate) errs.paymentDate = "Payment date is required.";
     if (!f.amount || isNaN(f.amount) || Number(f.amount) <= 0)
       errs.amount = "Enter a valid amount greater than 0.";
-    if (Number(f.amount) > remaining + 0.01)
-      errs.amount = `Amount cannot exceed outstanding balance of ${fmtINR(remaining)}.`;
     setErrors(errs);
     return Object.keys(errs).length === 0;
   }
@@ -874,10 +872,6 @@ function FlatPaymentForm({ sale, onSave, onClose, saving }) {
             <p style={{ fontSize: 11.5, color: "rgba(255,255,255,0.45)", marginTop: 2 }}>
               {sale.receiptNo} · Flat {sale.flatNo}, {sale.projectName}
             </p>
-          </div>
-          <div style={{ textAlign: "right" }}>
-            <p style={{ fontSize: 10.5, color: "rgba(255,255,255,0.45)" }}>Outstanding</p>
-            <p style={{ fontSize: 18, fontWeight: 700, color: "#ff8a75" }}>{fmtINR(remaining)}</p>
           </div>
         </div>
         <ProgressBar
@@ -1700,7 +1694,7 @@ export default function FlatSalePage() {
       await fsSet(token, `flatSales/${sale.id}`, {
         ...sale,
         paidAmount: newPaid,
-        remainingAmount: newRemaining < 0 ? 0 : newRemaining,
+        remainingAmount: newRemaining,
       });
       await logActivity(token, "flat_payment_added", `Payment of ${fmtINR(amount)} recorded for ${sale.customerName} – ${sale.receiptNo}`, { amount });
       showToast("Payment recorded");
@@ -1735,8 +1729,8 @@ export default function FlatSalePage() {
         const newRemaining = Number(sale.totalAmount || 0) - newPaid;
         await fsSet(token, `flatSales/${sale.id}`, {
           ...sale,
-          paidAmount: newPaid < 0 ? 0 : newPaid,
-          remainingAmount: newRemaining < 0 ? 0 : newRemaining,
+          paidAmount: newPaid,
+          remainingAmount: newRemaining,
           updatedAt: new Date().toISOString(),
         });
       }
@@ -1761,8 +1755,8 @@ export default function FlatSalePage() {
         const newRemaining = Number(sale.totalAmount || 0) - newPaid;
         await fsSet(token, `flatSales/${sale.id}`, {
           ...sale,
-          paidAmount: newPaid < 0 ? 0 : newPaid,
-          remainingAmount: newRemaining < 0 ? 0 : newRemaining,
+          paidAmount: newPaid,
+          remainingAmount: newRemaining,
           updatedAt: new Date().toISOString(),
         });
       }
