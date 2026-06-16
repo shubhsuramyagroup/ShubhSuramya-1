@@ -111,10 +111,6 @@ async function logActivity(token, type, description, details = {}) {
 }
 
 /* ─── Payment ID helpers ─────────────────────────────────────────────────── */
-/**
- * Returns the next paymentId by scanning all existing payments globally.
- * Uses the highest stored `paymentId` + 1. Never recalculates from array index.
- */
 function getNextPaymentId(allPayments) {
   const ids = allPayments
     .map((p) => Number(p.paymentId))
@@ -122,10 +118,6 @@ function getNextPaymentId(allPayments) {
   return ids.length > 0 ? Math.max(...ids) + 1 : 1;
 }
 
-/**
- * Build receipt number from the sale's receiptNo and the stored paymentId.
- * e.g.  SSG-2026-0001-P01
- */
 function buildReceiptNumber(saleReceiptNo, paymentId) {
   return `${saleReceiptNo}-P${String(paymentId).padStart(2, "0")}`;
 }
@@ -556,12 +548,14 @@ function Navbar({ user, onLogout, onBackToDashboard }) {
 async function generateSaleReceiptPDF(sale, payment) {
   if (!payment) { alert("Payment not found."); return; }
 
-  // Use the stored receiptNumber field; fall back to building it from paymentId
   const receiptNo =
     payment.receiptNumber ||
     (payment.paymentId
       ? buildReceiptNumber(sale.receiptNo, payment.paymentId)
       : `${sale.receiptNo}-P??`);
+
+  // Build full customer name (first + second)
+  const fullCustomerName = [sale.customerName, sale.customerSecondName].filter(Boolean).join(" & ");
 
   const doc = new jsPDF("p", "mm", "a4");
   const W = 210, H = 297, HEADER_H = 58;
@@ -609,9 +603,11 @@ async function generateSaleReceiptPDF(sale, payment) {
       1: { fontStyle: "normal", textColor: [18, 30, 90], fillColor: [255, 255, 255] },
     },
     body: [
-      ["Received From:", sale.customerName || "—"],
+      ["Received From:", fullCustomerName || "—"],
+      ...(sale.customerSecondName ? [["2nd Applicant:", sale.customerSecondName]] : []),
       ["Customer Email:", sale.email || "—"],
       ["Customer Phone:", sale.mobile || "—"],
+      ["Aadhaar Number:", sale.aadhaar || "—"],
       ["Amount Paid:", fmtINR(payment.amount || 0)],
       ["Total (incl. GST):", fmtINR((payment.amount || 0) + (payment.gstAmount || 0))],
       ["Payment Method:", payment.paymentMode || "—"],
@@ -657,19 +653,7 @@ async function generateSaleReceiptPDF(sale, payment) {
   doc.save(`Receipt_${receiptNo}.pdf`);
 }
 
-/* ─── NEW: Customer Sale (Booking) Receipt — Vendor-Statement style ──────────
-   This is a brand-new, independent PDF generator. It does NOT touch or call
-   generateSaleReceiptPDF() or generateVendorStatementPDF() — both remain
-   100% unchanged.
-
-   The visual shell (header image band at the top + navy footer bar with
-   company contact details + page number on every page, A4 portrait) mirrors
-   generateVendorStatementPDF() so this receipt matches the rest of the app's
-   PDFs. The body keeps the booking-receipt structure from the uploaded
-   sample: Block/Shop No + PAN boxes, name & address fields, a Sales Deed
-   Value box (now showing the TOTAL of all payments), a payment table with the
-   five requested columns, a CARPET / VARANDAH + BALCONY / OPEN MARGIN (PLOT)
-   area table, and an EAST/WEST/NORTH/SOUTH direction table (left blank).     */
+/* ─── Customer Sale (Booking) Receipt PDF ────────────────────────────────── */
 async function generateCustomerSaleReceiptPDF(sale, company, payments) {
   if (!sale) { alert("Sale record not found."); return; }
 
@@ -677,14 +661,13 @@ async function generateCustomerSaleReceiptPDF(sale, company, payments) {
   const W = 210, H = 297, HEADER_H = 58;
   const M = 14;
   const contentW = W - M * 2;
-  const FOOTER_RESERVE = 28; // keep content clear of the navy footer bar
+  const FOOTER_RESERVE = 28;
 
   const navy = [18, 30, 90];
   const gray = [60, 60, 60];
   const labelGray = [100, 115, 150];
   const lineGray = [210, 215, 230];
 
-  /* ── Company details (used in body + footer) ─────────────────────────── */
   const companyName = company?.name || company?.companyName || "Shubh Suramya Group";
   const companyAddress =
     company?.address ||
@@ -694,7 +677,9 @@ async function generateCustomerSaleReceiptPDF(sale, company, payments) {
   const companyEmail = company?.email || company?.companyEmail || "shubhsuramayagroup@gmail.com";
   const companyWebsite = company?.website || company?.companyWebsite || "www.shubhsuramya.com";
 
-  /* ── Helper: start a fresh page for body content (no header band on p2+) ── */
+  // Build full name string for display
+  const fullCustomerName = [sale.customerName, sale.customerSecondName].filter(Boolean).join(" & ");
+
   const ensureSpace = (needed, top = 22) => {
     if (y + needed > H - FOOTER_RESERVE) {
       doc.addPage();
@@ -702,10 +687,9 @@ async function generateCustomerSaleReceiptPDF(sale, company, payments) {
     }
   };
 
-  /* ── Header band (same as vendor statement) ──────────────────────────── */
+  /* Header band */
   doc.addImage(header, "PNG", 0, 0, W, HEADER_H);
 
-  /* ── Title: Project name (e.g. "SURAMYA DREAMS - SANAND") ─────────────── */
   const projectTitle = (sale.projectName || sale.buildingName || companyName || "SALE RECEIPT").toString().toUpperCase();
   doc.setTextColor(...navy);
   doc.setFontSize(16);
@@ -718,7 +702,7 @@ async function generateCustomerSaleReceiptPDF(sale, company, payments) {
 
   let y = HEADER_H + 30;
 
-  /* ── Meta: Generated date + Receipt No. + Booking date ───────────────── */
+  /* Meta */
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
   doc.setTextColor(...gray);
@@ -745,7 +729,7 @@ async function generateCustomerSaleReceiptPDF(sale, company, payments) {
   }
   y += 12;
 
-  /* ── Block / Shop No.  +  PAN Card boxes ─────────────────────────────── */
+  /* Block / Shop No. + PAN Card boxes */
   const boxH = 17;
   const gap = 6;
   const boxW = (contentW - gap) / 2;
@@ -769,16 +753,36 @@ async function generateCustomerSaleReceiptPDF(sale, company, payments) {
 
   y += boxH + 9;
 
-  /* ── Name ────────────────────────────────────────────────────────────── */
+  /* ── CHANGED: 1st Name + 2nd Name on the same row ───────────────────── */
+  const nameRowY = y;
+  // Left half — 1ST NAME
   doc.setFontSize(10.5);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(...labelGray);
-  doc.text("1ST NAME:", M, y);
+  doc.text("1ST NAME:", M, nameRowY);
   doc.setTextColor(...navy);
-  doc.text(sale.customerName || "—", M + 27, y);
+  doc.text(sale.customerName || "—", M + 27, nameRowY);
+
+  // Right half — 2ND NAME (only if present)
+  if (sale.customerSecondName) {
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...labelGray);
+    doc.text("2ND NAME:", M + boxW + gap, nameRowY);
+    doc.setTextColor(...navy);
+    doc.text(sale.customerSecondName, M + boxW + gap + 27, nameRowY);
+  }
   y += 8.5;
 
-  /* ── Address ─────────────────────────────────────────────────────────── */
+  /* ── CHANGED: Aadhaar number row ─────────────────────────────────────── */
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(...labelGray);
+  doc.text("AADHAAR:", M, y);
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(...navy);
+  doc.text(sale.aadhaar || "—", M + 27, y);
+  y += 8.5;
+
+  /* Address */
   doc.setFont("helvetica", "bold");
   doc.setTextColor(...labelGray);
   doc.text("ADDRESS:", M, y);
@@ -789,7 +793,7 @@ async function generateCustomerSaleReceiptPDF(sale, company, payments) {
   doc.text(addrLines, M, y);
   y += addrLines.length * 5.5 + 6;
 
-  /* ── Sale Deed Value box — shows TOTAL of all payments ───────────────── */
+  /* Sales Deed Value box */
   const totalPayments = (payments || []).reduce((s, p) => s + Number(p.amount || 0), 0);
   doc.setLineWidth(0.35);
   doc.setDrawColor(...navy);
@@ -803,7 +807,7 @@ async function generateCustomerSaleReceiptPDF(sale, company, payments) {
   doc.text(fmtINR(totalPayments), M + 4, y + 11);
   y += 13 + 10;
 
-  /* ── Payment Table — 5 columns, one row per payment ──────────────────── */
+  /* Payment Table */
   const paymentRows =
     payments && payments.length > 0
       ? payments.map((p) => [
@@ -835,8 +839,7 @@ async function generateCustomerSaleReceiptPDF(sale, company, payments) {
   });
   y = doc.lastAutoTable.finalY + 10;
 
-  /* ── Area Details: CARPET / VARANDAH + BALCONY / OPEN MARGIN (PLOT) ───
-     Blank values render as empty cells, never removed. Kept whole on a page. */
+  /* Area Details Table */
   ensureSpace(34, 20);
   autoTable(doc, {
     startY: y,
@@ -853,8 +856,7 @@ async function generateCustomerSaleReceiptPDF(sale, company, payments) {
   });
   y = doc.lastAutoTable.finalY + 10;
 
-  /* ── Direction Table: EAST / WEST / NORTH / SOUTH ────────────────────────
-     Intentionally left blank — never auto-populated. Kept whole on a page.   */
+  /* Direction Table */
   ensureSpace(46, 20);
   autoTable(doc, {
     startY: y,
@@ -873,11 +875,9 @@ async function generateCustomerSaleReceiptPDF(sale, company, payments) {
       ["SOUTH", ""],
     ],
   });
-  // CRITICAL: advance y past the direction table so the signature block
-  // below does NOT overlap it (this was the layout bug).
   y = doc.lastAutoTable.finalY + 14;
 
-  /* ── Authorized By / Signature / Thank-you block ─────────────────────── */
+  /* Authorized By / Signature */
   ensureSpace(34, 24);
   doc.setFontSize(10);
   doc.setFont("helvetica", "bold");
@@ -897,7 +897,7 @@ async function generateCustomerSaleReceiptPDF(sale, company, payments) {
   doc.setTextColor(80, 100, 140);
   doc.text("Thank you for your payment!", M, y);
 
-  /* ── Navy footer bar on EVERY page (same as vendor statement) ────────── */
+  /* Navy footer bar on EVERY page */
   const pageCount = doc.internal.getNumberOfPages();
   for (let i = 1; i <= pageCount; i++) {
     doc.setPage(i);
@@ -923,6 +923,7 @@ const exportFlatSalesExcel = (sales) => {
   const excelData = sales.map((s) => ({
     "Receipt No": s.receiptNo || "",
     "Customer Name": s.customerName || "",
+    "Customer Second Name": s.customerSecondName || "",
     Mobile: s.mobile || "",
     Email: s.email || "",
     PAN: s.pan || "",
@@ -958,6 +959,7 @@ function FlatSaleForm({ initial, existingSales, onSave, onClose, saving }) {
   const blankForm = {
     receiptNo: generateReceiptNo(existingSales),
     customerName: "",
+    customerSecondName: "",   // ← NEW
     mobile: "",
     email: "",
     address: "",
@@ -992,8 +994,7 @@ function FlatSaleForm({ initial, existingSales, onSave, onClose, saving }) {
     status: "Booked",
     notes: "",
   };
-  // Merge so older records missing the new area fields don't render
-  // uncontrolled inputs — any missing key simply falls back to blank.
+
   const [f, setF] = useState(initial ? { ...blankForm, ...initial } : blankForm);
   const set = (k) => (e) => setF((p) => ({ ...p, [k]: e.target.value }));
 
@@ -1017,8 +1018,13 @@ function FlatSaleForm({ initial, existingSales, onSave, onClose, saving }) {
 
       <Divider label="Customer Information" />
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(170px,1fr))", gap: 12 }}>
-        <Field label="Customer Name">
-          <input style={inp} value={f.customerName} onChange={set("customerName")} onFocus={focusOn} onBlur={focusOff} placeholder="Full name" />
+        {/* ── CHANGED: 1st Name ── */}
+        <Field label="Customer 1st Name">
+          <input style={inp} value={f.customerName} onChange={set("customerName")} onFocus={focusOn} onBlur={focusOff} placeholder="Full first name" />
+        </Field>
+        {/* ── NEW: 2nd Name ── */}
+        <Field label="Customer 2nd Name">
+          <input style={inp} value={f.customerSecondName} onChange={set("customerSecondName")} onFocus={focusOn} onBlur={focusOff} placeholder="Second applicant name" />
         </Field>
         <Field label="Mobile Number">
           <input style={inp} type="tel" value={f.mobile} onChange={set("mobile")} onFocus={focusOn} onBlur={focusOff} placeholder="10-digit number" />
@@ -1062,16 +1068,16 @@ function FlatSaleForm({ initial, existingSales, onSave, onClose, saving }) {
         </Field>
       </div>
 
-      {/* ── NEW: Area Details (For Receipt) — Carpet / Verandah+Balcony / Open Margin ── */}
+      {/* Area Details (For Receipt) */}
       <Divider label="Area Details (For Receipt)" />
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", gap: 12 }}>
-        <Field label="Carpet" hint="Printed as 'CARPET' on the sale receipt">
+        <Field label="Carpet">
           <input style={inp} type="number" value={f.carpetArea} onChange={set("carpetArea")} onFocus={focusOn} onBlur={focusOff} placeholder="0" />
         </Field>
-        <Field label="Verandah + Balcony" hint="Printed as 'VARANDAH + BALCONY' on the receipt">
+        <Field label="Verandah + Balcony">
           <input style={inp} type="number" value={f.verandahBalconyArea} onChange={set("verandahBalconyArea")} onFocus={focusOn} onBlur={focusOff} placeholder="0" />
         </Field>
-        <Field label="Open Margin (Plot)" hint="Printed as 'OPEN MARGIN (PLOT)' on the receipt">
+        <Field label="Open Margin (Plot)">
           <input style={inp} type="number" value={f.openMarginArea} onChange={set("openMarginArea")} onFocus={focusOn} onBlur={focusOff} placeholder="0" />
         </Field>
       </div>
@@ -1154,12 +1160,15 @@ function FlatPaymentForm({ sale, onSave, onClose, saving }) {
     onSave(f);
   }
 
+  // Build display name showing both applicants if present
+  const displayName = [sale.customerName, sale.customerSecondName].filter(Boolean).join(" & ");
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
       <div style={{ background: T.navy, borderRadius: 10, padding: "16px 18px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, flexWrap: "wrap", marginBottom: 10 }}>
           <div>
-            <p style={{ fontSize: 14, fontWeight: 700, color: "#fff" }}>{sale.customerName}</p>
+            <p style={{ fontSize: 14, fontWeight: 700, color: "#fff" }}>{displayName}</p>
             <p style={{ fontSize: 11.5, color: "rgba(255,255,255,0.45)", marginTop: 2 }}>
               {sale.receiptNo} · Flat {sale.flatNo}, {sale.projectName}
             </p>
@@ -1311,7 +1320,6 @@ function SaleDetailView({ sale, salePayments, onClose, onAddPayment, onEditPayme
   const [deleteInput, setDeleteInput] = useState("");
   const [deleteError, setDeleteError] = useState(false);
 
-  // Payment history date filter state
   const [pmtFrom, setPmtFrom] = useState("");
   const [pmtTo, setPmtTo] = useState("");
 
@@ -1326,7 +1334,6 @@ function SaleDetailView({ sale, salePayments, onClose, onAddPayment, onEditPayme
 
   const pct = Number(sale.totalAmount) > 0 ? (Number(sale.paidAmount) / Number(sale.totalAmount)) * 100 : 0;
 
-  // Sort payments by paymentId ascending (1, 2, 3…) so the list is always in creation order
   const sortedPayments = useMemo(() => {
     return [...salePayments].sort((a, b) => {
       const ia = Number(a.paymentId) || 0;
@@ -1356,12 +1363,14 @@ function SaleDetailView({ sale, salePayments, onClose, onAddPayment, onEditPayme
     setDeleteInput("");
   }
 
-  // ── Area details for the receipt-style mini section (blank if unavailable) ──
   const areaDetails = [
     { label: "Carpet", value: sale.carpetArea },
     { label: "Varandah + Balcony", value: sale.verandahBalconyArea },
     { label: "Open Margin (Plot)", value: sale.openMarginArea },
   ];
+
+  // Full name for hero display
+  const heroName = [sale.customerName, sale.customerSecondName].filter(Boolean).join(" & ");
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
@@ -1369,7 +1378,7 @@ function SaleDetailView({ sale, salePayments, onClose, onAddPayment, onEditPayme
       <div style={{ background: T.navy, borderRadius: 10, padding: "16px 18px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 10, marginBottom: 12 }}>
           <div>
-            <p style={{ fontSize: 17, fontWeight: 700, color: "#fff" }}>{sale.customerName}</p>
+            <p style={{ fontSize: 17, fontWeight: 700, color: "#fff" }}>{heroName}</p>
             <p style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", marginTop: 3 }}>
               Flat {sale.flatNo} · {sale.wing} Wing · Floor {sale.floorNo} · {sale.buildingName}
             </p>
@@ -1387,8 +1396,11 @@ function SaleDetailView({ sale, salePayments, onClose, onAddPayment, onEditPayme
 
       {/* Details grid */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))", gap: 12 }}>
+        {/* ── CHANGED: Customer card now includes 2nd Name + Aadhaar ── */}
         <div style={{ ...card, padding: "14px 16px" }}>
           <p style={{ fontSize: 11, fontWeight: 700, color: T.hint, textTransform: "uppercase", letterSpacing: "0.4px", marginBottom: 10 }}>Customer</p>
+          <DetailRow label="1st Name" value={sale.customerName} />
+          <DetailRow label="2nd Name" value={sale.customerSecondName} />
           <DetailRow label="Mobile" value={sale.mobile} />
           <DetailRow label="Email" value={sale.email} />
           <DetailRow label="PAN" value={sale.pan} />
@@ -1406,7 +1418,6 @@ function SaleDetailView({ sale, salePayments, onClose, onAddPayment, onEditPayme
           <DetailRow label="Sales Executive" value={sale.salesExecutive} />
         </div>
 
-        {/* ── NEW: Area Details card — mirrors the CARPET / VARANDAH+BALCONY / OPEN MARGIN section on the receipt ── */}
         <div style={{ ...card, padding: "14px 16px" }}>
           <p style={{ fontSize: 11, fontWeight: 700, color: T.hint, textTransform: "uppercase", letterSpacing: "0.4px", marginBottom: 10 }}>Area Details</p>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 8 }}>
@@ -1424,7 +1435,6 @@ function SaleDetailView({ sale, salePayments, onClose, onAddPayment, onEditPayme
 
       {/* Payment History */}
       <div style={{ ...card, padding: "14px 16px" }}>
-        {/* Header row */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12, flexWrap: "wrap", gap: 8 }}>
           <p style={{ fontSize: 11, fontWeight: 700, color: T.hint, textTransform: "uppercase", letterSpacing: "0.4px" }}>
             Payment History ({salePayments.length})
@@ -1434,7 +1444,6 @@ function SaleDetailView({ sale, salePayments, onClose, onAddPayment, onEditPayme
           </button>
         </div>
 
-        {/* Date Range Filter */}
         <div style={{
           display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap",
           background: T.bg, borderRadius: 8, padding: "10px 12px",
@@ -1468,7 +1477,6 @@ function SaleDetailView({ sale, salePayments, onClose, onAddPayment, onEditPayme
           )}
         </div>
 
-        {/* Filter summary chips */}
         {(pmtFrom || pmtTo) && (
           <div style={{ display: "flex", gap: 8, marginBottom: 10, flexWrap: "wrap", alignItems: "center" }}>
             <span style={{ fontSize: 11.5, color: T.hint }}>
@@ -1489,7 +1497,6 @@ function SaleDetailView({ sale, salePayments, onClose, onAddPayment, onEditPayme
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {filteredPayments.map((p) => {
-              // Always use stored paymentId and receiptNumber — never recalculate from index
               const paymentId = p.paymentId ? Number(p.paymentId) : null;
               const receiptLabel =
                 p.receiptNumber ||
@@ -1498,7 +1505,6 @@ function SaleDetailView({ sale, salePayments, onClose, onAddPayment, onEditPayme
               const isDeleting = deletingPayment?.id === p.id;
               const isEditing = editingPayment?.id === p.id;
 
-              /* ── Delete confirmation row ── */
               if (isDeleting) {
                 return (
                   <div key={p.id} style={{ background: "rgba(227,74,47,0.04)", border: `1.5px solid rgba(227,74,47,0.25)`, borderRadius: 9, padding: "14px 16px" }}>
@@ -1541,7 +1547,6 @@ function SaleDetailView({ sale, salePayments, onClose, onAddPayment, onEditPayme
                 );
               }
 
-              /* ── Edit row ── */
               if (isEditing) {
                 return (
                   <div key={p.id} style={{ border: `1.5px solid rgba(55,138,221,0.35)`, borderRadius: 9, padding: "14px 16px", background: "rgba(55,138,221,0.03)" }}>
@@ -1562,13 +1567,10 @@ function SaleDetailView({ sale, salePayments, onClose, onAddPayment, onEditPayme
                 );
               }
 
-              /* ── Normal payment row ── */
               return (
                 <div key={p.id} style={{ background: T.bg, borderRadius: 9, padding: "12px 14px", border: `1px solid ${T.border}` }}>
-                  {/* Top row: ID badge + receipt + amount */}
                   <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10, flexWrap: "wrap", marginBottom: 8 }}>
                     <div style={{ display: "flex", flexDirection: "column", gap: 3, flex: "1 1 160px", minWidth: 0 }}>
-                      {/* Receipt number — on its own line below the badge */}
                       <span style={{ fontSize: 12, fontWeight: 700, color: T.coral, fontFamily: "'DM Mono', monospace" }}>
                         {receiptLabel}
                       </span>
@@ -1578,7 +1580,6 @@ function SaleDetailView({ sale, salePayments, onClose, onAddPayment, onEditPayme
                     </span>
                   </div>
 
-                  {/* Details grid */}
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(130px,1fr))", gap: 6, marginBottom: 10 }}>
                     <div>
                       <p style={{ fontSize: 10, color: T.hint, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.3px", marginBottom: 2 }}>Date</p>
@@ -1612,7 +1613,6 @@ function SaleDetailView({ sale, salePayments, onClose, onAddPayment, onEditPayme
                     </p>
                   )}
 
-                  {/* Action buttons */}
                   <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                     <button
                       style={btn("primary", { fontSize: 11, padding: "5px 10px" })}
@@ -1640,7 +1640,6 @@ function SaleDetailView({ sale, salePayments, onClose, onAddPayment, onEditPayme
               );
             })}
 
-            {/* Summary footer */}
             <div style={{
               display: "flex", justifyContent: "space-between", alignItems: "center",
               flexWrap: "wrap", gap: 6, padding: "10px 14px",
@@ -1690,8 +1689,6 @@ export default function FlatSalePage() {
 
   const [flatSales, setFlatSales] = useState([]);
   const [flatPayments, setFlatPayments] = useState([]);
-  // NEW: company master info, used only to print contact details on the
-  // new customer sale receipt. Does not affect any other page/module.
   const [company, setCompany] = useState(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -1736,11 +1733,6 @@ export default function FlatSalePage() {
     async (tok) => {
       setLoading(true);
       try {
-        // NOTE: "companies" is read only to source contact details for the
-        // new receipt PDF. If your Company Master module uses a different
-        // Firestore collection name, just update the string below — nothing
-        // else on this page depends on it, and fsList() safely returns []
-        // if the collection doesn't exist, so this never breaks loading.
         const [fsD, fpD, compD] = await Promise.all([
           fsList(tok, "flatSales"),
           fsList(tok, "flatPayments"),
@@ -1788,6 +1780,7 @@ export default function FlatSalePage() {
           const q = search.toLowerCase();
           return (
             (s.customerName || "").toLowerCase().includes(q) ||
+            (s.customerSecondName || "").toLowerCase().includes(q) ||
             (s.receiptNo || "").toLowerCase().includes(q) ||
             (s.mobile || "").includes(q) ||
             (s.flatNo || "").toLowerCase().includes(q) ||
@@ -1813,6 +1806,7 @@ export default function FlatSalePage() {
     try {
       const data = {
         ...form,
+        customerSecondName: form.customerSecondName || "",  // ← NEW
         totalAmount: Number(form.totalAmount || 0),
         flatPrice: Number(form.flatPrice || 0),
         gstAmount: Number(form.gstAmount || 0),
@@ -1824,9 +1818,6 @@ export default function FlatSalePage() {
         remainingAmount: Number(form.remainingAmount || 0),
         carpetArea: Number(form.carpetArea || 0),
         builtUpArea: Number(form.builtUpArea || 0),
-        // NEW area fields — kept as plain text (not Number-cast) so an
-        // intentionally blank value stays blank on the receipt instead of
-        // being forced to "0".
         verandahBalconyArea: form.verandahBalconyArea || "",
         openMarginArea: form.openMarginArea || "",
         createdAt: existing?.createdAt || new Date().toISOString(),
@@ -1855,16 +1846,16 @@ export default function FlatSalePage() {
     if (!amount || amount <= 0) { showToast("Enter a valid amount", "error"); return; }
     setSaving(true);
     try {
-      // Determine next payment ID from ALL payments across all sales (global sequence)
       const nextPaymentId = getNextPaymentId(flatPayments);
       const receiptNumber = buildReceiptNumber(sale.receiptNo, nextPaymentId);
 
       await fsCreate(token, "flatPayments", {
         saleId: sale.id,
         receiptNo: sale.receiptNo || "",
-        receiptNumber,            // permanently stored, e.g. SSG-2026-0001-P03
-        paymentId: nextPaymentId, // permanently stored global sequence ID
+        receiptNumber,
+        paymentId: nextPaymentId,
         customerName: sale.customerName || "",
+        customerSecondName: sale.customerSecondName || "",  // ← NEW
         flatNo: sale.flatNo || "",
         projectName: sale.projectName || "",
         paymentDate: form.paymentDate,
@@ -1907,7 +1898,6 @@ export default function FlatSalePage() {
     const newAmount = Number(updatedForm.amount || 0);
     setSaving(true);
     try {
-      // Keep paymentId and receiptNumber unchanged — only update mutable fields
       await fsSet(token, `flatPayments/${payment.id}`, {
         ...payment,
         paymentDate: updatedForm.paymentDate,
@@ -1946,7 +1936,6 @@ export default function FlatSalePage() {
 
   /* ─── CRUD: Delete Payment ───────────────────────────────────────────── */
   async function deleteFlatPayment(payment) {
-    // Deleting a payment NEVER renumbers others. The paymentId gap is intentional.
     setSaving(true);
     try {
       await fsDelete(token, `flatPayments/${payment.id}`);
@@ -1994,9 +1983,7 @@ export default function FlatSalePage() {
     }
   }
 
-  /* ─── NEW: Download Customer Sale Receipt PDF ───────────────────────────
-     Collects the sale row + all of its payments + company info, then hands
-     them to the brand-new generateCustomerSaleReceiptPDF() generator.       */
+  /* ─── Download Customer Sale Receipt PDF ────────────────────────────── */
   function downloadCustomerReceipt(sale) {
     const salePmts = flatPayments
       .filter((p) => p.saleId === sale.id)
@@ -2120,8 +2107,12 @@ export default function FlatSalePage() {
                           <td style={{ padding: "13px 14px", fontSize: 12, color: T.coral, fontWeight: 700, fontFamily: "'DM Mono', monospace", whiteSpace: "nowrap" }}>
                             {s.receiptNo}
                           </td>
+                          {/* ── CHANGED: show both names in table ── */}
                           <td style={{ padding: "13px 14px" }}>
                             <p style={{ fontWeight: 600, color: T.navy, fontSize: 13 }}>{s.customerName}</p>
+                            {s.customerSecondName && (
+                              <p style={{ fontSize: 11.5, color: T.muted, marginTop: 1 }}>& {s.customerSecondName}</p>
+                            )}
                             <p style={{ fontSize: 11, color: T.hint, marginTop: 1 }}>{s.mobile}</p>
                           </td>
                           <td style={{ padding: "13px 14px" }}>
@@ -2138,11 +2129,11 @@ export default function FlatSalePage() {
                           </td>
                           <td style={{ padding: "13px 14px" }}>
                             <div style={{ display: "flex", gap: 4 }}>
-                              <button style={btn("default", { fontSize: 11, padding: "5px 9px" })} onClick={() => setModal({ type: "viewFlatSale", data: s })} title="View">👁</button>
-                              <button style={btn("primary", { fontSize: 11, padding: "5px 9px" })} onClick={() => setModal({ type: "flatPayment", sale: s })} title="Add Payment">₹</button>
-                              <button style={btn("teal", { fontSize: 11, padding: "5px 9px" })} onClick={() => downloadCustomerReceipt(s)} title="Download Sale Receipt">🧾</button>
-                              <button style={btn("outline", { fontSize: 11, padding: "5px 9px" })} onClick={() => setModal({ type: "editFlatSale", data: s })} title="Edit">✏️</button>
-                              <button style={btn("danger", { fontSize: 11, padding: "5px 9px" })} onClick={() => setDeleteModal({ sale: s, name: s.customerName, receiptNo: s.receiptNo })} title="Delete">🗑</button>
+                              <button style={btn("default", { fontSize: 11, padding: "5px 9px" })} onClick={() => setModal({ type: "viewFlatSale", data: s })} title="View">View</button>
+                              <button style={btn("primary", { fontSize: 11, padding: "5px 9px" })} onClick={() => setModal({ type: "flatPayment", sale: s })} title="Add Payment">Collect Payment</button>
+                              <button style={btn("teal", { fontSize: 11, padding: "5px 9px" })} onClick={() => downloadCustomerReceipt(s)} title="Download Sale Receipt">Download Receipt</button>
+                              <button style={btn("outline", { fontSize: 11, padding: "5px 9px" })} onClick={() => setModal({ type: "editFlatSale", data: s })} title="Edit">Edit</button>
+                              <button style={btn("danger", { fontSize: 11, padding: "5px 9px" })} onClick={() => setDeleteModal({ sale: s, name: s.customerName, receiptNo: s.receiptNo })} title="Delete">Delete</button>
                             </div>
                           </td>
                         </tr>
@@ -2161,6 +2152,9 @@ export default function FlatSalePage() {
                             <p style={{ fontWeight: 700, fontSize: 13.5, color: T.navy }}>{s.customerName}</p>
                             <Badge color={statusBadgeMap[s.status] || "navy"}>{s.status}</Badge>
                           </div>
+                          {s.customerSecondName && (
+                            <p style={{ fontSize: 12, color: T.muted, marginBottom: 2 }}>& {s.customerSecondName}</p>
+                          )}
                           <p style={{ fontSize: 11.5, color: T.hint }}>{s.receiptNo} · Flat {s.flatNo} · {s.projectName}</p>
                           <p style={{ fontSize: 11.5, color: T.hint, marginTop: 1 }}>
                             {s.mobile} · {s.bookingDate ? new Date(s.bookingDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "-"}
@@ -2169,10 +2163,10 @@ export default function FlatSalePage() {
                       </div>
                       <div style={{ display: "flex", gap: 5, marginTop: 8, flexWrap: "wrap" }}>
                         <button style={btn("default", { fontSize: 11, padding: "5px 10px" })} onClick={() => setModal({ type: "viewFlatSale", data: s })}>View</button>
-                        <button style={btn("primary", { fontSize: 11, padding: "5px 10px" })} onClick={() => setModal({ type: "flatPayment", sale: s })}>Collect</button>
-                        <button style={btn("teal", { fontSize: 11, padding: "5px 10px" })} onClick={() => downloadCustomerReceipt(s)}>Receipt</button>
+                        <button style={btn("primary", { fontSize: 11, padding: "5px 10px" })} onClick={() => setModal({ type: "flatPayment", sale: s })}>Collect Payment</button>
+                        <button style={btn("teal", { fontSize: 11, padding: "5px 10px" })} onClick={() => downloadCustomerReceipt(s)}>Download Receipt</button>
                         <button style={btn("outline", { fontSize: 11, padding: "5px 10px" })} onClick={() => setModal({ type: "editFlatSale", data: s })}>Edit</button>
-                        <button style={btn("danger", { fontSize: 11, padding: "5px 10px" })} onClick={() => setDeleteModal({ sale: s, name: s.customerName, receiptNo: s.receiptNo })}>Del</button>
+                        <button style={btn("danger", { fontSize: 11, padding: "5px 10px" })} onClick={() => setDeleteModal({ sale: s, name: s.customerName, receiptNo: s.receiptNo })}>Delete</button>
                       </div>
                     </div>
                   ))}
@@ -2222,7 +2216,6 @@ export default function FlatSalePage() {
           );
         })()}
 
-      {/* ── Delete Sale Confirm ── */}
       {deleteModal && (
         <DeleteConfirmModal
           name={deleteModal.name}
@@ -2233,7 +2226,6 @@ export default function FlatSalePage() {
         />
       )}
 
-      {/* ── Toast ── */}
       {toast && (
         <div style={{ position: "fixed", bottom: 22, left: "50%", transform: "translateX(-50%)", background: toast.type === "error" ? T.coral : T.success, color: "#fff", padding: "10px 18px", borderRadius: 9, fontSize: 13, fontWeight: 600, zIndex: 3000, display: "flex", alignItems: "center", gap: 7, boxShadow: `0 4px 16px rgba(0,0,0,0.18)`, animation: "toastIn 0.25s ease both", whiteSpace: "nowrap" }}>
           <span>{toast.type === "error" ? "⚠️" : "✓"}</span>
