@@ -110,6 +110,26 @@ async function logActivity(token, type, description, details = {}) {
   } catch {}
 }
 
+/* ─── Payment ID helpers ─────────────────────────────────────────────────── */
+/**
+ * Returns the next paymentId by scanning all existing payments globally.
+ * Uses the highest stored `paymentId` + 1. Never recalculates from array index.
+ */
+function getNextPaymentId(allPayments) {
+  const ids = allPayments
+    .map((p) => Number(p.paymentId))
+    .filter((n) => !isNaN(n) && n > 0);
+  return ids.length > 0 ? Math.max(...ids) + 1 : 1;
+}
+
+/**
+ * Build receipt number from the sale's receiptNo and the stored paymentId.
+ * e.g.  SSG-2026-0001-P01
+ */
+function buildReceiptNumber(saleReceiptNo, paymentId) {
+  return `${saleReceiptNo}-P${String(paymentId).padStart(2, "0")}`;
+}
+
 /* ─── Design Tokens ──────────────────────────────────────────────────────── */
 const T = {
   navy: "#1E2A5A",
@@ -218,9 +238,6 @@ const fmtINR = (n) =>
     maximumFractionDigits: 2,
   })}`;
 const today = () => new Date().toISOString().slice(0, 10);
-function isToday(d) {
-  return d === today();
-}
 
 function generateReceiptNo(existingSales) {
   const year = new Date().getFullYear();
@@ -536,8 +553,16 @@ function Navbar({ user, onLogout, onBackToDashboard }) {
 }
 
 /* ─── PDF Receipt Generator ──────────────────────────────────────────────── */
-async function generateSaleReceiptPDF(sale, payment, paymentIndex = 0) {
+async function generateSaleReceiptPDF(sale, payment) {
   if (!payment) { alert("Payment not found."); return; }
+
+  // Use the stored receiptNumber field; fall back to building it from paymentId
+  const receiptNo =
+    payment.receiptNumber ||
+    (payment.paymentId
+      ? buildReceiptNumber(sale.receiptNo, payment.paymentId)
+      : `${sale.receiptNo}-P??`);
+
   const doc = new jsPDF("p", "mm", "a4");
   const W = 210, H = 297, HEADER_H = 58;
   doc.addImage(header, "PNG", 0, 0, W, HEADER_H);
@@ -566,9 +591,6 @@ async function generateSaleReceiptPDF(sale, payment, paymentIndex = 0) {
   doc.setTextColor(18, 30, 90);
   doc.text(formattedDate, 25, y);
   y += 6;
-  const receiptNo = sale.receiptNo
-    ? `${sale.receiptNo}-P${String(paymentIndex + 1).padStart(2, "0")}`
-    : `P${String(paymentIndex + 1).padStart(2, "0")}`;
   doc.setFont("helvetica", "normal");
   doc.setTextColor(60, 60, 60);
   doc.text("Receipt No.:", 14, y);
@@ -655,15 +677,7 @@ const exportFlatSalesExcel = (sales) => {
     "Agreement Date": s.agreementDate || "",
     "Possession Date": s.possessionDate || "",
     "Sales Executive": s.salesExecutive || "",
-    "Flat Price": Number(s.flatPrice || 0),
-    GST: Number(s.gstAmount || 0),
-    Registration: Number(s.registrationAmount || 0),
-    "Stamp Duty": Number(s.stampDuty || 0),
-    "Other Charges": Number(s.otherCharges || 0),
-    "Total Amount": Number(s.totalAmount || 0),
-    "Booking Amount": Number(s.bookingAmount || 0),
     "Paid Amount": Number(s.paidAmount || 0),
-    "Remaining Amount": Number(s.remainingAmount || 0),
     Status: s.status || "",
   }));
   const worksheet = XLSX.utils.json_to_sheet(excelData);
@@ -716,7 +730,7 @@ function FlatSaleForm({ initial, existingSales, onSave, onClose, saving }) {
   const [f, setF] = useState(initial || blankForm);
   const set = (k) => (e) => setF((p) => ({ ...p, [k]: e.target.value }));
 
-useEffect(() => {
+  useEffect(() => {
     const total =
       Number(f.flatPrice || 0) +
       Number(f.gstAmount || 0) +
@@ -760,9 +774,6 @@ useEffect(() => {
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", gap: 12 }}>
         <Field label="Project Name">
           <input style={inp} value={f.projectName} onChange={set("projectName")} onFocus={focusOn} onBlur={focusOff} placeholder="e.g. Shubh Suramya" />
-        </Field>
-        <Field label="Building Name">
-          <input style={inp} value={f.buildingName} onChange={set("buildingName")} onFocus={focusOn} onBlur={focusOff} placeholder="Building / Tower" />
         </Field>
         <Field label="Wing">
           <input style={inp} value={f.wing} onChange={set("wing")} onFocus={focusOn} onBlur={focusOff} placeholder="A / B / C" />
@@ -837,7 +848,6 @@ useEffect(() => {
 
 /* ─── Flat Payment Form ──────────────────────────────────────────────────── */
 function FlatPaymentForm({ sale, onSave, onClose, saving }) {
-  const remaining = Number(sale.remainingAmount || 0);
   const [f, setF] = useState({
     paymentDate: today(),
     amount: "",
@@ -1020,6 +1030,10 @@ function SaleDetailView({ sale, salePayments, onClose, onAddPayment, onEditPayme
   const [deleteInput, setDeleteInput] = useState("");
   const [deleteError, setDeleteError] = useState(false);
 
+  // Payment history date filter state
+  const [pmtFrom, setPmtFrom] = useState("");
+  const [pmtTo, setPmtTo] = useState("");
+
   const DetailRow = ({ label, value }) => (
     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10, padding: "8px 0", borderBottom: `1px solid ${T.border}`, flexWrap: "wrap" }}>
       <span style={{ fontSize: 12, color: T.hint, fontWeight: 500, minWidth: 70 }}>{label}</span>
@@ -1030,6 +1044,25 @@ function SaleDetailView({ sale, salePayments, onClose, onAddPayment, onEditPayme
   );
 
   const pct = Number(sale.totalAmount) > 0 ? (Number(sale.paidAmount) / Number(sale.totalAmount)) * 100 : 0;
+
+  // Sort payments by paymentId ascending (1, 2, 3…) so the list is always in creation order
+  const sortedPayments = useMemo(() => {
+    return [...salePayments].sort((a, b) => {
+      const ia = Number(a.paymentId) || 0;
+      const ib = Number(b.paymentId) || 0;
+      return ia - ib;
+    });
+  }, [salePayments]);
+
+  const filteredPayments = useMemo(() => {
+    return sortedPayments.filter((p) => {
+      if (pmtFrom && p.paymentDate && p.paymentDate < pmtFrom) return false;
+      if (pmtTo && p.paymentDate && p.paymentDate > pmtTo) return false;
+      return true;
+    });
+  }, [sortedPayments, pmtFrom, pmtTo]);
+
+  const filteredTotal = filteredPayments.reduce((s, p) => s + Number(p.amount || 0), 0);
 
   function handleDeleteConfirm() {
     if (deleteInput !== deletingPayment.receiptLabel) {
@@ -1062,13 +1095,6 @@ function SaleDetailView({ sale, salePayments, onClose, onAddPayment, onEditPayme
             </div>
           </div>
         </div>
-        <ProgressBar pct={pct} color="rgba(255,255,255,0.35)" />
-        <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6, flexWrap: "wrap", gap: 6 }}>
-          <p style={{ fontSize: 10.5, color: "rgba(255,255,255,0.4)" }}>{pct.toFixed(1)}% paid</p>
-          <p style={{ fontSize: 10.5, color: "rgba(255,255,255,0.4)" }}>
-            {fmtINR(sale.paidAmount)} / {fmtINR(sale.totalAmount)}
-          </p>
-        </div>
       </div>
 
       {/* Details grid */}
@@ -1095,410 +1121,245 @@ function SaleDetailView({ sale, salePayments, onClose, onAddPayment, onEditPayme
 
       {/* Payment History */}
       <div style={{ ...card, padding: "14px 16px" }}>
-  <div
-    style={{
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "center",
-      marginBottom: 12,
-      flexWrap: "wrap",
-      gap: 8,
-    }}
-  >
-    <p
-      style={{
-        fontSize: 11,
-        fontWeight: 700,
-        color: T.hint,
-        textTransform: "uppercase",
-        letterSpacing: "0.4px",
-      }}
-    >
-      Payment History ({salePayments.length})
-    </p>
-    <button
-      style={btn("primary", { fontSize: 11.5, padding: "6px 12px" })}
-      onClick={onAddPayment}
-    >
-      + Add Payment
-    </button>
-  </div>
+        {/* Header row */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12, flexWrap: "wrap", gap: 8 }}>
+          <p style={{ fontSize: 11, fontWeight: 700, color: T.hint, textTransform: "uppercase", letterSpacing: "0.4px" }}>
+            Payment History ({salePayments.length})
+          </p>
+          <button style={btn("primary", { fontSize: 11.5, padding: "6px 12px" })} onClick={onAddPayment}>
+            + Add Payment
+          </button>
+        </div>
 
-  {salePayments.length === 0 ? (
-    <p
-      style={{
-        color: T.hint,
-        fontSize: 12.5,
-        textAlign: "center",
-        padding: "1rem 0",
-      }}
-    >
-      No payments recorded yet.
-    </p>
-  ) : (
-    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-      {salePayments.map((p, i) => {
-        const receiptLabel = `${sale.receiptNo}-P${String(i + 1).padStart(2, "0")}`;
-        const isDeleting = deletingPayment?.id === p.id;
-        const isEditing = editingPayment?.id === p.id;
-
-        /* ── Delete confirmation row ── */
-        if (isDeleting) {
-          return (
-            <div
-              key={p.id}
-              style={{
-                background: "rgba(227,74,47,0.04)",
-                border: `1.5px solid rgba(227,74,47,0.25)`,
-                borderRadius: 9,
-                padding: "14px 16px",
-              }}
+        {/* Date Range Filter */}
+        <div style={{
+          display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap",
+          background: T.bg, borderRadius: 8, padding: "10px 12px",
+          border: `1px solid ${T.border}`, marginBottom: 12,
+        }}>
+          <span style={{ fontSize: 11.5, fontWeight: 600, color: T.hint, whiteSpace: "nowrap" }}>Filter by date:</span>
+          <input
+            style={{ ...inp, width: "auto", flex: "1 1 130px", fontSize: 12.5, padding: "7px 10px" }}
+            type="date"
+            value={pmtFrom}
+            onChange={(e) => setPmtFrom(e.target.value)}
+            onFocus={focusOn}
+            onBlur={focusOff}
+          />
+          <span style={{ fontSize: 11.5, color: T.hint }}>to</span>
+          <input
+            style={{ ...inp, width: "auto", flex: "1 1 130px", fontSize: 12.5, padding: "7px 10px" }}
+            type="date"
+            value={pmtTo}
+            onChange={(e) => setPmtTo(e.target.value)}
+            onFocus={focusOn}
+            onBlur={focusOff}
+          />
+          {(pmtFrom || pmtTo) && (
+            <button
+              style={btn("ghost", { padding: "6px 10px", color: T.coral, fontSize: 11.5, border: `1px solid rgba(227,74,47,0.25)`, borderRadius: 7 })}
+              onClick={() => { setPmtFrom(""); setPmtTo(""); }}
             >
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "flex-start",
-                  gap: 10,
-                  marginBottom: 10,
-                  flexWrap: "wrap",
-                }}
-              >
-                <div
-                  style={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: 8,
-                    background: "rgba(227,74,47,0.08)",
-                    border: `1px solid rgba(227,74,47,0.18)`,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    flexShrink: 0,
-                  }}
-                >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                    <polyline
-                      points="3 6 5 6 21 6"
-                      stroke={T.coral}
-                      strokeWidth="2"
-                      strokeLinecap="round"
+              Clear ×
+            </button>
+          )}
+        </div>
+
+        {/* Filter summary chips */}
+        {(pmtFrom || pmtTo) && (
+          <div style={{ display: "flex", gap: 8, marginBottom: 10, flexWrap: "wrap", alignItems: "center" }}>
+            <span style={{ fontSize: 11.5, color: T.hint }}>
+              Showing <strong style={{ color: T.navy }}>{filteredPayments.length}</strong> of {salePayments.length} payments
+              &nbsp;·&nbsp;Total: <strong style={{ color: T.success }}>{fmtINR(filteredTotal)}</strong>
+            </span>
+          </div>
+        )}
+
+        {salePayments.length === 0 ? (
+          <p style={{ color: T.hint, fontSize: 12.5, textAlign: "center", padding: "1rem 0" }}>
+            No payments recorded yet.
+          </p>
+        ) : filteredPayments.length === 0 ? (
+          <p style={{ color: T.hint, fontSize: 12.5, textAlign: "center", padding: "1rem 0" }}>
+            No payments in this date range.
+          </p>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {filteredPayments.map((p) => {
+              // Always use stored paymentId and receiptNumber — never recalculate from index
+              const paymentId = p.paymentId ? Number(p.paymentId) : null;
+              const receiptLabel =
+                p.receiptNumber ||
+                (paymentId ? buildReceiptNumber(sale.receiptNo, paymentId) : `${sale.receiptNo}-P??`);
+
+              const isDeleting = deletingPayment?.id === p.id;
+              const isEditing = editingPayment?.id === p.id;
+
+              /* ── Delete confirmation row ── */
+              if (isDeleting) {
+                return (
+                  <div key={p.id} style={{ background: "rgba(227,74,47,0.04)", border: `1.5px solid rgba(227,74,47,0.25)`, borderRadius: 9, padding: "14px 16px" }}>
+                    <div style={{ display: "flex", alignItems: "flex-start", gap: 10, marginBottom: 10, flexWrap: "wrap" }}>
+                      <div style={{ width: 32, height: 32, borderRadius: 8, background: "rgba(227,74,47,0.08)", border: `1px solid rgba(227,74,47,0.18)`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                          <polyline points="3 6 5 6 21 6" stroke={T.coral} strokeWidth="2" strokeLinecap="round" />
+                          <path d="M19 6l-1 14H6L5 6M10 11v6M14 11v6M9 6V4h6v2" stroke={T.coral} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </div>
+                      <div style={{ flex: "1 1 200px", minWidth: 0 }}>
+                        <p style={{ fontSize: 13, fontWeight: 700, color: T.coral }}>Delete payment {receiptLabel}?</p>
+                        <p style={{ fontSize: 11.5, color: T.hint, marginTop: 1, lineHeight: 1.5 }}>
+                          This will permanently remove <strong style={{ color: T.navy }}>{fmtINR(p.amount)}</strong> and adjust the outstanding balance.
+                          The Payment ID ({paymentId}) will not be reused.
+                        </p>
+                      </div>
+                    </div>
+                    <p style={{ fontSize: 12, color: T.hint, marginBottom: 8 }}>
+                      Type <strong style={{ fontFamily: "'DM Mono', monospace", color: T.coral }}>{receiptLabel}</strong> to confirm deletion.
+                    </p>
+                    <input
+                      style={{ ...inp, borderColor: deleteError ? T.coral : T.border2, boxShadow: deleteError ? `0 0 0 3px rgba(227,74,47,0.10)` : "none", marginBottom: 4, width: "100%", boxSizing: "border-box" }}
+                      placeholder={`Type ${receiptLabel} to confirm`}
+                      value={deleteInput}
+                      onChange={(e) => { setDeleteInput(e.target.value); setDeleteError(false); }}
+                      onFocus={focusOn}
+                      onBlur={focusOff}
+                      onKeyDown={(e) => e.key === "Enter" && handleDeleteConfirm()}
+                      autoFocus
                     />
-                    <path
-                      d="M19 6l-1 14H6L5 6M10 11v6M14 11v6M9 6V4h6v2"
-                      stroke={T.coral}
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
+                    {deleteError && <p style={{ fontSize: 11.5, color: T.coral, marginBottom: 6 }}>Text doesn't match. Try again.</p>}
+                    <div style={{ display: "flex", gap: 6, justifyContent: "flex-end", marginTop: 10, flexWrap: "wrap" }}>
+                      <button style={btn("default", { flex: "1 1 auto", maxWidth: 120 })} onClick={() => { setDeletingPayment(null); setDeleteInput(""); setDeleteError(false); }}>Cancel</button>
+                      <button style={btn("primary", { opacity: deleteInput === receiptLabel ? 1 : 0.4, flex: "1 1 auto", maxWidth: 160 })} onClick={handleDeleteConfirm} disabled={deleteInput !== receiptLabel}>
+                        Delete Payment
+                      </button>
+                    </div>
+                  </div>
+                );
+              }
+
+              /* ── Edit row ── */
+              if (isEditing) {
+                return (
+                  <div key={p.id} style={{ border: `1.5px solid rgba(55,138,221,0.35)`, borderRadius: 9, padding: "14px 16px", background: "rgba(55,138,221,0.03)" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12, gap: 8, flexWrap: "wrap" }}>
+                      <div style={{ flex: "1 1 160px", minWidth: 0 }}>
+                        <p style={{ fontSize: 13, fontWeight: 700, color: T.blue }}>Editing {receiptLabel}</p>
+                        <p style={{ fontSize: 11.5, color: T.hint, marginTop: 1 }}>Update payment details below</p>
+                      </div>
+                      <button style={btn("ghost", { fontSize: 11.5, padding: "5px 10px", color: T.hint, flexShrink: 0 })} onClick={() => setEditingPayment(null)}>Cancel</button>
+                    </div>
+                    <EditPaymentForm
+                      payment={p}
+                      onSave={(updated) => { onEditPayment(p, updated); setEditingPayment(null); }}
+                      onClose={() => setEditingPayment(null)}
+                      saving={editPaymentSaving}
                     />
-                  </svg>
-                </div>
-                <div style={{ flex: "1 1 200px", minWidth: 0 }}>
-                  <p
-                    style={{ fontSize: 13, fontWeight: 700, color: T.coral }}
-                  >
-                    Delete payment {receiptLabel}?
-                  </p>
-                  <p
-                    style={{
-                      fontSize: 11.5,
-                      color: T.hint,
-                      marginTop: 1,
-                      lineHeight: 1.5,
-                    }}
-                  >
-                    This will permanently remove{" "}
-                    <strong style={{ color: T.navy }}>
+                  </div>
+                );
+              }
+
+              /* ── Normal payment row ── */
+              return (
+                <div key={p.id} style={{ background: T.bg, borderRadius: 9, padding: "12px 14px", border: `1px solid ${T.border}` }}>
+                  {/* Top row: ID badge + receipt + amount */}
+                  <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10, flexWrap: "wrap", marginBottom: 8 }}>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 3, flex: "1 1 160px", minWidth: 0 }}>
+                      {/* Receipt number — on its own line below the badge */}
+                      <span style={{ fontSize: 12, fontWeight: 700, color: T.coral, fontFamily: "'DM Mono', monospace" }}>
+                        {receiptLabel}
+                      </span>
+                    </div>
+                    <span style={{ fontWeight: 700, color: T.success, fontSize: 14, whiteSpace: "nowrap", flexShrink: 0 }}>
                       {fmtINR(p.amount)}
-                    </strong>{" "}
-                    and adjust the outstanding balance.
-                  </p>
+                    </span>
+                  </div>
+
+                  {/* Details grid */}
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(130px,1fr))", gap: 6, marginBottom: 10 }}>
+                    <div>
+                      <p style={{ fontSize: 10, color: T.hint, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.3px", marginBottom: 2 }}>Date</p>
+                      <p style={{ fontSize: 12.5, fontWeight: 600, color: T.navy }}>
+                        {p.paymentDate
+                          ? new Date(p.paymentDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
+                          : "—"}
+                      </p>
+                    </div>
+                    <div>
+                      <p style={{ fontSize: 10, color: T.hint, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.3px", marginBottom: 2 }}>Mode</p>
+                      <p style={{ fontSize: 12.5, fontWeight: 600, color: T.navy }}>{p.paymentMode || "—"}</p>
+                    </div>
+                    {p.transactionId && (
+                      <div>
+                        <p style={{ fontSize: 10, color: T.hint, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.3px", marginBottom: 2 }}>Txn / Cheque</p>
+                        <p style={{ fontSize: 12, color: T.muted, fontFamily: "'DM Mono', monospace" }}>{p.transactionId}</p>
+                      </div>
+                    )}
+                    {p.bankName && (
+                      <div>
+                        <p style={{ fontSize: 10, color: T.hint, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.3px", marginBottom: 2 }}>Bank</p>
+                        <p style={{ fontSize: 12, color: T.muted }}>{p.bankName}</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {p.notes && (
+                    <p style={{ fontSize: 11, color: T.hint, fontStyle: "italic", marginBottom: 8, borderTop: `1px solid ${T.border}`, paddingTop: 6 }}>
+                      {p.notes}
+                    </p>
+                  )}
+
+                  {/* Action buttons */}
+                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                    <button
+                      style={btn("primary", { fontSize: 11, padding: "5px 10px" })}
+                      onClick={() => generateSaleReceiptPDF(sale, p)}
+                      title="Download receipt PDF"
+                    >
+                      ↓ Receipt
+                    </button>
+                    <button
+                      style={btn("outline", { fontSize: 11, padding: "5px 10px" })}
+                      onClick={() => { setEditingPayment(p); setDeletingPayment(null); setDeleteInput(""); }}
+                      title="Edit this payment"
+                    >
+                      ✏️ Edit
+                    </button>
+                    <button
+                      style={btn("danger", { fontSize: 11, padding: "5px 10px" })}
+                      onClick={() => { setDeletingPayment({ ...p, receiptLabel }); setEditingPayment(null); setDeleteInput(""); setDeleteError(false); }}
+                      title="Delete this payment"
+                    >
+                      🗑 Delete
+                    </button>
+                  </div>
                 </div>
-              </div>
-              <p style={{ fontSize: 12, color: T.hint, marginBottom: 8 }}>
-                Type{" "}
-                <strong
-                  style={{
-                    fontFamily: "'DM Mono', monospace",
-                    color: T.coral,
-                  }}
-                >
-                  {receiptLabel}
-                </strong>{" "}
-                to confirm deletion.
-              </p>
-              <input
-                style={{
-                  ...inp,
-                  borderColor: deleteError ? T.coral : T.border2,
-                  boxShadow: deleteError
-                    ? `0 0 0 3px rgba(227,74,47,0.10)`
-                    : "none",
-                  marginBottom: 4,
-                  width: "100%",
-                  boxSizing: "border-box",
-                }}
-                placeholder={`Type ${receiptLabel} to confirm`}
-                value={deleteInput}
-                onChange={(e) => {
-                  setDeleteInput(e.target.value);
-                  setDeleteError(false);
-                }}
-                onFocus={focusOn}
-                onBlur={focusOff}
-                onKeyDown={(e) => e.key === "Enter" && handleDeleteConfirm()}
-                autoFocus
-              />
-              {deleteError && (
-                <p
-                  style={{
-                    fontSize: 11.5,
-                    color: T.coral,
-                    marginBottom: 6,
-                  }}
-                >
-                  Text doesn't match. Try again.
-                </p>
-              )}
-              <div
-                style={{
-                  display: "flex",
-                  gap: 6,
-                  justifyContent: "flex-end",
-                  marginTop: 10,
-                  flexWrap: "wrap",
-                }}
-              >
-                <button
-                  style={btn("default", { flex: "1 1 auto", maxWidth: 120 })}
-                  onClick={() => {
-                    setDeletingPayment(null);
-                    setDeleteInput("");
-                    setDeleteError(false);
-                  }}
-                >
-                  Cancel
-                </button>
-                <button
-                  style={btn("primary", {
-                    opacity: deleteInput === receiptLabel ? 1 : 0.4,
-                    flex: "1 1 auto",
-                    maxWidth: 160,
-                  })}
-                  onClick={handleDeleteConfirm}
-                  disabled={deleteInput !== receiptLabel}
-                >
-                  Delete Payment
-                </button>
-              </div>
-            </div>
-          );
-        }
+              );
+            })}
 
-        /* ── Edit row ── */
-        if (isEditing) {
-          return (
-            <div
-              key={p.id}
-              style={{
-                border: `1.5px solid rgba(55,138,221,0.35)`,
-                borderRadius: 9,
-                padding: "14px 16px",
-                background: "rgba(55,138,221,0.03)",
-              }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "flex-start",
-                  marginBottom: 12,
-                  gap: 8,
-                  flexWrap: "wrap",
-                }}
-              >
-                <div style={{ flex: "1 1 160px", minWidth: 0 }}>
-                  <p
-                    style={{ fontSize: 13, fontWeight: 700, color: T.blue }}
-                  >
-                    Editing {receiptLabel}
-                  </p>
-                  <p
-                    style={{ fontSize: 11.5, color: T.hint, marginTop: 1 }}
-                  >
-                    Update payment details below
-                  </p>
-                </div>
-                <button
-                  style={btn("ghost", {
-                    fontSize: 11.5,
-                    padding: "5px 10px",
-                    color: T.hint,
-                    flexShrink: 0,
-                  })}
-                  onClick={() => setEditingPayment(null)}
-                >
-                  Cancel
-                </button>
+            {/* Summary footer */}
+            <div style={{
+              display: "flex", justifyContent: "space-between", alignItems: "center",
+              flexWrap: "wrap", gap: 6, padding: "10px 14px",
+              borderTop: `1.5px solid ${T.border2}`, marginTop: 4,
+            }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                <span style={{ fontSize: 12, fontWeight: 700, color: T.hint, textTransform: "uppercase", letterSpacing: "0.3px" }}>
+                  {(pmtFrom || pmtTo) ? "Filtered Payments" : "Total Payments Recorded"}
+                </span>
+                {(pmtFrom || pmtTo) && (
+                  <span style={{ fontSize: 11, color: T.hint }}>
+                    {filteredPayments.length} of {salePayments.length} payments shown
+                  </span>
+                )}
               </div>
-              <EditPaymentForm
-                payment={p}
-                onSave={(updated) => {
-                  onEditPayment(p, updated, i);
-                  setEditingPayment(null);
-                }}
-                onClose={() => setEditingPayment(null)}
-                saving={editPaymentSaving}
-              />
-            </div>
-          );
-        }
-
-        /* ── Normal row ── */
-        return (
-          <div
-            key={p.id}
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "flex-start",
-              flexWrap: "wrap",
-              gap: 10,
-              background: T.bg,
-              borderRadius: 8,
-              padding: "10px 14px",
-              border: `1px solid ${T.border}`,
-            }}
-          >
-            {/* Info block */}
-            <div style={{ flex: "1 1 160px", minWidth: 0 }}>
-              <p
-                style={{
-                  fontSize: 11.5,
-                  fontWeight: 700,
-                  color: T.hint,
-                  fontFamily: "'DM Mono', monospace",
-                  marginBottom: 3,
-                }}
-              >
-                {receiptLabel}
-              </p>
-              <p style={{ fontSize: 13, fontWeight: 600, color: T.navy }}>
-                {p.paymentDate
-                  ? new Date(p.paymentDate).toLocaleDateString("en-GB", {
-                      day: "2-digit",
-                      month: "long",
-                      year: "numeric",
-                    })
-                  : "—"}
-              </p>
-              <p style={{ fontSize: 11.5, color: T.hint, marginTop: 2 }}>
-                {p.paymentMode}
-                {p.transactionId ? ` · ${p.transactionId}` : ""}
-                {p.bankName ? ` · ${p.bankName}` : ""}
-              </p>
-              {p.notes && (
-                <p
-                  style={{
-                    fontSize: 11,
-                    color: T.hint,
-                    marginTop: 1,
-                    fontStyle: "italic",
-                  }}
-                >
-                  {p.notes}
-                </p>
-              )}
-            </div>
-
-            {/* Actions block */}
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 6,
-                flexShrink: 0,
-                flexWrap: "wrap",
-                width: "100%",
-                maxWidth: "100%",
-              }}
-            >
-              <span
-                style={{
-                  fontWeight: 700,
-                  color: T.success,
-                  fontSize: 14,
-                  whiteSpace: "nowrap",
-                  marginRight: "auto",
-                }}
-              >
-                {fmtINR(p.amount)}
+              <span style={{ fontSize: 15, fontWeight: 700, color: T.success }}>
+                {fmtINR(filteredTotal)}
               </span>
-              <button
-                style={btn("primary", { fontSize: 11, padding: "5px 10px" })}
-                onClick={() => generateSaleReceiptPDF(sale, p, i)}
-                title="Download receipt PDF"
-              >
-                Receipt
-              </button>
-              <button
-                style={btn("outline", { fontSize: 11, padding: "5px 10px" })}
-                onClick={() => {
-                  setEditingPayment(p);
-                  setDeletingPayment(null);
-                  setDeleteInput("");
-                }}
-                title="Edit this payment"
-              >
-                ✏️ Edit
-              </button>
-              <button
-                style={btn("danger", { fontSize: 11, padding: "5px 10px" })}
-                onClick={() => {
-                  setDeletingPayment({ ...p, receiptLabel });
-                  setEditingPayment(null);
-                  setDeleteInput("");
-                  setDeleteError(false);
-                }}
-                title="Delete this payment"
-              >
-                🗑 Delete
-              </button>
             </div>
           </div>
-        );
-      })}
-
-      {/* Payment total row */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          flexWrap: "wrap",
-          gap: 6,
-          padding: "10px 14px",
-          borderTop: `1.5px solid ${T.border2}`,
-          marginTop: 4,
-        }}
-      >
-        <span
-          style={{
-            fontSize: 12,
-            fontWeight: 700,
-            color: T.hint,
-            textTransform: "uppercase",
-            letterSpacing: "0.3px",
-          }}
-        >
-          Total Payments Recorded
-        </span>
-        <span style={{ fontSize: 15, fontWeight: 700, color: T.success }}>
-          {fmtINR(salePayments.reduce((s, p) => s + Number(p.amount || 0), 0))}
-        </span>
+        )}
       </div>
-    </div>
-  )}
-</div>
 
       {sale.notes && (
         <div style={{ ...card, padding: "12px 16px", borderLeft: `3px solid ${T.amber}` }}>
@@ -1626,9 +1487,6 @@ export default function FlatSalePage() {
   const soldFlats = flatSales.filter((s) => s.status === "Sold").length;
   const bookedFlats = flatSales.filter((s) => s.status === "Booked").length;
   const cancelledFlats = flatSales.filter((s) => s.status === "Cancelled").length;
-  const totalRevenue = flatSales.reduce((acc, s) => acc + Number(s.totalAmount || 0), 0);
-  const totalPaidRevenue = flatSales.reduce((acc, s) => acc + Number(s.paidAmount || 0), 0);
-  const totalPending = flatSales.reduce((acc, s) => acc + Number(s.remainingAmount || 0), 0);
 
   /* ─── CRUD: Sale ─────────────────────────────────────────────────────── */
   async function saveFlatSale(form, existing) {
@@ -1675,9 +1533,15 @@ export default function FlatSalePage() {
     if (!amount || amount <= 0) { showToast("Enter a valid amount", "error"); return; }
     setSaving(true);
     try {
+      // Determine next payment ID from ALL payments across all sales (global sequence)
+      const nextPaymentId = getNextPaymentId(flatPayments);
+      const receiptNumber = buildReceiptNumber(sale.receiptNo, nextPaymentId);
+
       await fsCreate(token, "flatPayments", {
         saleId: sale.id,
         receiptNo: sale.receiptNo || "",
+        receiptNumber,            // permanently stored, e.g. SSG-2026-0001-P03
+        paymentId: nextPaymentId, // permanently stored global sequence ID
         customerName: sale.customerName || "",
         flatNo: sale.flatNo || "",
         projectName: sale.projectName || "",
@@ -1689,15 +1553,23 @@ export default function FlatSalePage() {
         notes: form.notes || "",
         createdAt: new Date().toISOString(),
       });
+
       const newPaid = Number(sale.paidAmount || 0) + amount;
       const newRemaining = Number(sale.totalAmount || 0) - newPaid;
       await fsSet(token, `flatSales/${sale.id}`, {
         ...sale,
         paidAmount: newPaid,
         remainingAmount: newRemaining,
+        updatedAt: new Date().toISOString(),
       });
-      await logActivity(token, "flat_payment_added", `Payment of ${fmtINR(amount)} recorded for ${sale.customerName} – ${sale.receiptNo}`, { amount });
-      showToast("Payment recorded");
+
+      await logActivity(
+        token,
+        "flat_payment_added",
+        `Payment ${receiptNumber} of ${fmtINR(amount)} recorded for ${sale.customerName} – ${sale.receiptNo}`,
+        { amount }
+      );
+      showToast(`Payment recorded — ${receiptNumber}`);
       await loadAll(token);
       setModal(null);
     } catch (e) {
@@ -1713,6 +1585,7 @@ export default function FlatSalePage() {
     const newAmount = Number(updatedForm.amount || 0);
     setSaving(true);
     try {
+      // Keep paymentId and receiptNumber unchanged — only update mutable fields
       await fsSet(token, `flatPayments/${payment.id}`, {
         ...payment,
         paymentDate: updatedForm.paymentDate,
@@ -1734,7 +1607,12 @@ export default function FlatSalePage() {
           updatedAt: new Date().toISOString(),
         });
       }
-      await logActivity(token, "flat_payment_edited", `Payment updated for ${payment.customerName} – ${payment.receiptNo} (${fmtINR(oldAmount)} → ${fmtINR(newAmount)})`, { amount: newAmount });
+      await logActivity(
+        token,
+        "flat_payment_edited",
+        `Payment ${payment.receiptNumber || payment.receiptNo} updated (${fmtINR(oldAmount)} → ${fmtINR(newAmount)}) for ${payment.customerName}`,
+        { amount: newAmount }
+      );
       showToast("Payment updated successfully");
       await loadAll(token);
     } catch (e) {
@@ -1746,6 +1624,7 @@ export default function FlatSalePage() {
 
   /* ─── CRUD: Delete Payment ───────────────────────────────────────────── */
   async function deleteFlatPayment(payment) {
+    // Deleting a payment NEVER renumbers others. The paymentId gap is intentional.
     setSaving(true);
     try {
       await fsDelete(token, `flatPayments/${payment.id}`);
@@ -1760,7 +1639,12 @@ export default function FlatSalePage() {
           updatedAt: new Date().toISOString(),
         });
       }
-      await logActivity(token, "flat_payment_deleted", `Payment of ${fmtINR(payment.amount)} deleted for ${payment.customerName} – ${payment.receiptNo}`, { amount: payment.amount });
+      await logActivity(
+        token,
+        "flat_payment_deleted",
+        `Payment ${payment.receiptNumber || payment.receiptNo} (ID #${payment.paymentId}) of ${fmtINR(payment.amount)} deleted for ${payment.customerName}`,
+        { amount: payment.amount }
+      );
       showToast("Payment deleted");
       await loadAll(token);
     } catch (e) {
@@ -1820,7 +1704,7 @@ export default function FlatSalePage() {
               </div>
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                 <button style={btn("success")} onClick={() => exportFlatSalesExcel(filtered)}>
-                  📊 Export Excel
+                  📊 Export Sales in Excel
                 </button>
                 <button style={btn("primary")} onClick={() => setModal({ type: "addFlatSale" })}>
                   + New Sale
@@ -1948,14 +1832,11 @@ export default function FlatSalePage() {
                           <p style={{ fontSize: 11.5, color: T.hint, marginTop: 1 }}>
                             {s.mobile} · {s.bookingDate ? new Date(s.bookingDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "-"}
                           </p>
-                          <p style={{ fontSize: 12, fontWeight: 600, color: T.coral, marginTop: 4 }}>
-                            {fmtINR(s.remainingAmount)} due
-                          </p>
                         </div>
                       </div>
                       <div style={{ display: "flex", gap: 5, marginTop: 8 }}>
                         <button style={btn("default", { fontSize: 11, padding: "5px 10px" })} onClick={() => setModal({ type: "viewFlatSale", data: s })}>View</button>
-                        <button style={btn("primary", { fontSize: 11, padding: "5px 10px" })} onClick={() => setModal({ type: "flatPayment", sale: s })}>Pay</button>
+                        <button style={btn("primary", { fontSize: 11, padding: "5px 10px" })} onClick={() => setModal({ type: "flatPayment", sale: s })}>Collect</button>
                         <button style={btn("outline", { fontSize: 11, padding: "5px 10px" })} onClick={() => setModal({ type: "editFlatSale", data: s })}>Edit</button>
                         <button style={btn("danger", { fontSize: 11, padding: "5px 10px" })} onClick={() => setDeleteModal({ sale: s, name: s.customerName, receiptNo: s.receiptNo })}>Del</button>
                       </div>
@@ -1990,7 +1871,6 @@ export default function FlatSalePage() {
       {modal?.type === "viewFlatSale" &&
         (() => {
           const sale = modal.data;
-          // Re-read sale from flatSales to get the latest paidAmount after edits
           const liveSale = flatSales.find((s) => s.id === sale.id) || sale;
           const salePmts = flatPayments.filter((p) => p.saleId === sale.id);
           return (
