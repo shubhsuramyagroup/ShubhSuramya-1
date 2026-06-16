@@ -1369,8 +1369,8 @@ function VendorsTab({ vendors, companies, bills, onAdd, onEdit, onDelete, onAddB
         title="Vendors"
         action={
           <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
-            <button style={btn("success")} onClick={() => exportVendorBillsExcel(vendors, bills, companies)}>📊 Download Excel</button>
-            <button style={btn("navy")} onClick={handleDownloadReport}>📄 Download PDF Report</button>
+            <button style={btn("success")} onClick={() => exportVendorBillsExcel(vendors, bills, companies)}>📊 Vendors Bills</button>
+            <button style={btn("navy")} onClick={handleDownloadReport}>📄 Pending Bills</button>
             <button style={btn("primary")} onClick={onAdd} disabled={companies.length === 0}>+ Add Vendor</button>
           </div>
         }
