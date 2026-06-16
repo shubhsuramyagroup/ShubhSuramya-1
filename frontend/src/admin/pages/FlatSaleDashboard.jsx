@@ -552,7 +552,7 @@ function Navbar({ user, onLogout, onBackToDashboard }) {
   );
 }
 
-/* ─── PDF Receipt Generator ──────────────────────────────────────────────── */
+/* ─── PDF Receipt Generator (Payment receipt — UNCHANGED) ───────────────────── */
 async function generateSaleReceiptPDF(sale, payment) {
   if (!payment) { alert("Payment not found."); return; }
 
@@ -657,6 +657,267 @@ async function generateSaleReceiptPDF(sale, payment) {
   doc.save(`Receipt_${receiptNo}.pdf`);
 }
 
+/* ─── NEW: Customer Sale (Booking) Receipt — Vendor-Statement style ──────────
+   This is a brand-new, independent PDF generator. It does NOT touch or call
+   generateSaleReceiptPDF() or generateVendorStatementPDF() — both remain
+   100% unchanged.
+
+   The visual shell (header image band at the top + navy footer bar with
+   company contact details + page number on every page, A4 portrait) mirrors
+   generateVendorStatementPDF() so this receipt matches the rest of the app's
+   PDFs. The body keeps the booking-receipt structure from the uploaded
+   sample: Block/Shop No + PAN boxes, name & address fields, a Sales Deed
+   Value box (now showing the TOTAL of all payments), a payment table with the
+   five requested columns, a CARPET / VARANDAH + BALCONY / OPEN MARGIN (PLOT)
+   area table, and an EAST/WEST/NORTH/SOUTH direction table (left blank).     */
+async function generateCustomerSaleReceiptPDF(sale, company, payments) {
+  if (!sale) { alert("Sale record not found."); return; }
+
+  const doc = new jsPDF("p", "mm", "a4");
+  const W = 210, H = 297, HEADER_H = 58;
+  const M = 14;
+  const contentW = W - M * 2;
+  const FOOTER_RESERVE = 28; // keep content clear of the navy footer bar
+
+  const navy = [18, 30, 90];
+  const gray = [60, 60, 60];
+  const labelGray = [100, 115, 150];
+  const lineGray = [210, 215, 230];
+
+  /* ── Company details (used in body + footer) ─────────────────────────── */
+  const companyName = company?.name || company?.companyName || "Shubh Suramya Group";
+  const companyAddress =
+    company?.address ||
+    company?.companyAddress ||
+    "Shubh Suramya Corporate House opp suramaya dreams, Suramya Road, Near Eklingji Road, Sanand-382110";
+  const companyPhone = company?.phone || company?.contactNumber || company?.mobile || "+91 96872 58222";
+  const companyEmail = company?.email || company?.companyEmail || "shubhsuramayagroup@gmail.com";
+  const companyWebsite = company?.website || company?.companyWebsite || "www.shubhsuramya.com";
+
+  /* ── Helper: start a fresh page for body content (no header band on p2+) ── */
+  const ensureSpace = (needed, top = 22) => {
+    if (y + needed > H - FOOTER_RESERVE) {
+      doc.addPage();
+      y = top;
+    }
+  };
+
+  /* ── Header band (same as vendor statement) ──────────────────────────── */
+  doc.addImage(header, "PNG", 0, 0, W, HEADER_H);
+
+  /* ── Title: Project name (e.g. "SURAMYA DREAMS - SANAND") ─────────────── */
+  const projectTitle = (sale.projectName || sale.buildingName || companyName || "SALE RECEIPT").toString().toUpperCase();
+  doc.setTextColor(...navy);
+  doc.setFontSize(16);
+  doc.setFont("helvetica", "bold");
+  doc.text(projectTitle, W / 2, HEADER_H + 16, { align: "center" });
+
+  doc.setDrawColor(...navy);
+  doc.setLineWidth(0.4);
+  doc.line(40, HEADER_H + 18.5, W - 40, HEADER_H + 18.5);
+
+  let y = HEADER_H + 30;
+
+  /* ── Meta: Generated date + Receipt No. + Booking date ───────────────── */
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(...gray);
+  doc.text("Generated Date:", M, y);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(...navy);
+  doc.text(new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" }), 46, y);
+  y += 6.5;
+
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(...gray);
+  doc.text("Receipt No.:", M, y);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(...navy);
+  doc.text(String(sale.receiptNo || "—"), 38, y);
+
+  if (sale.bookingDate) {
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(...gray);
+    doc.text("Booking Date:", 118, y);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...navy);
+    doc.text(new Date(sale.bookingDate).toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" }), 144, y);
+  }
+  y += 12;
+
+  /* ── Block / Shop No.  +  PAN Card boxes ─────────────────────────────── */
+  const boxH = 17;
+  const gap = 6;
+  const boxW = (contentW - gap) / 2;
+
+  doc.setLineWidth(0.35);
+  doc.setDrawColor(...navy);
+  doc.rect(M, y, boxW, boxH);
+  doc.rect(M + boxW + gap, y, boxW, boxH);
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8.5);
+  doc.setTextColor(...labelGray);
+  doc.text("BLOCK OR SHOP NO", M + 4, y + 6);
+  doc.text("PAN CARD", M + boxW + gap + 4, y + 6);
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(12);
+  doc.setTextColor(...navy);
+  doc.text(String(sale.flatNo || "—"), M + 4, y + 13);
+  doc.text(String(sale.pan || "—"), M + boxW + gap + 4, y + 13);
+
+  y += boxH + 9;
+
+  /* ── Name ────────────────────────────────────────────────────────────── */
+  doc.setFontSize(10.5);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(...labelGray);
+  doc.text("1ST NAME:", M, y);
+  doc.setTextColor(...navy);
+  doc.text(sale.customerName || "—", M + 27, y);
+  y += 8.5;
+
+  /* ── Address ─────────────────────────────────────────────────────────── */
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(...labelGray);
+  doc.text("ADDRESS:", M, y);
+  y += 6;
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(...navy);
+  const addrLines = doc.splitTextToSize(sale.address || "—", contentW);
+  doc.text(addrLines, M, y);
+  y += addrLines.length * 5.5 + 6;
+
+  /* ── Sale Deed Value box — shows TOTAL of all payments ───────────────── */
+  const totalPayments = (payments || []).reduce((s, p) => s + Number(p.amount || 0), 0);
+  doc.setLineWidth(0.35);
+  doc.setDrawColor(...navy);
+  doc.rect(M, y, 95, 13);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8.5);
+  doc.setTextColor(...labelGray);
+  doc.text("SALES DEED VALUE", M + 4, y + 5.5);
+  doc.setFontSize(12);
+  doc.setTextColor(...navy);
+  doc.text(fmtINR(totalPayments), M + 4, y + 11);
+  y += 13 + 10;
+
+  /* ── Payment Table — 5 columns, one row per payment ──────────────────── */
+  const paymentRows =
+    payments && payments.length > 0
+      ? payments.map((p) => [
+          p.paymentDate
+            ? new Date(p.paymentDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
+            : "—",
+          fmtINR(p.amount || 0),
+          p.paymentMode || "—",
+          p.transactionId || "—",
+          p.bankName || "—",
+        ])
+      : [["—", "—", "—", "—", "—"]];
+
+  autoTable(doc, {
+    startY: y,
+    margin: { left: M, right: M, bottom: FOOTER_RESERVE },
+    theme: "grid",
+    styles: { fontSize: 9, cellPadding: 4, lineColor: lineGray, lineWidth: 0.3, textColor: navy, overflow: "linebreak", valign: "middle" },
+    headStyles: { fillColor: navy, textColor: [255, 255, 255], fontStyle: "bold", fontSize: 9, halign: "center" },
+    columnStyles: {
+      0: { cellWidth: 28 },
+      1: { halign: "right", cellWidth: 34 },
+      2: { cellWidth: 26 },
+      3: { cellWidth: 46 },
+      4: { cellWidth: "auto" },
+    },
+    head: [["Payment Date", "Amount (Rs.)", "Payment Mode", "Transaction ID / Cheque No.", "Bank Name"]],
+    body: paymentRows,
+  });
+  y = doc.lastAutoTable.finalY + 10;
+
+  /* ── Area Details: CARPET / VARANDAH + BALCONY / OPEN MARGIN (PLOT) ───
+     Blank values render as empty cells, never removed. Kept whole on a page. */
+  ensureSpace(34, 20);
+  autoTable(doc, {
+    startY: y,
+    margin: { left: M, right: M, bottom: FOOTER_RESERVE },
+    theme: "grid",
+    styles: { fontSize: 9.5, cellPadding: 5.5, lineColor: lineGray, lineWidth: 0.3, halign: "center", textColor: navy, minCellHeight: 12 },
+    headStyles: { fillColor: navy, textColor: [255, 255, 255], fontStyle: "bold", fontSize: 9.5, halign: "center" },
+    head: [["CARPET", "VARANDAH + BALCONY", "OPEN MARGIN (PLOT)"]],
+    body: [[
+      sale.carpetArea || "",
+      sale.verandahBalconyArea || "",
+      sale.openMarginArea || "",
+    ]],
+  });
+  y = doc.lastAutoTable.finalY + 10;
+
+  /* ── Direction Table: EAST / WEST / NORTH / SOUTH ────────────────────────
+     Intentionally left blank — never auto-populated. Kept whole on a page.   */
+  ensureSpace(46, 20);
+  autoTable(doc, {
+    startY: y,
+    margin: { left: M, right: M, bottom: FOOTER_RESERVE },
+    theme: "grid",
+    tableWidth: 100,
+    styles: { fontSize: 9.5, cellPadding: 4, lineColor: lineGray, lineWidth: 0.3, textColor: navy, minCellHeight: 9 },
+    columnStyles: {
+      0: { fontStyle: "bold", cellWidth: 38, fillColor: [245, 247, 252] },
+      1: { cellWidth: 62 },
+    },
+    body: [
+      ["EAST", ""],
+      ["WEST", ""],
+      ["NORTH", ""],
+      ["SOUTH", ""],
+    ],
+  });
+  // CRITICAL: advance y past the direction table so the signature block
+  // below does NOT overlap it (this was the layout bug).
+  y = doc.lastAutoTable.finalY + 14;
+
+  /* ── Authorized By / Signature / Thank-you block ─────────────────────── */
+  ensureSpace(34, 24);
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(...navy);
+  doc.text(`Authorized By: ${companyName}`, M, y);
+  y += 9;
+
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(...gray);
+  doc.text("Signature:", M, y);
+  doc.setDrawColor(...navy);
+  doc.setLineWidth(0.4);
+  doc.line(M + 22, y, M + 81, y);
+  y += 12;
+
+  doc.setFont("helvetica", "italic");
+  doc.setTextColor(80, 100, 140);
+  doc.text("Thank you for your payment!", M, y);
+
+  /* ── Navy footer bar on EVERY page (same as vendor statement) ────────── */
+  const pageCount = doc.internal.getNumberOfPages();
+  for (let i = 1; i <= pageCount; i++) {
+    doc.setPage(i);
+    const footerY = H - 22;
+    doc.setFillColor(22, 34, 94);
+    doc.rect(0, footerY, W, 22, "F");
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(200, 210, 240);
+    doc.text(`${companyName}  |  ${companyAddress}`, W / 2, footerY + 8, { align: "center" });
+    doc.text(`${companyWebsite}  |  ${companyEmail}  |  ${companyPhone}`, W / 2, footerY + 14, { align: "center" });
+    doc.setTextColor(150, 165, 200);
+    doc.setFontSize(8);
+    doc.text(String(i).padStart(2, "0"), W - 14, footerY + 15, { align: "right" });
+  }
+
+  const safeReceiptNo = (sale.receiptNo || "Sale").toString().replace(/[^a-z0-9-]+/gi, "_");
+  doc.save(`Sale_Receipt_${safeReceiptNo}.pdf`);
+}
+
 /* ─── Excel Export ───────────────────────────────────────────────────────── */
 const exportFlatSalesExcel = (sales) => {
   const excelData = sales.map((s) => ({
@@ -673,6 +934,8 @@ const exportFlatSalesExcel = (sales) => {
     "Flat No": s.flatNo || "",
     "Flat Type": s.flatType || "",
     "Carpet Area": s.carpetArea || "",
+    "Verandah + Balcony": s.verandahBalconyArea || "",
+    "Open Margin (Plot)": s.openMarginArea || "",
     "Booking Date": s.bookingDate || "",
     "Agreement Date": s.agreementDate || "",
     "Possession Date": s.possessionDate || "",
@@ -708,6 +971,8 @@ function FlatSaleForm({ initial, existingSales, onSave, onClose, saving }) {
     flatType: "",
     carpetArea: "",
     builtUpArea: "",
+    verandahBalconyArea: "",
+    openMarginArea: "",
     bookingDate: today(),
     agreementDate: "",
     possessionDate: "",
@@ -727,7 +992,9 @@ function FlatSaleForm({ initial, existingSales, onSave, onClose, saving }) {
     status: "Booked",
     notes: "",
   };
-  const [f, setF] = useState(initial || blankForm);
+  // Merge so older records missing the new area fields don't render
+  // uncontrolled inputs — any missing key simply falls back to blank.
+  const [f, setF] = useState(initial ? { ...blankForm, ...initial } : blankForm);
   const set = (k) => (e) => setF((p) => ({ ...p, [k]: e.target.value }));
 
   useEffect(() => {
@@ -792,6 +1059,20 @@ function FlatSaleForm({ initial, existingSales, onSave, onClose, saving }) {
         </Field>
         <Field label="Built-up Area (sq.ft)">
           <input style={inp} type="number" value={f.builtUpArea} onChange={set("builtUpArea")} onFocus={focusOn} onBlur={focusOff} placeholder="0" />
+        </Field>
+      </div>
+
+      {/* ── NEW: Area Details (For Receipt) — Carpet / Verandah+Balcony / Open Margin ── */}
+      <Divider label="Area Details (For Receipt)" />
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", gap: 12 }}>
+        <Field label="Carpet" hint="Printed as 'CARPET' on the sale receipt">
+          <input style={inp} type="number" value={f.carpetArea} onChange={set("carpetArea")} onFocus={focusOn} onBlur={focusOff} placeholder="0" />
+        </Field>
+        <Field label="Verandah + Balcony" hint="Printed as 'VARANDAH + BALCONY' on the receipt">
+          <input style={inp} type="number" value={f.verandahBalconyArea} onChange={set("verandahBalconyArea")} onFocus={focusOn} onBlur={focusOff} placeholder="0" />
+        </Field>
+        <Field label="Open Margin (Plot)" hint="Printed as 'OPEN MARGIN (PLOT)' on the receipt">
+          <input style={inp} type="number" value={f.openMarginArea} onChange={set("openMarginArea")} onFocus={focusOn} onBlur={focusOff} placeholder="0" />
         </Field>
       </div>
 
@@ -1075,6 +1356,13 @@ function SaleDetailView({ sale, salePayments, onClose, onAddPayment, onEditPayme
     setDeleteInput("");
   }
 
+  // ── Area details for the receipt-style mini section (blank if unavailable) ──
+  const areaDetails = [
+    { label: "Carpet", value: sale.carpetArea },
+    { label: "Varandah + Balcony", value: sale.verandahBalconyArea },
+    { label: "Open Margin (Plot)", value: sale.openMarginArea },
+  ];
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
       {/* Hero */}
@@ -1116,6 +1404,21 @@ function SaleDetailView({ sale, salePayments, onClose, onAddPayment, onEditPayme
           <DetailRow label="Agreement" value={sale.agreementDate} />
           <DetailRow label="Possession" value={sale.possessionDate} />
           <DetailRow label="Sales Executive" value={sale.salesExecutive} />
+        </div>
+
+        {/* ── NEW: Area Details card — mirrors the CARPET / VARANDAH+BALCONY / OPEN MARGIN section on the receipt ── */}
+        <div style={{ ...card, padding: "14px 16px" }}>
+          <p style={{ fontSize: 11, fontWeight: 700, color: T.hint, textTransform: "uppercase", letterSpacing: "0.4px", marginBottom: 10 }}>Area Details</p>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 8 }}>
+            {areaDetails.map((a) => (
+              <div key={a.label} style={{ textAlign: "center", padding: "10px 6px", background: T.bg, borderRadius: 8, border: `1px solid ${T.border}` }}>
+                <p style={{ fontSize: 9.5, color: T.hint, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.3px" }}>{a.label}</p>
+                <p style={{ fontSize: 13.5, fontWeight: 700, color: T.navy, marginTop: 4 }}>
+                  {a.value !== undefined && a.value !== null && a.value !== "" ? a.value : "—"}
+                </p>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -1387,6 +1690,9 @@ export default function FlatSalePage() {
 
   const [flatSales, setFlatSales] = useState([]);
   const [flatPayments, setFlatPayments] = useState([]);
+  // NEW: company master info, used only to print contact details on the
+  // new customer sale receipt. Does not affect any other page/module.
+  const [company, setCompany] = useState(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -1430,9 +1736,20 @@ export default function FlatSalePage() {
     async (tok) => {
       setLoading(true);
       try {
-        const [fsD, fpD] = await Promise.all([fsList(tok, "flatSales"), fsList(tok, "flatPayments")]);
+        // NOTE: "companies" is read only to source contact details for the
+        // new receipt PDF. If your Company Master module uses a different
+        // Firestore collection name, just update the string below — nothing
+        // else on this page depends on it, and fsList() safely returns []
+        // if the collection doesn't exist, so this never breaks loading.
+        const [fsD, fpD, compD] = await Promise.all([
+          fsList(tok, "flatSales"),
+          fsList(tok, "flatPayments"),
+          fsList(tok, "companies"),
+        ]);
         setFlatSales(fsD.map(docToObj).filter(Boolean));
         setFlatPayments(fpD.map(docToObj).filter(Boolean));
+        const companies = compD.map(docToObj).filter(Boolean);
+        if (companies.length > 0) setCompany(companies[0]);
       } catch (e) {
         if (e.message === "AUTH_EXPIRED") handleAuthError();
         else showToast("Failed to load data", "error");
@@ -1507,6 +1824,11 @@ export default function FlatSalePage() {
         remainingAmount: Number(form.remainingAmount || 0),
         carpetArea: Number(form.carpetArea || 0),
         builtUpArea: Number(form.builtUpArea || 0),
+        // NEW area fields — kept as plain text (not Number-cast) so an
+        // intentionally blank value stays blank on the receipt instead of
+        // being forced to "0".
+        verandahBalconyArea: form.verandahBalconyArea || "",
+        openMarginArea: form.openMarginArea || "",
         createdAt: existing?.createdAt || new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
@@ -1672,6 +1994,16 @@ export default function FlatSalePage() {
     }
   }
 
+  /* ─── NEW: Download Customer Sale Receipt PDF ───────────────────────────
+     Collects the sale row + all of its payments + company info, then hands
+     them to the brand-new generateCustomerSaleReceiptPDF() generator.       */
+  function downloadCustomerReceipt(sale) {
+    const salePmts = flatPayments
+      .filter((p) => p.saleId === sale.id)
+      .sort((a, b) => (Number(a.paymentId) || 0) - (Number(b.paymentId) || 0));
+    generateCustomerSaleReceiptPDF(sale, company, salePmts);
+  }
+
   const statusBadgeMap = { Sold: "green", Booked: "blue", Cancelled: "red" };
 
   if (!user) return null;
@@ -1808,6 +2140,7 @@ export default function FlatSalePage() {
                             <div style={{ display: "flex", gap: 4 }}>
                               <button style={btn("default", { fontSize: 11, padding: "5px 9px" })} onClick={() => setModal({ type: "viewFlatSale", data: s })} title="View">👁</button>
                               <button style={btn("primary", { fontSize: 11, padding: "5px 9px" })} onClick={() => setModal({ type: "flatPayment", sale: s })} title="Add Payment">₹</button>
+                              <button style={btn("teal", { fontSize: 11, padding: "5px 9px" })} onClick={() => downloadCustomerReceipt(s)} title="Download Sale Receipt">🧾</button>
                               <button style={btn("outline", { fontSize: 11, padding: "5px 9px" })} onClick={() => setModal({ type: "editFlatSale", data: s })} title="Edit">✏️</button>
                               <button style={btn("danger", { fontSize: 11, padding: "5px 9px" })} onClick={() => setDeleteModal({ sale: s, name: s.customerName, receiptNo: s.receiptNo })} title="Delete">🗑</button>
                             </div>
@@ -1834,9 +2167,10 @@ export default function FlatSalePage() {
                           </p>
                         </div>
                       </div>
-                      <div style={{ display: "flex", gap: 5, marginTop: 8 }}>
+                      <div style={{ display: "flex", gap: 5, marginTop: 8, flexWrap: "wrap" }}>
                         <button style={btn("default", { fontSize: 11, padding: "5px 10px" })} onClick={() => setModal({ type: "viewFlatSale", data: s })}>View</button>
                         <button style={btn("primary", { fontSize: 11, padding: "5px 10px" })} onClick={() => setModal({ type: "flatPayment", sale: s })}>Collect</button>
+                        <button style={btn("teal", { fontSize: 11, padding: "5px 10px" })} onClick={() => downloadCustomerReceipt(s)}>Receipt</button>
                         <button style={btn("outline", { fontSize: 11, padding: "5px 10px" })} onClick={() => setModal({ type: "editFlatSale", data: s })}>Edit</button>
                         <button style={btn("danger", { fontSize: 11, padding: "5px 10px" })} onClick={() => setDeleteModal({ sale: s, name: s.customerName, receiptNo: s.receiptNo })}>Del</button>
                       </div>
