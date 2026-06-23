@@ -11,47 +11,51 @@ import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import { getProjectById } from "../services/projectService"; // add getProjectById there (see README)
 
+// Import Firebase tools required for Lead Form Interception
+import { addDoc, collection, serverTimestamp } from "firebase/firestore";
+import { db } from "../firebase";
+
 // ─── Firestore field → page field mapping ────────────────────────────────────
 /**
  * Expected Firestore document shape (all fields optional except title):
  *
- *  title            string
- *  description      string
- *  longDescription  string
- *  location         string
- *  type             string          → "type" prop (Residential / Commercial …)
- *  status           string          → "Under Construction" / "Completed" …
- *  startingPrice    string          → "₹ 2.5 Cr"
- *  mainImage        string          → hero / about image URL
- *  videoSrc         string          → MP4 URL for hero background video
- *  year             string | number → completion / launch year
- *  tags             string[]        → hero tag pills
- *  subtitle         string          → hero subtitle line
- *  brochureUrl      string          → PDF download link
- *  floorPlanUrl     string          → floor-plan download link
+ * title         string
+ * description   string
+ * longDescription  string
+ * location      string
+ * type          string          → "type" prop (Residential / Commercial …)
+ * status        string          → "Under Construction" / "Completed" …
+ * startingPrice    string          → "₹ 2.5 Cr"
+ * mainImage        string          → hero / about image URL
+ * videoSrc         string          → MP4 URL for hero background video
+ * year             string | number → completion / launch year
+ * tags             string[]        → hero tag pills
+ * subtitle         string          → hero subtitle line
+ * brochureUrl      string          → PDF download link
+ * floorPlanUrl     string          → floor-plan download link
  *
- *  stats            { value, suffix, label }[]   → Stats Band (≤ 4 items)
+ * stats            { value, suffix, label }[]   → Stats Band (≤ 4 items)
  *
- *  amenities        { label, img }[]             → Amenities grid
+ * amenities        { label, img }[]             → Amenities grid
  *
- *  floors           {                            → Floor Previews
- *                     key, label, title,
- *                     rooms: { label, img }[]
- *                   }[]
+ * floors           {                            → Floor Previews
+ * key, label, title,
+ * rooms: { label, img }[]
+ * }[]
  *
- *  gallery          { id, src, alt }[]           → Image Gallery
- *                   OR  string[]                 → plain image URLs
+ * gallery          { id, src, alt }[]           → Image Gallery
+ * OR  string[]                 → plain image URLs
  *
- *  nearbyPlaces     {                            → Location section
- *                     name, sub, type,
- *                     distance, iconBg?,
- *                     iconType?  "hospital"|"mall"|"school"|"default"
- *                   }[]
+ * nearbyPlaces     {                            → Location section
+ * name, sub, type,
+ * distance, iconBg?,
+ * iconType?  "hospital"|"mall"|"school"|"default"
+ * }[]
  *
- *  mapEmbed         string          → full Google Maps embed URL
- *  mapLocationLabel string          → label shown on map pin (e.g. "Vastral, Ahmedabad")
- *  locationTitle    string          → big heading in Location section
- *  locationDesc     string          → paragraph in Location section
+ * mapEmbed         string          → full Google Maps embed URL
+ * mapLocationLabel string          → label shown on map pin (e.g. "Vastral, Ahmedabad")
+ * locationTitle    string          → big heading in Location section
+ * locationDesc     string          → paragraph in Location section
  */
 
 function mapFirestoreToProps(p) {
@@ -431,6 +435,27 @@ function NearbyIcon({ iconType = "default" }) {
   );
 }
 
+// Custom simple Toast component to avoid introducing context or styling libraries
+function FormToast({ message, type, onClose }) {
+  useEffect(() => {
+    const timer = setTimeout(onClose, 4000);
+    return () => clearTimeout(timer);
+  }, [onClose]);
+
+  return (
+    <div
+      className={`fixed top-6 right-6 z-[10000] px-5 py-3 rounded-xl shadow-xl flex items-center gap-3 backdrop-blur-md transition-all duration-300 animate-[scrollTopReveal_0.3s_ease_both] ${
+        type === "success"
+          ? "bg-emerald-500/90 text-white border border-emerald-400/30"
+          : "bg-rose-500/90 text-white border border-rose-400/30"
+      }`}
+    >
+      <span className="text-sm font-medium tracking-wide">{message}</span>
+      <button onClick={onClose} className="text-white/70 hover:text-white ml-2 text-xs">✕</button>
+    </div>
+  );
+}
+
 function iconBgForType(iconType) {
   if (iconType === "hospital") return "bg-red-50";
   if (iconType === "mall") return "bg-blue-50";
@@ -500,7 +525,7 @@ export default function ProjectDetailPage() {
       return;
     }
     let cancelled = false;
-    setLoading(true);
+    LoadingSkeleton(true);
     setError(null);
     getProjectById(projectId)
       .then((data) => {
@@ -531,6 +556,23 @@ export default function ProjectDetailPage() {
   const parallaxBg = useParallax(0.18);
   const scrollProgress = useScrollProgress();
   const [showScrollTop, setShowScrollTop] = useState(false);
+
+  // ── lead generation states ──────────────────────────────────────────────
+  const [showLeadModal, setShowLeadModal] = useState(false);
+  const [downloadType, setDownloadType] = useState(null);
+  const [downloadUrl, setDownloadUrl] = useState("");
+  const [savingLead, setSavingLead] = useState(false);
+  
+  // Local form inputs configuration
+  const [leadForm, setLeadForm] = useState({
+    fullName: "",
+    email: "",
+    phone: "",
+    dateOfBirth: "",
+    subject: "",
+    message: ""
+  });
+  const [toast, setToast] = useState(null);
 
   useEffect(() => {
     const t = setTimeout(() => setPageLoaded(true), 50);
@@ -587,7 +629,107 @@ export default function ProjectDetailPage() {
     return "0.4";
   };
 
-  // ── early returns ─────────────────────────────────────────────────────────
+  // ── Lead capturing intercept functions ───────────────────────────────────
+  const handleDownloadRequest = (type, url) => {
+    if (!url || url === "#") {
+      alert(`${type === "brochure" ? "Brochure" : "Floor plan"} coming soon. Please contact us.`);
+      return;
+    }
+    setDownloadType(type);
+    setDownloadUrl(url);
+    setShowLeadModal(true);
+  };
+
+  const handleModalClose = () => {
+    if (savingLead) return;
+    setShowLeadModal(false);
+    setDownloadType(null);
+    setDownloadUrl("");
+    setLeadForm({
+      fullName: "",
+      email: "",
+      phone: "",
+      dateOfBirth: "",
+      subject: "",
+      message: ""
+    });
+  };
+
+  const handleLeadSubmit = async (e) => {
+    e.preventDefault();
+    if (savingLead) return;
+
+    // Field spacing sanity verification & dynamic validation criteria
+    const { fullName, email, phone, dateOfBirth, subject, message } = leadForm;
+    if (
+      !fullName.trim() || 
+      !email.trim() || 
+      !phone.trim() || 
+      !dateOfBirth.trim() || 
+      !subject.trim() || 
+      !message.trim()
+    ) {
+      setToast({ message: "All fields are required and cannot contain empty spaces only.", type: "error" });
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
+      setToast({ message: "Please enter a valid email address.", type: "error" });
+      return;
+    }
+
+    try {
+      setSavingLead(true);
+      
+      const mappedSource = downloadType === "brochure" ? "Brochure Download" : "Floor Plan Download";
+      
+      // Store dynamic structure document safely to existing Contacts collection
+      await addDoc(collection(db, "contacts"), {
+        fullName: fullName.trim(),
+        email: email.trim(),
+        phone: phone.trim(),
+        dateOfBirth: dateOfBirth,
+        subject: subject.trim(),
+        message: message.trim(),
+        projectId: projectId,
+        projectName: props?.projectName || "Project Details",
+        source: mappedSource,
+        createdAt: serverTimestamp()
+      });
+
+      setToast({ message: "Details submitted successfully! Starting your download...", type: "success" });
+      
+      // Perform the original request target resolution workflow natively
+      const targetAnchor = document.createElement("a");
+      targetAnchor.href = downloadUrl;
+      targetAnchor.target = "_blank";
+      targetAnchor.download = true;
+      document.body.appendChild(targetAnchor);
+      targetAnchor.click();
+      document.body.removeChild(targetAnchor);
+
+      // Clean resetting hook triggers
+      setShowLeadModal(false);
+      setDownloadType(null);
+      setDownloadUrl("");
+      setLeadForm({
+        fullName: "",
+        email: "",
+        phone: "",
+        dateOfBirth: "",
+        subject: "",
+        message: ""
+      });
+    } catch (err) {
+      console.error("Error saving lead payload details: ", err);
+      setToast({ message: "Failed to submit request parameters. Please try again.", type: "error" });
+    } finally {
+      setSavingLead(false);
+    }
+  };
+
+  // ── flex structural calculations mapping hooks bounds parsing ───────────
   if (loading) return <LoadingSkeleton />;
   if (error || !props)
     return (
@@ -654,6 +796,14 @@ export default function ProjectDetailPage() {
   return (
     <>
       <Navbar />
+
+      {toast && (
+        <FormToast 
+          message={toast.message} 
+          type={toast.type} 
+          onClose={() => setToast(null)} 
+        />
+      )}
 
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=Manrope:wght@400;500;600;700;800;900&display=swap');
@@ -921,82 +1071,82 @@ export default function ProjectDetailPage() {
 
       {/* ── STATS BAND ── */}
       <section className="w-full bg-[#1F2A44] py-8 sm:py-10 px-3 sm:px-4 lg:px-8 xl:px-12 overflow-hidden">
-  <div className="max-w-6xl mx-auto grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-    {stats.map((stat, i) => {
-      const isNumber =
-        !isNaN(
-          parseFloat(stat.value)
-        ) &&
-        /^\d+/.test(
-          stat.value
-        );
+        <div className="max-w-6xl mx-auto grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+          {stats.map((stat, i) => {
+            const isNumber =
+              !isNaN(
+                parseFloat(stat.value)
+              ) &&
+              /^\d+/.test(
+                stat.value
+              );
 
-      const numericValue =
-        parseFloat(stat.value);
+            const numericValue =
+              parseFloat(stat.value);
 
-      const suffix =
-        stat.value.replace(
-          numericValue,
-          ""
-        );
+            const suffix =
+              stat.value.replace(
+                numericValue,
+                ""
+              );
 
-      return (
-        <Reveal
-          key={stat.title}
-          delay={i * 120}
-          direction="up"
-        >
-          <div className="text-center py-5 sm:py-6 px-2 sm:px-3 rounded-2xl cursor-default overflow-hidden backdrop-blur-sm min-h-[120px] sm:min-h-[140px] flex flex-col justify-center">
-            <div className="w-full overflow-hidden flex justify-center">
-              <p
-                className="font-light text-white leading-none whitespace-nowrap"
-                style={{
-                  fontSize:
-                    "clamp(20px,3.8vw,42px)",
-
-                  transform:
-                    stat.value.length >
-                    20
-                      ? "scale(0.55)"
-                      : stat.value
-                          .length >
-                        16
-                      ? "scale(0.68)"
-                      : stat.value
-                          .length >
-                        12
-                      ? "scale(0.8)"
-                      : "scale(1)",
-
-                  transformOrigin:
-                    "center",
-
-                  display:
-                    "inline-block",
-                }}
+            return (
+              <Reveal
+                key={stat.title}
+                delay={i * 120}
+                direction="up"
               >
-                {isNumber ? (
-                  <AnimatedCounter
-                    target={
-                      numericValue
-                    }
-                    suffix={suffix}
-                  />
-                ) : (
-                  stat.value
-                )}
-              </p>
-            </div>
+                <div className="text-center py-5 sm:py-6 px-2 sm:px-3 rounded-2xl cursor-default overflow-hidden backdrop-blur-sm min-h-[120px] sm:min-h-[140px] flex flex-col justify-center">
+                  <div className="w-full overflow-hidden flex justify-center">
+                    <p
+                      className="font-light text-white leading-none whitespace-nowrap"
+                      style={{
+                        fontSize:
+                          "clamp(20px,3.8vw,42px)",
 
-            <p className="text-[9px] sm:text-[10px] tracking-[0.18em] uppercase text-white/40 mt-3 leading-relaxed px-1 break-words">
-              {stat.title}
-            </p>
-          </div>
-        </Reveal>
-      );
-    })}
-  </div>
-</section>
+                        transform:
+                          stat.value.length >
+                          20
+                            ? "scale(0.55)"
+                            : stat.value
+                                .length >
+                              16
+                              ? "scale(0.68)"
+                              : stat.value
+                                  .length >
+                                12
+                                ? "scale(0.8)"
+                                : "scale(1)",
+
+                        transformOrigin:
+                          "center",
+
+                        display:
+                          "inline-block",
+                      }}
+                    >
+                      {isNumber ? (
+                        <AnimatedCounter
+                          target={
+                            numericValue
+                          }
+                          suffix={suffix}
+                        />
+                      ) : (
+                        stat.value
+                      )}
+                    </p>
+                  </div>
+
+                  <p className="text-[9px] sm:text-[10px] tracking-[0.18em] uppercase text-white/40 mt-3 leading-relaxed px-1 break-words">
+                    {stat.title}
+                  </p>
+                </div>
+              </Reveal>
+            );
+          })}
+        </div>
+      </section>
 
       {/* ── ABOUT ── */}
       <section className="w-full py-15 sm:py-20 px-2 sm:px-4 lg:px-8 xl:px-12 bg-[#F8F7F4]">
@@ -1070,9 +1220,8 @@ export default function ProjectDetailPage() {
                 </div>
 
                 {brochureUrl && brochureUrl !== "#" ? (
-                  <a
-                    href={brochureUrl}
-                    download
+                  <button
+                    onClick={() => handleDownloadRequest("brochure", brochureUrl)}
                     className="group inline-flex items-center gap-2.5 px-5 py-3 rounded-xl border border-[#E3E6EA] bg-white hover:bg-[#E4572E] hover:border-[#E4572E] transition-all duration-300 cursor-pointer self-start sm:self-auto"
                   >
                     <span className="flex items-center justify-center w-7 h-7 rounded-lg bg-[#FFE9E2] group-hover:bg-white/20 transition-colors duration-300">
@@ -1095,7 +1244,7 @@ export default function ProjectDetailPage() {
                     <span className="text-[12px] tracking-[0.18em] uppercase font-medium text-[#1F2A44] group-hover:text-white transition-colors duration-300">
                       Download Brochure
                     </span>
-                  </a>
+                  </button>
                 ) : (
                   <button
                     onClick={() =>
@@ -1230,17 +1379,8 @@ export default function ProjectDetailPage() {
               </h2>
             </Reveal>
             <Reveal direction="right" delay={200}>
-              <a
-                href={floorPlanUrl !== "#" ? floorPlanUrl : undefined}
-                download={floorPlanUrl !== "#"}
-                onClick={
-                  floorPlanUrl === "#"
-                    ? (e) => {
-                        e.preventDefault();
-                        alert("Floor plan coming soon.");
-                      }
-                    : undefined
-                }
+              <button
+                onClick={() => handleDownloadRequest("floorplan", floorPlanUrl)}
                 className="inline-flex items-center gap-3 border border-[#E3E6EA] rounded-full px-4 sm:px-5 py-2 sm:py-2.5 text-[11px] sm:text-[12px] tracking-wide text-[#1F2A44] bg-white hover:bg-[#F1F3F6] transition-all hover:shadow-md hover:scale-105 w-fit cursor-pointer"
               >
                 Download Floor Plan
@@ -1256,7 +1396,7 @@ export default function ProjectDetailPage() {
                     <polyline points="7 7 17 7 17 17" />
                   </svg>
                 </span>
-              </a>
+              </button>
             </Reveal>
           </div>
 
@@ -1560,10 +1700,7 @@ export default function ProjectDetailPage() {
               )}
 
               <button
-                onClick={() => {
-                  if (floorPlanUrl !== "#") window.open(floorPlanUrl, "_blank");
-                  else alert("Floor plan coming soon.");
-                }}
+                onClick={() => handleDownloadRequest("floorplan", floorPlanUrl)}
                 className="inline-flex items-center gap-[10px] border-[1.5px] border-gray-800 rounded-full px-[16px] sm:px-[18px] py-[8px] sm:py-[9px] text-[12px] sm:text-[13px] font-medium text-gray-800 bg-transparent hover:bg-[#ece9e4] transition-all hover:scale-105 hover:shadow-md w-fit"
               >
                 Download Floor Plan
@@ -1601,6 +1738,127 @@ export default function ProjectDetailPage() {
           </Reveal>
         </div>
       </section>
+
+      {/* ── CUSTOMER LEAD CAPTURE MODAL (PREMIUM GLASSMORPHISM DESIGN) ── */}
+      {showLeadModal && (
+        <div className="fixed inset-0 z-[9500] flex items-center justify-center px-4 py-6 overflow-y-auto backdrop-blur-md bg-black/60 animate-[scrollTopReveal_0.25s_ease_both]">
+          <div className="relative w-full max-w-xl bg-white/90 backdrop-blur-xl border border-white/40 rounded-3xl p-6 sm:p-8 shadow-2xl max-h-[90vh] overflow-y-auto no-scrollbar">
+            
+            {/* Close trigger button */}
+            <button 
+              onClick={handleModalClose}
+              disabled={savingLead}
+              className="absolute top-5 right-5 w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-[#E4572E] text-gray-500 hover:text-white transition-all duration-200"
+            >
+              ✕
+            </button>
+
+            <div className="mb-6 text-center">
+              <span className="inline-block px-3 py-1 bg-[#FFE9E2] text-[#E4572E] rounded-full text-[10px] uppercase font-semibold tracking-widest mb-2">
+                Unlock Direct Access
+              </span>
+              <h3 className="text-2xl font-normal text-[#1F2A44] uppercase tracking-wide">
+                Verify Customer Details
+              </h3>
+              <p className="text-xs text-gray-500 mt-1">
+                Please complete fields below to securely process the requested document download for <span className="font-semibold">{projectName}</span>.
+              </p>
+            </div>
+
+            <form onSubmit={handleLeadSubmit} className="space-y-4">
+              <div>
+                <label className="block text-[10px] uppercase tracking-wider text-gray-400 font-medium mb-1">Full Name *</label>
+                <input 
+                  type="text" 
+                  required
+                  placeholder="Enter your full name"
+                  value={leadForm.fullName}
+                  onChange={(e) => setLeadForm({...leadForm, fullName: e.target.value})}
+                  className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-[#1F2A44] focus:outline-none focus:border-[#E4572E] focus:bg-white transition-all"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[10px] uppercase tracking-wider text-gray-400 font-medium mb-1">Email Address *</label>
+                  <input 
+                    type="email" 
+                    required
+                    placeholder="name@example.com"
+                    value={leadForm.email}
+                    onChange={(e) => setLeadForm({...leadForm, email: e.target.value})}
+                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-[#1F2A44] focus:outline-none focus:border-[#E4572E] focus:bg-white transition-all"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] uppercase tracking-wider text-gray-400 font-medium mb-1">Phone Number *</label>
+                  <input 
+                    type="tel" 
+                    required
+                    placeholder="Your contact number"
+                    value={leadForm.phone}
+                    onChange={(e) => setLeadForm({...leadForm, phone: e.target.value})}
+                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-[#1F2A44] focus:outline-none focus:border-[#E4572E] focus:bg-white transition-all"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[10px] uppercase tracking-wider text-gray-400 font-medium mb-1">Date of Birth *</label>
+                <input 
+                  type="date" 
+                  required
+                  value={leadForm.dateOfBirth}
+                  onChange={(e) => setLeadForm({...leadForm, dateOfBirth: e.target.value})}
+                  className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-[#1F2A44] focus:outline-none focus:border-[#E4572E] focus:bg-white transition-all"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[10px] uppercase tracking-wider text-gray-400 font-medium mb-1">Subject *</label>
+                <input 
+                  type="text" 
+                  required
+                  placeholder="Reason for downloading"
+                  value={leadForm.subject}
+                  onChange={(e) => setLeadForm({...leadForm, subject: e.target.value})}
+                  className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-[#1F2A44] focus:outline-none focus:border-[#E4572E] focus:bg-white transition-all"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[10px] uppercase tracking-wider text-gray-400 font-medium mb-1">Message *</label>
+                <textarea 
+                  rows="3"
+                  required
+                  placeholder="Share a short note about your requirements..."
+                  value={leadForm.message}
+                  onChange={(e) => setLeadForm({...leadForm, message: e.target.value})}
+                  className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-[#1F2A44] focus:outline-none focus:border-[#E4572E] focus:bg-white transition-all resize-none"
+                />
+              </div>
+
+              <div className="pt-2">
+                <button
+                  type="submit"
+                  disabled={savingLead}
+                  className="w-full py-3 bg-[#E4572E] hover:bg-[#c73b22] text-white font-semibold text-sm tracking-widest uppercase rounded-xl transition-all shadow-md flex items-center justify-center gap-2 disabled:bg-gray-400 disabled:cursor-not-allowed cursor-pointer"
+                >
+                  {savingLead ? (
+                    <>
+                      <div className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
+                      Saving Customer Profile...
+                    </>
+                  ) : (
+                    "Authorize Document Download"
+                  )}
+                </button>
+              </div>
+            </form>
+
+          </div>
+        </div>
+      )}
 
       <Footer />
     </>
