@@ -15,7 +15,7 @@ const emptyForm = {
   fullName: "",
   email: "",
   phone: "",
-  dob: "",
+  dateOfBirth: "", // Updated from dob -> dateOfBirth
   subject: "",
   message: "",
 };
@@ -32,7 +32,8 @@ const formatDate = (date) => {
 
 const formatDateTime = (date) => {
   if (!date) return "—";
-  const d = date instanceof Date ? date : new Date(date);
+  // Fallback support for Firestore Timestamps if they have a toDate method
+  const d = date && typeof date.toDate === "function" ? date.toDate() : new Date(date);
   if (isNaN(d.getTime())) return "—";
   return d.toLocaleString("en-IN", {
     day: "2-digit",
@@ -63,7 +64,7 @@ const ContactModal = ({ isOpen, onClose, onSubmit, initialData, mode }) => {
           fullName: initialData.fullName || "",
           email: initialData.email || "",
           phone: initialData.phone || "",
-          dob: toDateInputValue(initialData.dob),
+          dateOfBirth: toDateInputValue(initialData.dateOfBirth), // Updated from dob
           subject: initialData.subject || "",
           message: initialData.message || "",
         });
@@ -81,7 +82,7 @@ const ContactModal = ({ isOpen, onClose, onSubmit, initialData, mode }) => {
     else if (!EMAIL_REGEX.test(form.email)) newErrors.email = "Invalid email format";
     if (!form.phone.trim()) newErrors.phone = "Phone number is required";
     else if (!PHONE_REGEX.test(form.phone)) newErrors.phone = "Invalid phone number";
-    if (!form.dob) newErrors.dob = "Date of birth is required";
+    if (!form.dateOfBirth) newErrors.dateOfBirth = "Date of birth is required"; // Updated from dob
     if (!form.subject.trim()) newErrors.subject = "Subject is required";
     if (!form.message.trim()) newErrors.message = "Message is required";
     return newErrors;
@@ -186,20 +187,20 @@ const ContactModal = ({ isOpen, onClose, onSubmit, initialData, mode }) => {
             </div>
 
             <div className="flex flex-col">
-              <label htmlFor="dob" className="mb-1.5 text-sm font-medium text-gray-700">
+              <label htmlFor="dateOfBirth" className="mb-1.5 text-sm font-medium text-gray-700">
                 Date of Birth *
               </label>
               <input
-                id="dob"
-                name="dob"
+                id="dateOfBirth"
+                name="dateOfBirth" // Updated from dob
                 type="date"
-                value={form.dob}
+                value={form.dateOfBirth}
                 onChange={handleChange}
                 className={`rounded-lg border px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 ${
-                  errors.dob ? "border-red-500" : "border-gray-300 focus:border-blue-500"
+                  errors.dateOfBirth ? "border-red-500" : "border-gray-300 focus:border-blue-500"
                 }`}
               />
-              {errors.dob && <span className="mt-1 text-xs text-red-500">{errors.dob}</span>}
+              {errors.dateOfBirth && <span className="mt-1 text-xs text-red-500">{errors.dateOfBirth}</span>}
             </div>
           </div>
 
@@ -357,7 +358,9 @@ const Contacts = () => {
         c.fullName?.toLowerCase().includes(term) ||
         c.email?.toLowerCase().includes(term) ||
         c.subject?.toLowerCase().includes(term) ||
-        c.phone?.toLowerCase().includes(term)
+        c.phone?.toLowerCase().includes(term) ||
+        c.projectName?.toLowerCase().includes(term) || // Support search parameters on project data
+        c.source?.toLowerCase().includes(term)
     );
   }, [contacts, searchTerm]);
 
@@ -368,7 +371,7 @@ const Contacts = () => {
       const newContact = {
         id: docRef.id,
         ...formData,
-        dob: new Date(formData.dob),
+        dateOfBirth: formData.dateOfBirth, // Maintained string layout consistent with Firestore
         createdAt: new Date(),
       };
       setContacts((prev) => [newContact, ...prev]);
@@ -394,7 +397,7 @@ const Contacts = () => {
         setContacts((prev) =>
           prev.map((c) =>
             c.id === selectedContact.id
-              ? { ...c, ...formData, dob: new Date(formData.dob) }
+              ? { ...c, ...formData }
               : c
           )
         );
@@ -437,7 +440,9 @@ const Contacts = () => {
       "Full Name": c.fullName,
       Email: c.email,
       Phone: c.phone,
-      "Date of Birth": formatDate(c.dob),
+      "Date of Birth": formatDate(c.dateOfBirth), // Updated key structure
+      "Project Name": c.projectName || "—",       // Added sheet properties
+      Source: c.source || "—",
       Subject: c.subject,
       Message: c.message,
       "Created Date": formatDateTime(c.createdAt),
@@ -491,7 +496,7 @@ const Contacts = () => {
           <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             type="text"
-            placeholder="Search by name, email, subject, or phone..."
+            placeholder="Search by name, email, project, or phone..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full rounded-lg border border-gray-300 py-2.5 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500"
@@ -517,13 +522,15 @@ const Contacts = () => {
             <p className="text-sm">No contacts found.</p>
           </div>
         ) : (
-          <table className="min-w-[900px] w-full text-left text-sm">
+          <table className="min-w-[1100px] w-full text-left text-sm">
             <thead>
               <tr className="bg-gray-50">
                 <th className="px-4 py-3 text-xs font-semibold text-gray-700 whitespace-nowrap">Full Name</th>
                 <th className="px-4 py-3 text-xs font-semibold text-gray-700 whitespace-nowrap">Email</th>
                 <th className="px-4 py-3 text-xs font-semibold text-gray-700 whitespace-nowrap">Phone</th>
                 <th className="px-4 py-3 text-xs font-semibold text-gray-700 whitespace-nowrap">DOB</th>
+                <th className="px-4 py-3 text-xs font-semibold text-gray-700 whitespace-nowrap">Project Name</th>
+                <th className="px-4 py-3 text-xs font-semibold text-gray-700 whitespace-nowrap">Source</th>
                 <th className="px-4 py-3 text-xs font-semibold text-gray-700 whitespace-nowrap">Subject</th>
                 <th className="px-4 py-3 text-xs font-semibold text-gray-700 whitespace-nowrap">Message</th>
                 <th className="px-4 py-3 text-xs font-semibold text-gray-700 whitespace-nowrap">Created At</th>
@@ -533,12 +540,20 @@ const Contacts = () => {
             <tbody>
               {filteredContacts.map((contact) => (
                 <tr key={contact.id} className="border-t border-gray-100 transition-colors hover:bg-gray-50">
-                  <td className="px-4 py-3 font-medium text-gray-900">{contact.fullName}</td>
-                  <td className="px-4 py-3 text-gray-600">{contact.email}</td>
-                  <td className="px-4 py-3 text-gray-600">{contact.phone}</td>
-                  <td className="px-4 py-3 text-gray-600">{formatDate(contact.dob)}</td>
-                  <td className="px-4 py-3 text-gray-600">{contact.subject}</td>
-                  <td className="px-4 py-3 max-w-[250px] truncate text-gray-600">{contact.message}</td>
+                  <td className="px-4 py-3 font-medium text-gray-900 whitespace-nowrap">{contact.fullName}</td>
+                  <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{contact.email}</td>
+                  <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{contact.phone}</td>
+                  <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{formatDate(contact.dateOfBirth)}</td>
+                  <td className="px-4 py-3 text-blue-600 font-medium whitespace-nowrap">{contact.projectName || "—"}</td>
+                  <td className="px-4 py-3 whitespace-nowrap">
+                    <span className={`inline-block px-2.5 py-0.5 text-xs font-medium rounded-full ${
+                      contact.source === "Brochure Download" ? "bg-orange-50 text-orange-600" : "bg-purple-50 text-purple-600"
+                    }`}>
+                      {contact.source || "Form Submission"}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{contact.subject}</td>
+                  <td className="px-4 py-3 max-w-[200px] truncate text-gray-600" title={contact.message}>{contact.message}</td>
                   <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{formatDateTime(contact.createdAt)}</td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">

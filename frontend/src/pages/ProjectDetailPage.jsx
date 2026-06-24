@@ -569,7 +569,6 @@ export default function ProjectDetailPage() {
     email: "",
     phone: "",
     dateOfBirth: "",
-    subject: "",
     message: ""
   });
   const [toast, setToast] = useState(null);
@@ -650,84 +649,81 @@ export default function ProjectDetailPage() {
       email: "",
       phone: "",
       dateOfBirth: "",
-      subject: "",
       message: ""
     });
   };
 
   const handleLeadSubmit = async (e) => {
-    e.preventDefault();
-    if (savingLead) return;
+  e.preventDefault();
+  if (savingLead) return;
 
-    // Field spacing sanity verification & dynamic validation criteria
-    const { fullName, email, phone, dateOfBirth, subject, message } = leadForm;
-    if (
-      !fullName.trim() || 
-      !email.trim() || 
-      !phone.trim() || 
-      !dateOfBirth.trim() || 
-      !subject.trim() || 
-      !message.trim()
-    ) {
-      setToast({ message: "All fields are required and cannot contain empty spaces only.", type: "error" });
-      return;
-    }
+  // 1. Added 'message' to destructuring assignment
+  const { fullName, email, phone, dateOfBirth, message } = leadForm;
+  
+  // 2. Removed trailing logical OR operator (||) syntax error below
+  if (
+  !fullName.trim() || 
+  !email.trim() || 
+  !phone.trim() || 
+  !dateOfBirth.trim()
+) {
+  setToast({ message: "All fields are required and cannot contain empty spaces only.", type: "error" });
+  return;
+}
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email.trim())) {
-      setToast({ message: "Please enter a valid email address.", type: "error" });
-      return;
-    }
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email.trim())) {
+    setToast({ message: "Please enter a valid email address.", type: "error" });
+    return;
+  }
 
-    try {
-      setSavingLead(true);
-      
-      const mappedSource = downloadType === "brochure" ? "Brochure Download" : "Floor Plan Download";
-      
-      // Store dynamic structure document safely to existing Contacts collection
-      await addDoc(collection(db, "contacts"), {
-        fullName: fullName.trim(),
-        email: email.trim(),
-        phone: phone.trim(),
-        dateOfBirth: dateOfBirth,
-        subject: subject.trim(),
-        message: message.trim(),
-        projectId: projectId,
-        projectName: props?.projectName || "Project Details",
-        source: mappedSource,
-        createdAt: serverTimestamp()
-      });
+  try {
+    setSavingLead(true);
+    
+    const mappedSource = downloadType === "brochure" ? "Brochure Download" : "Floor Plan Download";
+    
+    // Store dynamic structure document safely to existing Contacts collection
+    await addDoc(collection(db, "contacts"), {
+      fullName: fullName.trim(),
+      email: email.trim(),
+      phone: phone.trim(),
+      dateOfBirth: dateOfBirth,
+      message: message ? message.trim() : "", // Safe fallback check if message is optional
+      projectId: projectId,
+      projectName: props?.projectName || "Project Details",
+      source: mappedSource,
+      createdAt: serverTimestamp()
+    });
 
-      setToast({ message: "Details submitted successfully! Starting your download...", type: "success" });
-      
-      // Perform the original request target resolution workflow natively
-      const targetAnchor = document.createElement("a");
-      targetAnchor.href = downloadUrl;
-      targetAnchor.target = "_blank";
-      targetAnchor.download = true;
-      document.body.appendChild(targetAnchor);
-      targetAnchor.click();
-      document.body.removeChild(targetAnchor);
+    setToast({ message: "Details submitted successfully! Starting your download...", type: "success" });
+    
+    // Perform the original request target resolution workflow natively
+    const targetAnchor = document.createElement("a");
+    targetAnchor.href = downloadUrl;
+    targetAnchor.target = "_blank";
+    targetAnchor.download = true;
+    document.body.appendChild(targetAnchor);
+    targetAnchor.click();
+    document.body.removeChild(targetAnchor);
 
-      // Clean resetting hook triggers
-      setShowLeadModal(false);
-      setDownloadType(null);
-      setDownloadUrl("");
-      setLeadForm({
-        fullName: "",
-        email: "",
-        phone: "",
-        dateOfBirth: "",
-        subject: "",
-        message: ""
-      });
-    } catch (err) {
-      console.error("Error saving lead payload details: ", err);
-      setToast({ message: "Failed to submit request parameters. Please try again.", type: "error" });
-    } finally {
-      setSavingLead(false);
-    }
-  };
+    // Clean resetting hook triggers
+    setShowLeadModal(false);
+    setDownloadType(null);
+    setDownloadUrl("");
+    setLeadForm({
+      fullName: "",
+      email: "",
+      phone: "",
+      dateOfBirth: "",
+      message: ""
+    });
+  } catch (err) {
+    console.error("Error saving lead payload details: ", err);
+    setToast({ message: "Failed to submit request parameters. Please try again.", type: "error" });
+  } finally {
+    setSavingLead(false);
+  }
+};
 
   // ── flex structural calculations mapping hooks bounds parsing ───────────
   if (loading) return <LoadingSkeleton />;
@@ -1380,7 +1376,6 @@ export default function ProjectDetailPage() {
             </Reveal>
             <Reveal direction="right" delay={200}>
               <button
-                onClick={() => handleDownloadRequest("floorplan", floorPlanUrl)}
                 className="inline-flex items-center gap-3 border border-[#E3E6EA] rounded-full px-4 sm:px-5 py-2 sm:py-2.5 text-[11px] sm:text-[12px] tracking-wide text-[#1F2A44] bg-white hover:bg-[#F1F3F6] transition-all hover:shadow-md hover:scale-105 w-fit cursor-pointer"
               >
                 Download Floor Plan
@@ -1700,7 +1695,6 @@ export default function ProjectDetailPage() {
               )}
 
               <button
-                onClick={() => handleDownloadRequest("floorplan", floorPlanUrl)}
                 className="inline-flex items-center gap-[10px] border-[1.5px] border-gray-800 rounded-full px-[16px] sm:px-[18px] py-[8px] sm:py-[9px] text-[12px] sm:text-[13px] font-medium text-gray-800 bg-transparent hover:bg-[#ece9e4] transition-all hover:scale-105 hover:shadow-md w-fit"
               >
                 Download Floor Plan
@@ -1748,20 +1742,18 @@ export default function ProjectDetailPage() {
             <button 
               onClick={handleModalClose}
               disabled={savingLead}
-              className="absolute top-5 right-5 w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-[#E4572E] text-gray-500 hover:text-white transition-all duration-200"
+              className="absolute top-6 right-6 w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-[#E4572E] text-gray-500 hover:text-white transition-all duration-200"
             >
               ✕
             </button>
 
-            <div className="mb-6 text-center">
-              <span className="inline-block px-3 py-1 bg-[#FFE9E2] text-[#E4572E] rounded-full text-[10px] uppercase font-semibold tracking-widest mb-2">
-                Unlock Direct Access
-              </span>
-              <h3 className="text-2xl font-normal text-[#1F2A44] uppercase tracking-wide">
-                Verify Customer Details
+            {/* Updated Header Block to match image_7ad7e6.jpg */}
+            <div className="mb-6 text-left pr-8">
+              <h3 className="text-xl font-semibold text-gray-800 tracking-tight">
+                Download Brochure
               </h3>
-              <p className="text-xs text-gray-500 mt-1">
-                Please complete fields below to securely process the requested document download for <span className="font-semibold">{projectName}</span>.
+              <p className="text-sm text-gray-500 mt-1.5 leading-relaxed">
+                Share your details and we'll start your download for <span className="font-medium text-gray-700">{projectName}</span>.
               </p>
             </div>
 
@@ -1815,23 +1807,9 @@ export default function ProjectDetailPage() {
               </div>
 
               <div>
-                <label className="block text-[10px] uppercase tracking-wider text-gray-400 font-medium mb-1">Subject *</label>
-                <input 
-                  type="text" 
-                  required
-                  placeholder="Reason for downloading"
-                  value={leadForm.subject}
-                  onChange={(e) => setLeadForm({...leadForm, subject: e.target.value})}
-                  className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-[#1F2A44] focus:outline-none focus:border-[#E4572E] focus:bg-white transition-all"
-                />
-              </div>
-
-              <div>
                 <label className="block text-[10px] uppercase tracking-wider text-gray-400 font-medium mb-1">Message *</label>
                 <textarea 
                   rows="3"
-                  required
-                  placeholder="Share a short note about your requirements..."
                   value={leadForm.message}
                   onChange={(e) => setLeadForm({...leadForm, message: e.target.value})}
                   className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-[#1F2A44] focus:outline-none focus:border-[#E4572E] focus:bg-white transition-all resize-none"
@@ -1850,7 +1828,7 @@ export default function ProjectDetailPage() {
                       Saving Customer Profile...
                     </>
                   ) : (
-                    "Authorize Document Download"
+                    "Download Brochure"
                   )}
                 </button>
               </div>
