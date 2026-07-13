@@ -2,7 +2,12 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // Fully dynamic — reads :projectId from the URL, fetches from Firestore,
 // falls back gracefully when optional fields are absent.
-// UI is 100 % identical to the original static design.
+//
+// VISUAL REDESIGN NOTE: This pass reworks the presentation layer only —
+// palette, type scale, spacing, glass/gradient treatments, and layout —
+// to a premium SaaS / luxury real-estate aesthetic (Apple × Stripe × Airbnb
+// Luxury). Every hook, state variable, function, Firestore call, and prop
+// mapping below is unchanged from the original implementation.
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useEffect, useState, useRef } from "react";
@@ -444,13 +449,25 @@ function FormToast({ message, type, onClose }) {
 
   return (
     <div
-      className={`fixed top-6 right-6 z-[10000] px-5 py-3 rounded-xl shadow-xl flex items-center gap-3 backdrop-blur-md transition-all duration-300 animate-[scrollTopReveal_0.3s_ease_both] ${
+      className={`fixed top-6 right-6 z-[10000] px-5 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 backdrop-blur-xl border transition-all duration-300 animate-[toastIn_0.35s_cubic-bezier(.34,1.56,.64,1)_both] ${
         type === "success"
-          ? "bg-emerald-500/90 text-white border border-emerald-400/30"
-          : "bg-rose-500/90 text-white border border-rose-400/30"
+          ? "bg-[#16A34A]/95 text-white border-white/20"
+          : "bg-[#E4572E]/95 text-white border-white/20"
       }`}
     >
-      <span className="text-sm font-medium tracking-wide">{message}</span>
+      <span className="flex items-center justify-center w-6 h-6 rounded-full bg-white/20 flex-shrink-0">
+        {type === "success" ? (
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3">
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+        ) : (
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        )}
+      </span>
+      <span className="text-[13px] font-medium tracking-wide">{message}</span>
       <button onClick={onClose} className="text-white/70 hover:text-white ml-2 text-xs">✕</button>
     </div>
   );
@@ -466,10 +483,13 @@ function iconBgForType(iconType) {
 // ─── Loading skeleton ────────────────────────────────────────────────────────
 function LoadingSkeleton() {
   return (
-    <div className="min-h-screen bg-black flex flex-col items-center justify-center gap-6">
-      <div className="w-12 h-12 rounded-full border-4 border-[#E34A2F] border-t-transparent animate-spin" />
-      <p className="text-white/50 text-sm tracking-widest uppercase">
-        Loading Project…
+    <div className="min-h-screen bg-[#1F2A44] flex flex-col items-center justify-center gap-6">
+      <div className="relative w-14 h-14">
+        <div className="absolute inset-0 rounded-full border-2 border-white/10" />
+        <div className="absolute inset-0 rounded-full border-2 border-[#E4572E] border-t-transparent animate-spin" />
+      </div>
+      <p className="text-white/40 text-[11px] tracking-[0.32em] uppercase font-light">
+        Loading Project
       </p>
     </div>
   );
@@ -479,13 +499,13 @@ function LoadingSkeleton() {
 function ErrorState({ message, onBack }) {
   return (
     <div className="min-h-screen bg-[#F8F7F4] flex flex-col items-center justify-center gap-6 px-4 text-center">
-      <div className="w-20 h-20 rounded-full bg-red-50 flex items-center justify-center mb-2">
+      <div className="w-20 h-20 rounded-full bg-[#FFE9E2] flex items-center justify-center mb-2">
         <svg
-          width="32"
-          height="32"
+          width="30"
+          height="30"
           viewBox="0 0 24 24"
           fill="none"
-          stroke="#E34A2F"
+          stroke="#E4572E"
           strokeWidth="2"
         >
           <circle cx="12" cy="12" r="10" />
@@ -493,13 +513,13 @@ function ErrorState({ message, onBack }) {
           <line x1="12" y1="16" x2="12.01" y2="16" />
         </svg>
       </div>
-      <h2 className="text-2xl font-semibold text-gray-900">{message}</h2>
-      <p className="text-gray-500 text-sm max-w-sm">
+      <h2 className="text-2xl font-semibold text-[#1F2A44]">{message}</h2>
+      <p className="text-[#6B7280] text-sm max-w-sm">
         The project you're looking for doesn't exist or could not be loaded.
       </p>
       <button
         onClick={onBack}
-        className="mt-2 px-6 py-3 rounded-full bg-[#E34A2F] text-white text-sm font-semibold hover:bg-[#c73b22] transition-colors"
+        className="mt-2 px-7 py-3.5 rounded-full bg-[#E4572E] text-white text-[13px] font-semibold tracking-wide hover:bg-[#c73b22] hover:shadow-lg hover:shadow-[#E4572E]/30 transition-all duration-300"
       >
         ← Back to Projects
       </button>
@@ -802,16 +822,35 @@ export default function ProjectDetailPage() {
       )}
 
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=Manrope:wght@400;500;600;700;800;900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&family=Manrope:wght@400;500;600;700;800&display=swap');
+
+        :root {
+          --pd-primary: #1F2A44;
+          --pd-accent: #E4572E;
+          --pd-accent-soft: #FFE9E2;
+          --pd-bg: #F8F7F4;
+          --pd-card: #FFFFFF;
+          --pd-border: rgba(31,42,68,0.08);
+          --pd-text-secondary: #6B7280;
+          --pd-success: #16A34A;
+        }
+
         *, *::before, *::after { box-sizing: border-box; }
         html, body { overflow-x: hidden; width: 100%; }
         #root { overflow-x: hidden; width: 100%; }
+
+        .pd-root { font-family: 'Manrope', sans-serif; }
+        .pd-display { font-family: 'Montserrat', sans-serif; }
 
         @keyframes scrollLineDrop {
           0%   { transform: translateY(-100%); opacity: 0; }
           20%  { opacity: 1; }
           80%  { opacity: 1; }
           100% { transform: translateY(200%); opacity: 0; }
+        }
+        @keyframes toastIn {
+          from { opacity: 0; transform: translateY(-14px) scale(0.92); }
+          to   { opacity: 1; transform: translateY(0) scale(1); }
         }
         @keyframes scrollTopReveal {
           from { opacity: 0; transform: translateY(16px) scale(0.85); }
@@ -834,15 +873,13 @@ export default function ProjectDetailPage() {
           70%  { transform: scale(1.05) translateY(-2px); }
           100% { opacity: 1; transform: scale(1) translateY(0); }
         }
-        @keyframes float3D {
-          0%, 100% { transform: perspective(600px) rotateX(0deg) rotateY(0deg) translateZ(0); }
-          25%      { transform: perspective(600px) rotateX(2deg) rotateY(3deg) translateZ(8px); }
-          50%      { transform: perspective(600px) rotateX(-1deg) rotateY(-2deg) translateZ(4px); }
-          75%      { transform: perspective(600px) rotateX(1.5deg) rotateY(-3deg) translateZ(6px); }
+        @keyframes floatSlow {
+          0%, 100% { transform: translateY(0); }
+          50%      { transform: translateY(-10px); }
         }
-        @keyframes depthPulse {
-          0%, 100% { transform: perspective(800px) translateZ(0px); box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
-          50%      { transform: perspective(800px) translateZ(10px); box-shadow: 0 12px 40px rgba(227,74,47,0.15); }
+        @keyframes gradientShift {
+          0%, 100% { background-position: 0% 50%; }
+          50%      { background-position: 100% 50%; }
         }
         @keyframes spin { to { transform: rotate(360deg); } }
 
@@ -852,16 +889,51 @@ export default function ProjectDetailPage() {
         .scroll-line  { animation: scrollLineDrop 1.8s ease-in-out infinite; }
         .scroll-top-btn { animation: scrollTopReveal 0.4s cubic-bezier(.34,1.56,.64,1) both; }
         .scroll-top-btn:hover .scroll-top-arrow { animation: scrollTopBounce 0.6s ease infinite; }
-        .scroll-progress-bar { position: fixed; top: 0; left: 0; height: 3px; background: linear-gradient(90deg, #E34A2F, #ffb347); z-index: 9999; transition: width 0.1s linear; }
+        .scroll-progress-bar { position: fixed; top: 0; left: 0; height: 3px; background: linear-gradient(90deg, #E4572E, #ff8a5c); z-index: 9999; transition: width 0.1s linear; box-shadow: 0 0 10px rgba(228,87,46,0.5); }
         html { scroll-behavior: smooth; }
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: #FDFAF6; }
-        ::-webkit-scrollbar-thumb { background: #E34A2F; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb { background: #E4572E; border-radius: 3px; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         .room-img-fade { transition: opacity 0.2s ease; }
         .room-img-fade.changing { opacity: 0; }
+
+        .pd-float { animation: floatSlow 6s ease-in-out infinite; }
+        .pd-glass {
+          background: rgba(255,255,255,0.72);
+          backdrop-filter: blur(20px);
+          -webkit-backdrop-filter: blur(20px);
+          border: 1px solid rgba(255,255,255,0.5);
+        }
+        .pd-glass-dark {
+          background: rgba(20,26,40,0.55);
+          backdrop-filter: blur(18px);
+          -webkit-backdrop-filter: blur(18px);
+          border: 1px solid rgba(255,255,255,0.14);
+        }
+        .pd-card {
+          background: var(--pd-card);
+          border: 1px solid var(--pd-border);
+          border-radius: 28px;
+          transition: transform 0.45s cubic-bezier(.22,1,.36,1), box-shadow 0.45s cubic-bezier(.22,1,.36,1), border-color 0.45s ease;
+        }
+        .pd-card:hover {
+          transform: translateY(-6px);
+          box-shadow: 0 24px 60px -20px rgba(31,42,68,0.22);
+          border-color: rgba(228,87,46,0.25);
+        }
+        .pd-gradient-cta {
+          background: linear-gradient(120deg, #1F2A44 0%, #2c3a5e 45%, #E4572E 150%);
+          background-size: 200% 200%;
+          animation: gradientShift 10s ease infinite;
+        }
+        .pd-section-pad { padding-top: 88px; padding-bottom: 88px; }
+        @media (max-width: 1024px) { .pd-section-pad { padding-top: 64px; padding-bottom: 64px; } }
+        @media (max-width: 640px)  { .pd-section-pad { padding-top: 44px; padding-bottom: 44px; } }
       `}</style>
+
+      <div className="pd-root">
 
       {/* ── SCROLL PROGRESS BAR ── */}
       <div
@@ -1066,8 +1138,16 @@ export default function ProjectDetailPage() {
       </section>
 
       {/* ── STATS BAND ── */}
-      <section className="w-full bg-[#1F2A44] py-8 sm:py-10 px-3 sm:px-4 lg:px-8 xl:px-12 overflow-hidden">
-        <div className="max-w-6xl mx-auto grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+      <section className="w-full bg-[#1F2A44] relative overflow-hidden pd-section-pad px-3 sm:px-4 lg:px-8 xl:px-12">
+        <div
+          className="absolute inset-0 opacity-[0.06]"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle at 2px 2px, white 1px, transparent 0)",
+            backgroundSize: "28px 28px",
+          }}
+        />
+        <div className="max-w-[1400px] mx-auto grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 relative">
           {stats.map((stat, i) => {
             const isNumber =
               !isNaN(
@@ -1092,13 +1172,21 @@ export default function ProjectDetailPage() {
                 delay={i * 120}
                 direction="up"
               >
-                <div className="text-center py-5 sm:py-6 px-2 sm:px-3 rounded-2xl cursor-default overflow-hidden backdrop-blur-sm min-h-[120px] sm:min-h-[140px] flex flex-col justify-center">
-                  <div className="w-full overflow-hidden flex justify-center">
+                <div
+                  className="relative text-center py-8 sm:py-9 px-2 sm:px-3 rounded-3xl cursor-default overflow-hidden min-h-[140px] sm:min-h-[160px] flex flex-col justify-center border border-white/10 hover:border-[#E4572E]/40 transition-all duration-500 hover:-translate-y-1.5 group"
+                  style={{
+                    background: "linear-gradient(160deg, rgba(255,255,255,0.06), rgba(255,255,255,0.015))",
+                  }}
+                >
+                  <div
+                    className="absolute -top-8 -right-8 w-24 h-24 rounded-full bg-[#E4572E]/0 group-hover:bg-[#E4572E]/20 blur-2xl transition-all duration-500"
+                  />
+                  <div className="w-full overflow-hidden flex justify-center relative">
                     <p
-                      className="font-light text-white leading-none whitespace-nowrap"
+                      className="pd-display font-light text-white leading-none whitespace-nowrap"
                       style={{
                         fontSize:
-                          "clamp(20px,3.8vw,42px)",
+                          "clamp(22px,3.8vw,44px)",
 
                         transform:
                           stat.value.length >
@@ -1134,7 +1222,7 @@ export default function ProjectDetailPage() {
                     </p>
                   </div>
 
-                  <p className="text-[9px] sm:text-[10px] tracking-[0.18em] uppercase text-white/40 mt-3 leading-relaxed px-1 break-words">
+                  <p className="text-[9px] sm:text-[10px] tracking-[0.22em] uppercase text-white/40 mt-3.5 leading-relaxed px-1 break-words relative">
                     {stat.title}
                   </p>
                 </div>
@@ -1145,71 +1233,86 @@ export default function ProjectDetailPage() {
       </section>
 
       {/* ── ABOUT ── */}
-      <section className="w-full py-15 sm:py-20 px-2 sm:px-4 lg:px-8 xl:px-12 bg-[#F8F7F4]">
-        <div className="mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 sm:gap-12 items-stretch">
+      <section className="w-full pd-section-pad px-3 sm:px-4 lg:px-8 xl:px-12 bg-[#F8F7F4] relative overflow-hidden">
+        <div
+          className="absolute top-1/3 -left-32 w-96 h-96 rounded-full opacity-40 pointer-events-none"
+          style={{ background: "radial-gradient(circle, #FFE9E2 0%, transparent 70%)" }}
+        />
+        <div className="max-w-[1400px] mx-auto grid grid-cols-1 md:grid-cols-[1.1fr_1fr] gap-10 sm:gap-14 items-center relative">
           {/* Image */}
           <Reveal direction="left" delay={100}>
-            <div className="flex flex-col h-full">
-              <div className="rounded-2xl overflow-hidden flex-1 min-h-[240px] sm:min-h-[320px]">
+            <div className="relative">
+              <div className="rounded-[32px] overflow-hidden h-[340px] sm:h-[440px] md:h-[520px] shadow-2xl shadow-[#1F2A44]/10">
                 <img
                   src={image}
                   alt={projectName}
                   className="w-full h-full object-cover transition-transform duration-700 hover:scale-105"
                 />
               </div>
+              {/* Floating info card */}
+              <div className="pd-card hidden sm:flex absolute -bottom-8 -right-6 md:-right-10 shadow-xl p-5 md:p-6 items-center gap-4 max-w-[240px]">
+                <div className="w-11 h-11 rounded-2xl bg-[#FFE9E2] flex items-center justify-center flex-shrink-0">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E4572E" strokeWidth="2">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                    <polyline points="9 22 9 12 15 12 15 22" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-[10px] tracking-[0.2em] uppercase text-[#A0A8B5] mb-0.5">Status</p>
+                  <p className="text-[13px] font-semibold text-[#1F2A44]">{status}</p>
+                </div>
+              </div>
             </div>
           </Reveal>
 
           {/* Content */}
-          <div className="flex flex-col justify-between h-full gap-6 md:gap-0">
+          <div className="flex flex-col gap-7 md:pt-6">
             <Reveal direction="right" delay={200}>
               <div className="flex flex-col gap-4 sm:gap-5">
-                <span className="inline-flex w-fit items-center bg-[#FFE9E2] text-[#E4572E] rounded-full px-3 sm:px-4 py-1 sm:py-1.5 text-[10px] sm:text-[11px] tracking-widest">
+                <span className="inline-flex w-fit items-center bg-[#FFE9E2] text-[#E4572E] rounded-full px-4 py-1.5 text-[10px] sm:text-[11px] tracking-widest font-semibold uppercase">
                   About {projectName}
                 </span>
-                <h2 className="text-[clamp(22px,3.5vw,42px)] text-[#1F2A44] leading-tight">
+                <h2 className="pd-display text-[clamp(26px,3.6vw,44px)] text-[#1F2A44] leading-[1.08] font-medium">
                   {title}
                 </h2>
-                <p className="text-[13px] sm:text-[14px] leading-relaxed text-[#5F6B7A]">
+                <p className="text-[14px] leading-relaxed text-[#6B7280]">
                   {description}
                 </p>
               </div>
             </Reveal>
 
-            <Reveal direction="up" delay={400}>
-              <div className="flex flex-wrap gap-5 sm:gap-7 pt-5 sm:pt-6 border-t border-[#E3E6EA] mt-4 sm:mt-6">
-                {[
-                  { label: "Location", value: location },
-                  { label: "Type", value: type },
-                  { label: "Status", value: status },
-                ].map((item, i) => (
-                  <div
-                    key={item.label}
-                    className="group"
-                    style={{ transition: `all 0.3s ease ${i * 80}ms` }}
-                  >
-                    <p className="text-[10px] tracking-[0.28em] uppercase text-[#A0A8B5] mb-1">
-                      {item.label}
-                    </p>
-                    <p className="text-[14px] sm:text-[15px] text-[#1F2A44] group-hover:text-[#E4572E] transition-colors">
-                      {item.value}
-                    </p>
-                  </div>
-                ))}
+            <Reveal direction="up" delay={350}>
+              <div className="pd-card p-5 sm:p-6">
+                <div className="grid grid-cols-3 gap-4 sm:gap-6">
+                  {[
+                    { label: "Location", value: location },
+                    { label: "Type", value: type },
+                    { label: "Status", value: status },
+                  ].map((item) => (
+                    <div key={item.label} className="min-w-0">
+                      <p className="text-[9px] tracking-[0.24em] uppercase text-[#A0A8B5] mb-1.5">
+                        {item.label}
+                      </p>
+                      <p className="text-[13px] sm:text-[14px] text-[#1F2A44] font-semibold truncate">
+                        {item.value}
+                      </p>
+                    </div>
+                  ))}
+                </div>
               </div>
             </Reveal>
 
-            <Reveal direction="up" delay={520}>
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-5 sm:pt-6 border-t border-[#E3E6EA] mt-2">
-                <div className="flex flex-col gap-0.5">
-                  <p className="text-[10px] tracking-[0.28em] uppercase text-[#A0A8B5]">
+            <Reveal direction="up" delay={480}>
+              <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-5 bg-[#1F2A44] rounded-3xl p-5 sm:p-6">
+                <div className="flex flex-col gap-0.5 flex-1">
+                  <p className="text-[9px] tracking-[0.24em] uppercase text-white/40">
                     Starting Price
                   </p>
                   <div className="flex items-baseline gap-1.5">
-                    <span className="text-[clamp(22px,2.8vw,32px)] font-semibold text-[#1F2A44] leading-tight tracking-tight">
+                    <span className="pd-display text-[clamp(24px,2.8vw,34px)] font-semibold text-white leading-tight tracking-tight">
                       {price}
                     </span>
-                    <span className="text-[12px] text-[#A0A8B5] font-normal">
+                    <span className="text-[12px] text-white/40 font-normal">
                       onwards
                     </span>
                   </div>
@@ -1218,54 +1321,35 @@ export default function ProjectDetailPage() {
                 {brochureUrl && brochureUrl !== "#" ? (
                   <button
                     onClick={() => handleDownloadRequest("brochure", brochureUrl)}
-                    className="group inline-flex items-center gap-2.5 px-5 py-3 rounded-xl border border-[#E3E6EA] bg-white hover:bg-[#E4572E] hover:border-[#E4572E] transition-all duration-300 cursor-pointer self-start sm:self-auto"
+                    className="group inline-flex items-center gap-2.5 px-5 py-3 rounded-2xl bg-[#E4572E] hover:bg-white transition-all duration-300 cursor-pointer flex-shrink-0"
                   >
-                    <span className="flex items-center justify-center w-7 h-7 rounded-lg bg-[#FFE9E2] group-hover:bg-white/20 transition-colors duration-300">
-                      <svg
-                        width="15"
-                        height="15"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="text-[#E4572E] group-hover:text-white transition-all duration-300 group-hover:translate-y-0.5"
-                      >
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                        <polyline points="7 10 12 15 17 10" />
-                        <line x1="12" y1="15" x2="12" y2="3" />
-                      </svg>
-                    </span>
-                    <span className="text-[12px] tracking-[0.18em] uppercase font-medium text-[#1F2A44] group-hover:text-white transition-colors duration-300">
+                    <span className="text-[11px] tracking-[0.16em] uppercase font-semibold text-white group-hover:text-[#E4572E] transition-colors duration-300">
                       Download Brochure
                     </span>
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="text-white group-hover:text-[#E4572E] transition-all duration-300 group-hover:translate-y-0.5"
+                    >
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                      <polyline points="7 10 12 15 17 10" />
+                      <line x1="12" y1="15" x2="12" y2="3" />
+                    </svg>
                   </button>
                 ) : (
                   <button
                     onClick={() =>
                       alert("Brochure coming soon. Please contact us.")
                     }
-                    className="group inline-flex items-center gap-2.5 px-5 py-3 rounded-xl border border-[#E3E6EA] bg-white hover:bg-[#E4572E] hover:border-[#E4572E] transition-all duration-300 cursor-pointer self-start sm:self-auto"
+                    className="group inline-flex items-center gap-2.5 px-5 py-3 rounded-2xl bg-white/10 hover:bg-[#E4572E] transition-all duration-300 cursor-pointer flex-shrink-0"
                   >
-                    <span className="flex items-center justify-center w-7 h-7 rounded-lg bg-[#FFE9E2] group-hover:bg-white/20 transition-colors duration-300">
-                      <svg
-                        width="15"
-                        height="15"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="text-[#E4572E] group-hover:text-white transition-all duration-300"
-                      >
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                        <polyline points="7 10 12 15 17 10" />
-                        <line x1="12" y1="15" x2="12" y2="3" />
-                      </svg>
-                    </span>
-                    <span className="text-[12px] tracking-[0.18em] uppercase font-medium text-[#1F2A44] group-hover:text-white transition-colors duration-300">
+                    <span className="text-[11px] tracking-[0.16em] uppercase font-semibold text-white transition-colors duration-300">
                       Request Brochure
                     </span>
                   </button>
@@ -1278,31 +1362,38 @@ export default function ProjectDetailPage() {
 
       {/* ── AMENITIES ── */}
       {amenities.length > 0 && (
-        <section className="w-full py-15 sm:py-20 px-2 sm:px-4 lg:px-8 xl:px-12 bg-white text-center overflow-hidden">
+        <section className="w-full pd-section-pad px-3 sm:px-4 lg:px-8 xl:px-12 bg-white text-center overflow-hidden">
           <Reveal direction="up">
-            <h2 className="text-[clamp(22px,4vw,44px)] font-normal text-[#1a2332] leading-snug mb-8 sm:mb-12">
-              Unparalleled Amenities for
-              <br />
-              Unmatched Living
+            <span className="inline-flex items-center bg-[#F8F7F4] text-[#E4572E] rounded-full px-4 py-1.5 text-[10px] sm:text-[11px] tracking-widest font-semibold uppercase mb-5">
+              Lifestyle & Comfort
+            </span>
+            <h2 className="pd-display text-[clamp(24px,4vw,46px)] font-medium text-[#1F2A44] leading-snug mb-10 sm:mb-14 max-w-2xl mx-auto">
+              Unparalleled amenities for unmatched living
             </h2>
           </Reveal>
 
-          {/* Desktop */}
-          <div className="hidden md:grid grid-cols-2 lg:grid-cols-4 gap-4 w-full">
+          {/* Desktop — asymmetric masonry-style grid */}
+          <div className="hidden md:grid grid-cols-4 gap-4 sm:gap-5 w-full max-w-[1400px] mx-auto">
             {amenities.map(({ label, img }, i) => (
-              <Reveal key={label} delay={i * 120} direction="up">
-                <div className="relative rounded-[20px] overflow-hidden group cursor-pointer w-full h-[320px] lg:h-[380px]">
+              <Reveal
+                key={label}
+                delay={i * 120}
+                direction="up"
+              >
+                <div
+                  className="relative rounded-[26px] overflow-hidden group cursor-pointer w-full h-[360px]"
+                >
                   <img
                     src={img}
                     alt={label}
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.08]"
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                  <div className="absolute top-3 right-3 w-9 h-9 rounded-full bg-white/90 flex items-center justify-center transform group-hover:rotate-45 transition-transform duration-300">
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/5 to-transparent opacity-70 group-hover:opacity-90 transition-opacity duration-500" />
+                  <div className="absolute top-4 right-4 w-9 h-9 rounded-full bg-white/15 backdrop-blur-md border border-white/25 flex items-center justify-center transform group-hover:rotate-45 group-hover:bg-[#E4572E] transition-all duration-300">
                     <svg
                       className="w-4 h-4"
                       fill="none"
-                      stroke="#1a2332"
+                      stroke="white"
                       strokeWidth={2}
                       viewBox="0 0 24 24"
                     >
@@ -1310,14 +1401,7 @@ export default function ProjectDetailPage() {
                       <polyline points="7 7 17 7 17 17" />
                     </svg>
                   </div>
-                  <span
-                    className="absolute bottom-3 left-3 px-4 py-1.5 rounded-full text-[12px] text-white"
-                    style={{
-                      background: "rgba(255,255,255,0.22)",
-                      backdropFilter: "blur(10px)",
-                      border: "1px solid rgba(255,255,255,0.35)",
-                    }}
-                  >
+                  <span className="absolute bottom-4 left-4 right-4 text-left text-[14px] font-semibold text-white tracking-wide">
                     {label}
                   </span>
                 </div>
@@ -1329,32 +1413,14 @@ export default function ProjectDetailPage() {
           <div className="md:hidden grid grid-cols-2 gap-3">
             {amenities.map(({ label, img }, i) => (
               <Reveal key={label} delay={i * 100} direction="scale">
-                <div className="relative rounded-[16px] overflow-hidden group cursor-pointer h-[200px] sm:h-[260px]">
+                <div className="relative rounded-2xl overflow-hidden group cursor-pointer h-[200px] sm:h-[260px]">
                   <img
                     src={img}
                     alt={label}
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.08]"
                   />
-                  <div className="absolute top-2 right-2 w-7 h-7 rounded-full bg-white/90 flex items-center justify-center transform group-hover:rotate-45 transition-transform duration-300">
-                    <svg
-                      className="w-3 h-3"
-                      fill="none"
-                      stroke="#1a2332"
-                      strokeWidth={2}
-                      viewBox="0 0 24 24"
-                    >
-                      <line x1="7" y1="17" x2="17" y2="7" />
-                      <polyline points="7 7 17 7 17 17" />
-                    </svg>
-                  </div>
-                  <span
-                    className="absolute bottom-2 left-2 px-3 py-1 rounded-full text-[11px] text-white"
-                    style={{
-                      background: "rgba(255,255,255,0.22)",
-                      backdropFilter: "blur(10px)",
-                      border: "1px solid rgba(255,255,255,0.35)",
-                    }}
-                  >
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                  <span className="absolute bottom-3 left-3 text-[12px] font-semibold text-white">
                     {label}
                   </span>
                 </div>
@@ -1366,20 +1432,26 @@ export default function ProjectDetailPage() {
 
       {/* ── FLOOR PREVIEWS ── */}
       {floors.length > 0 && floor && (
-        <section className="w-full py-15 sm:py-20 px-2 sm:px-4 lg:px-8 xl:px-12 bg-[#F8F7F4]">
+        <section id="pd-floor-plan" className="w-full pd-section-pad px-3 sm:px-4 lg:px-8 xl:px-12 bg-[#F8F7F4]">
+          <div className="max-w-[1400px] mx-auto">
           {/* Top bar */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8 sm:mb-10">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8 sm:mb-12">
             <Reveal direction="left">
-              <h2 className="text-[28px] sm:text-[36px] font-medium text-[#1F2A44]">
-                Floor Previews
-              </h2>
+              <div>
+                <span className="inline-flex items-center bg-white text-[#E4572E] rounded-full px-4 py-1.5 text-[10px] tracking-widest font-semibold uppercase mb-3 border border-[#E3E6EA]">
+                  Explore The Space
+                </span>
+                <h2 className="pd-display text-[28px] sm:text-[38px] font-medium text-[#1F2A44]">
+                  Floor Previews
+                </h2>
+              </div>
             </Reveal>
             <Reveal direction="right" delay={200}>
               <button
-                className="inline-flex items-center gap-3 border border-[#E3E6EA] rounded-full px-4 sm:px-5 py-2 sm:py-2.5 text-[11px] sm:text-[12px] tracking-wide text-[#1F2A44] bg-white hover:bg-[#F1F3F6] transition-all hover:shadow-md hover:scale-105 w-fit cursor-pointer"
+                className="inline-flex items-center gap-3 rounded-full px-5 sm:px-6 py-3 text-[11px] sm:text-[12px] tracking-wide font-semibold uppercase text-white bg-[#1F2A44] hover:bg-[#E4572E] transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 w-fit cursor-pointer"
               >
                 Download Floor Plan
-                <span className="w-7 sm:w-8 h-7 sm:h-8 rounded-full bg-[#E4572E] flex items-center justify-center">
+                <span className="w-7 sm:w-8 h-7 sm:h-8 rounded-full bg-white/15 flex items-center justify-center">
                   <svg
                     className="w-3 sm:w-3.5 h-3 sm:h-3.5"
                     fill="none"
@@ -1400,7 +1472,7 @@ export default function ProjectDetailPage() {
             <div className="relative">
               <button
                 onClick={() => setFloorMenuOpen(!floorMenuOpen)}
-                className="w-full flex items-center justify-between bg-white border border-[#E9EDF2] rounded-xl px-4 py-3 text-[14px] text-[#1F2A44] font-medium transition-shadow hover:shadow-md"
+                className="w-full flex items-center justify-between bg-white border border-[#E9EDF2] rounded-2xl px-4 py-3.5 text-[14px] text-[#1F2A44] font-semibold transition-shadow hover:shadow-md"
               >
                 <span>{floor.label}</span>
                 <svg
@@ -1414,12 +1486,12 @@ export default function ProjectDetailPage() {
                 </svg>
               </button>
               {floorMenuOpen && (
-                <div className="absolute top-full left-0 right-0 z-30 bg-white border border-[#E9EDF2] rounded-xl mt-1 overflow-hidden shadow-lg">
+                <div className="absolute top-full left-0 right-0 z-30 bg-white border border-[#E9EDF2] rounded-2xl mt-1 overflow-hidden shadow-xl">
                   {floors.map((f) => (
                     <button
                       key={f.key}
                       onClick={() => handleFloorChange(f.key)}
-                      className={`w-full px-4 py-3 text-left text-[13px] transition border-b border-[#F0F2F5] last:border-0 ${activeFloor === f.key ? "bg-[#FFF1EC] text-[#E4572E] font-medium" : "text-[#6B7280] hover:bg-[#F4F6F8]"}`}
+                      className={`w-full px-4 py-3 text-left text-[13px] transition border-b border-[#F0F2F5] last:border-0 ${activeFloor === f.key ? "bg-[#FFF1EC] text-[#E4572E] font-semibold" : "text-[#6B7280] hover:bg-[#F4F6F8]"}`}
                     >
                       {f.label}
                     </button>
@@ -1427,7 +1499,7 @@ export default function ProjectDetailPage() {
                 </div>
               )}
             </div>
-            <p className="text-[20px] text-[#1F2A44] font-medium">
+            <p className="pd-display text-[20px] text-[#1F2A44] font-semibold">
               {floor.title}
             </p>
             <div
@@ -1438,16 +1510,13 @@ export default function ProjectDetailPage() {
                 alt=""
                 className="w-full h-full object-cover"
               />
-              <div className="absolute bottom-4 left-4 flex items-center gap-2 bg-black/40 backdrop-blur-md rounded-full px-3 py-1.5">
-                <span className="text-[11px] text-white">360° View</span>
-              </div>
             </div>
             <div className="flex gap-3 overflow-x-auto pb-2 no-scrollbar">
               {floor.rooms.map((room, i) => (
                 <div
                   key={i}
                   onClick={() => handleRoomChange(i)}
-                  className={`relative rounded-xl overflow-hidden cursor-pointer flex-shrink-0 w-[110px] h-[80px] ${activeRoom === i ? "ring-2 ring-[#E4572E]" : ""}`}
+                  className={`relative rounded-xl overflow-hidden cursor-pointer flex-shrink-0 w-[110px] h-[80px] transition-all ${activeRoom === i ? "ring-2 ring-[#E4572E] ring-offset-2" : "opacity-70"}`}
                 >
                   <img
                     src={room.img}
@@ -1462,20 +1531,24 @@ export default function ProjectDetailPage() {
             </div>
           </div>
 
-          {/* Desktop */}
+          {/* Desktop — dashboard style */}
           <Reveal direction="up" delay={100}>
             <div className="hidden md:block">
-              <div className="bg-white rounded-[22px] p-6 md:p-8 grid md:grid-cols-[240px_1fr] gap-6 shadow-sm border border-[#E9EDF2] min-h-[520px]">
-                <div className="flex flex-col gap-2 overflow-y-auto no-scrollbar pr-2">
+              <div className="bg-white rounded-[32px] p-3 grid md:grid-cols-[260px_1fr] gap-3 shadow-xl shadow-[#1F2A44]/[0.06] border border-[#E9EDF2] min-h-[560px]">
+                {/* Sidebar */}
+                <div className="flex flex-col gap-1.5 bg-[#F8F7F4] rounded-[24px] p-3 overflow-y-auto no-scrollbar">
+                  <p className="text-[9px] tracking-[0.22em] uppercase text-[#A0A8B5] px-3 pt-2 pb-1">
+                    Select Floor
+                  </p>
                   {floors.map((f) => (
                     <button
                       key={f.key}
                       onClick={() => handleFloorChange(f.key)}
-                      className={`px-4 py-3 rounded-xl text-left flex justify-between items-center ${activeFloor === f.key ? "bg-[#FFF1EC] text-[#E4572E] font-medium" : "text-[#6B7280] hover:bg-[#F4F6F8]"}`}
+                      className={`px-4 py-3.5 rounded-2xl text-left flex justify-between items-center transition-all duration-300 ${activeFloor === f.key ? "bg-[#1F2A44] text-white shadow-md" : "text-[#6B7280] hover:bg-white"}`}
                     >
-                      {f.label}
+                      <span className="text-[13px] font-medium">{f.label}</span>
                       {activeFloor === f.key && (
-                        <span className="w-7 h-7 rounded-full bg-[#E4572E] flex items-center justify-center">
+                        <span className="w-6 h-6 rounded-full bg-[#E4572E] flex items-center justify-center">
                           <svg
                             className="w-3 h-3"
                             fill="none"
@@ -1491,67 +1564,75 @@ export default function ProjectDetailPage() {
                     </button>
                   ))}
                 </div>
-                <div className="flex flex-col h-full overflow-hidden">
-                  <p className="text-[24px] text-[#1F2A44] mb-4 font-medium">
-                    {floor.title}
-                  </p>
-                  <div className="grid grid-cols-[140px_1fr] gap-4 flex-1 min-h-0">
-                    <div className="flex flex-col gap-3 overflow-y-auto no-scrollbar pr-2 h-full">
+                {/* Preview panel */}
+                <div className="flex flex-col h-full overflow-hidden p-3">
+                  <div className="flex items-center justify-between mb-4">
+                    <p className="pd-display text-[24px] text-[#1F2A44] font-semibold">
+                      {floor.title}
+                    </p>
+                    <span className="text-[10px] tracking-[0.2em] uppercase text-[#A0A8B5]">
+                      Room {activeRoom + 1} / {floor.rooms.length}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-[150px_1fr] gap-4 flex-1 min-h-0">
+                    <div className="flex flex-col gap-3 overflow-y-auto no-scrollbar pr-1 h-full">
                       {floor.rooms.map((room, i) => (
                         <div
                           key={i}
                           onClick={() => handleRoomChange(i)}
-                          className={`relative rounded-xl overflow-hidden cursor-pointer h-[110px] flex-shrink-0 ${activeRoom === i ? "ring-2 ring-[#E4572E]" : ""}`}
+                          className={`relative rounded-2xl overflow-hidden cursor-pointer h-[110px] flex-shrink-0 transition-all duration-300 ${activeRoom === i ? "ring-2 ring-[#E4572E] ring-offset-2 scale-[1.02]" : "opacity-60 hover:opacity-100"}`}
                         >
                           <img
                             src={room.img}
                             alt={room.label}
                             className="w-full h-full object-cover"
                           />
-                          <div className="absolute bottom-0 left-0 right-0 px-2 py-1 bg-gradient-to-t from-black/60 text-[11px] text-white">
+                          <div className="absolute bottom-0 left-0 right-0 px-2 py-1.5 bg-gradient-to-t from-black/70 text-[11px] font-medium text-white">
                             {room.label}
                           </div>
                         </div>
                       ))}
                     </div>
                     <div
-                      className={`relative rounded-2xl overflow-hidden h-full room-img-fade ${roomChanging ? "changing" : ""}`}
+                      className={`relative rounded-[24px] overflow-hidden h-full room-img-fade ${roomChanging ? "changing" : ""}`}
                     >
                       <img
                         src={floor.rooms[activeRoom]?.img}
                         alt=""
-                        className="w-full h-full object-cover transition-transform duration-700 hover:scale-[1.02]"
+                        className="w-full h-full object-cover transition-transform duration-700 hover:scale-[1.03]"
                       />
-                      <div className="absolute bottom-4 left-4 flex items-center gap-2 bg-black/40 backdrop-blur-md rounded-full px-3 py-1.5">
-                        <span className="text-[11px] text-white">
-                          360° View
-                        </span>
-                      </div>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
           </Reveal>
+          </div>
         </section>
       )}
 
       {/* ── IMAGE GALLERY ── */}
       {gallery.length > 0 && (
-        <section className="w-full py-15 sm:py-20 px-2 sm:px-4 lg:px-8 xl:px-12 bg-[#f5f4f2] overflow-hidden">
+        <section className="w-full pd-section-pad px-3 sm:px-4 lg:px-8 xl:px-12 bg-white overflow-hidden">
+          <div className="max-w-[1400px] mx-auto">
           <Reveal direction="up">
-            <h2 className="text-center text-2xl sm:text-3xl font-medium text-gray-900 mb-6 sm:mb-7 tracking-tight">
-              Image Gallery
-            </h2>
+            <div className="text-center mb-8 sm:mb-10">
+              <span className="inline-flex items-center bg-[#F8F7F4] text-[#E4572E] rounded-full px-4 py-1.5 text-[10px] tracking-widest font-semibold uppercase mb-4">
+                Gallery
+              </span>
+              <h2 className="pd-display text-2xl sm:text-3xl font-medium text-[#1F2A44] tracking-tight">
+                A closer look
+              </h2>
+            </div>
           </Reveal>
 
           {/* Desktop */}
           <Reveal direction="up" delay={200}>
-            <div className="hidden sm:flex gap-2 h-[400px] md:h-[480px] items-stretch overflow-hidden w-full">
+            <div className="hidden sm:flex gap-3 h-[400px] md:h-[480px] items-stretch overflow-hidden w-full">
               {gallery.map((img) => (
                 <div
                   key={img.id}
-                  className="relative overflow-hidden rounded-2xl cursor-pointer"
+                  className="relative overflow-hidden rounded-[24px] cursor-pointer"
                   style={{
                     flex: getFlex(img.id),
                     transition: "flex 0.5s cubic-bezier(0.4,0,0.2,1)",
@@ -1570,17 +1651,32 @@ export default function ProjectDetailPage() {
                     }}
                   />
                   <div
-                    className="absolute bottom-0 left-0 right-0 p-4"
+                    className="absolute inset-0"
                     style={{
                       background:
-                        "linear-gradient(to top, rgba(0,0,0,0.6), transparent)",
-                      opacity: hoveredId === img.id ? 1 : 0,
+                        "linear-gradient(to top, rgba(0,0,0,0.65), transparent 45%)",
+                      opacity: hoveredId === img.id ? 1 : 0.15,
                       transition: "opacity 0.4s ease",
                     }}
+                  />
+                  <div
+                    className="absolute bottom-0 left-0 right-0 p-4"
+                    style={{
+                      opacity: hoveredId === img.id ? 1 : 0,
+                      transform: hoveredId === img.id ? "translateY(0)" : "translateY(8px)",
+                      transition: "all 0.4s ease",
+                    }}
                   >
-                    <span className="text-white text-[12px] font-light">
+                    <span className="text-white text-[12px] font-medium">
                       {img.alt}
                     </span>
+                  </div>
+                  <div className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/15 backdrop-blur-md border border-white/25 flex items-center justify-center opacity-0 group-hover:opacity-100"
+                    style={{ opacity: hoveredId === img.id ? 1 : 0, transition: "opacity 0.3s ease" }}
+                  >
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
+                      <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
+                    </svg>
                   </div>
                 </div>
               ))}
@@ -1588,11 +1684,11 @@ export default function ProjectDetailPage() {
           </Reveal>
 
           {/* Mobile */}
-          <div className="sm:hidden grid grid-cols-2 gap-2">
+          <div className="sm:hidden grid grid-cols-2 gap-2.5">
             {gallery.map((img, i) => (
               <Reveal key={img.id} delay={i * 80} direction="scale">
                 <div
-                  className={`relative overflow-hidden rounded-xl cursor-pointer ${i === 0 ? "col-span-2 h-[200px]" : "h-[150px]"}`}
+                  className={`relative overflow-hidden rounded-2xl cursor-pointer ${i === 0 ? "col-span-2 h-[200px]" : "h-[150px]"}`}
                 >
                   <img
                     src={img.src}
@@ -1603,27 +1699,34 @@ export default function ProjectDetailPage() {
               </Reveal>
             ))}
           </div>
+          </div>
         </section>
       )}
 
       {/* ── LOCATION ── */}
-      <section className="bg-[#f5f4f1] rounded-2xl py-15 sm:py-20 px-2 sm:px-4 lg:px-8 xl:px-12 mx-2 sm:mx-0 overflow-hidden">
+      <section className="bg-[#F8F7F4] pd-section-pad px-3 sm:px-4 lg:px-8 xl:px-12 overflow-hidden">
+        <div className="max-w-[1400px] mx-auto">
         {/* Top row */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-7 mb-5 sm:mb-6 items-start">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8 mb-8 sm:mb-10 items-end">
           <Reveal direction="left">
-            <h2 className="text-[26px] sm:text-[34px] font-medium leading-tight text-gray-900">
-              {locationTitle.includes("\n")
-                ? locationTitle.split("\n").map((line, i) => (
-                    <span key={i}>
-                      {line}
-                      {i === 0 && <br />}
-                    </span>
-                  ))
-                : locationTitle}
-            </h2>
+            <div>
+              <span className="inline-flex items-center bg-white text-[#E4572E] rounded-full px-4 py-1.5 text-[10px] tracking-widest font-semibold uppercase mb-4 border border-[#E3E6EA]">
+                Neighbourhood
+              </span>
+              <h2 className="pd-display text-[26px] sm:text-[36px] font-medium leading-tight text-[#1F2A44]">
+                {locationTitle.includes("\n")
+                  ? locationTitle.split("\n").map((line, i) => (
+                      <span key={i}>
+                        {line}
+                        {i === 0 && <br />}
+                      </span>
+                    ))
+                  : locationTitle}
+              </h2>
+            </div>
           </Reveal>
           <Reveal direction="right" delay={150}>
-            <p className="text-[13px] text-gray-500 leading-[1.75] sm:pt-1">
+            <p className="text-[13px] text-[#6B7280] leading-[1.75]">
               {locationDesc}
             </p>
           </Reveal>
@@ -1635,15 +1738,15 @@ export default function ProjectDetailPage() {
           <Reveal direction="left" delay={200}>
             <div className="flex flex-col gap-4 sm:gap-5">
               {nearbyPlaces.length > 0 ? (
-                <div className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300">
-                  <div className="grid grid-cols-[1fr_auto_auto] bg-[#f9f8f7] px-[14px] sm:px-[18px] py-[10px]">
-                    <span className="text-[10px] uppercase tracking-[.07em] font-medium text-gray-400">
+                <div className="pd-card overflow-hidden">
+                  <div className="grid grid-cols-[1fr_auto_auto] bg-[#F8F7F4] px-[16px] sm:px-[20px] py-[12px]">
+                    <span className="text-[10px] uppercase tracking-[.07em] font-semibold text-[#A0A8B5]">
                       Nearby Places
                     </span>
-                    <span className="text-[10px] uppercase tracking-[.07em] font-medium text-gray-400 px-3 sm:px-4">
+                    <span className="text-[10px] uppercase tracking-[.07em] font-semibold text-[#A0A8B5] px-3 sm:px-4">
                       Type
                     </span>
-                    <span className="text-[10px] uppercase tracking-[.07em] font-medium text-gray-400">
+                    <span className="text-[10px] uppercase tracking-[.07em] font-semibold text-[#A0A8B5]">
                       Distance
                     </span>
                   </div>
@@ -1661,27 +1764,27 @@ export default function ProjectDetailPage() {
                     return (
                       <div
                         key={i}
-                        className="grid grid-cols-[1fr_auto_auto] items-center px-[14px] sm:px-[18px] py-[11px] sm:py-[12px] border-t border-gray-100 hover:bg-[#fafaf9] transition-all cursor-default"
+                        className="grid grid-cols-[1fr_auto_auto] items-center px-[16px] sm:px-[20px] py-[13px] sm:py-[14px] border-t border-[#F0F2F5] hover:bg-[#FAFAF9] transition-all cursor-default"
                       >
-                        <div className="flex items-center gap-[8px] sm:gap-[10px] min-w-0">
+                        <div className="flex items-center gap-[10px] min-w-0">
                           <div
-                            className={`w-7 sm:w-8 h-7 sm:h-8 rounded-[9px] flex items-center justify-center flex-shrink-0 ${bg} transition-transform hover:scale-110`}
+                            className={`w-8 sm:w-9 h-8 sm:h-9 rounded-[11px] flex items-center justify-center flex-shrink-0 ${bg} transition-transform hover:scale-110`}
                           >
                             <NearbyIcon iconType={iconType} />
                           </div>
                           <div className="min-w-0">
-                            <p className="text-[12px] sm:text-[13px] font-medium text-[#1c1c1c] truncate">
+                            <p className="text-[12px] sm:text-[13px] font-semibold text-[#1F2A44] truncate">
                               {p.name}
                             </p>
-                            <p className="text-[10px] sm:text-[11px] text-gray-400 mt-[1px]">
+                            <p className="text-[10px] sm:text-[11px] text-[#A0A8B5] mt-[1px]">
                               {p.sub}
                             </p>
                           </div>
                         </div>
-                        <span className="text-[10px] sm:text-[11px] text-gray-400 px-2 sm:px-4 hidden xs:block">
+                        <span className="text-[10px] sm:text-[11px] text-[#A0A8B5] px-2 sm:px-4 hidden xs:block">
                           {p.type}
                         </span>
-                        <span className="bg-[#f0efec] text-gray-600 text-[10px] sm:text-[11px] font-medium rounded-full px-[8px] sm:px-[10px] py-[3px] sm:py-[4px] whitespace-nowrap transition-colors hover:bg-[#E4572E] hover:text-white">
+                        <span className="bg-[#F0EFEC] text-[#1F2A44] text-[10px] sm:text-[11px] font-semibold rounded-full px-[10px] sm:px-[12px] py-[4px] whitespace-nowrap transition-colors hover:bg-[#E4572E] hover:text-white">
                           {p.distance}
                         </span>
                       </div>
@@ -1689,44 +1792,77 @@ export default function ProjectDetailPage() {
                   })}
                 </div>
               ) : (
-                <div className="bg-white rounded-2xl p-6 text-center text-gray-400 text-sm shadow-sm">
+                <div className="pd-card p-8 text-center text-[#A0A8B5] text-sm">
                   Nearby places information coming soon.
                 </div>
               )}
-
-              <button
-                className="inline-flex items-center gap-[10px] border-[1.5px] border-gray-800 rounded-full px-[16px] sm:px-[18px] py-[8px] sm:py-[9px] text-[12px] sm:text-[13px] font-medium text-gray-800 bg-transparent hover:bg-[#ece9e4] transition-all hover:scale-105 hover:shadow-md w-fit"
-              >
-                Download Floor Plan
-                <span className="w-6 sm:w-7 h-6 sm:h-7 bg-[#1a1a2e] rounded-full flex items-center justify-center transition-transform hover:rotate-45">
-                  <svg
-                    width="12"
-                    height="12"
-                    viewBox="0 0 12 12"
-                    fill="none"
-                    stroke="white"
-                    strokeWidth="1.8"
-                  >
-                    <path d="M2 10L10 2M10 2H5M10 2v5" />
-                  </svg>
-                </span>
-              </button>
             </div>
           </Reveal>
 
           {/* Map */}
           <Reveal direction="right" delay={250}>
-            <div className="bg-white rounded-2xl overflow-hidden relative min-h-[260px] sm:min-h-[320px]">
+            <div className="pd-card overflow-hidden relative min-h-[280px] sm:min-h-[340px] p-0">
               <iframe
                 src={mapEmbed}
                 loading="lazy"
                 allowFullScreen
                 referrerPolicy="no-referrer-when-downgrade"
                 title={`${projectName} location map`}
-                className="w-full h-full min-h-[260px] sm:min-h-[320px] border-0 block"
+                className="w-full h-full min-h-[280px] sm:min-h-[340px] border-0 block rounded-[28px]"
               />
-              <div className="absolute bottom-[10px] left-[10px] bg-[rgba(20,20,30,0.85)] text-white text-[11px] font-medium px-3 py-[5px] rounded-full tracking-[.03em]">
-                📍 {mapLocationLabel}
+              <div className="absolute bottom-[14px] left-[14px] pd-glass-dark text-white text-[11px] font-medium px-4 py-[7px] rounded-full tracking-[.03em] flex items-center gap-1.5">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#E4572E" strokeWidth="2.5">
+                  <path d="M21 10c0 6-9 12-9 12s-9-6-9-12a9 9 0 0118 0z" />
+                  <circle cx="12" cy="10" r="3" />
+                </svg>
+                {mapLocationLabel}
+              </div>
+            </div>
+          </Reveal>
+        </div>
+        </div>
+      </section>
+
+      {/* ── FOOTER CTA ── */}
+      <section className="w-full py-16 sm:py-20 px-3 sm:px-4 lg:px-8 xl:px-12 bg-[#F8F7F4]">
+        <div className="max-w-[1400px] mx-auto">
+          <Reveal direction="up">
+            <div className="pd-gradient-cta relative overflow-hidden rounded-[32px] sm:rounded-[40px] px-6 sm:px-14 py-12 sm:py-16 text-center">
+              <div
+                className="absolute inset-0 opacity-[0.08] pointer-events-none"
+                style={{
+                  backgroundImage:
+                    "radial-gradient(circle at 2px 2px, white 1px, transparent 0)",
+                  backgroundSize: "26px 26px",
+                }}
+              />
+              <div
+                className="absolute -top-20 -right-20 w-72 h-72 rounded-full bg-[#E4572E]/25 blur-3xl pointer-events-none"
+              />
+              <div className="relative flex flex-col items-center gap-5 sm:gap-6 max-w-xl mx-auto">
+                <span className="pd-glass-dark text-white/80 text-[10px] tracking-[0.2em] uppercase px-4 py-1.5 rounded-full font-medium">
+                  Ready When You Are
+                </span>
+                <h2 className="pd-display text-[clamp(26px,4vw,44px)] font-medium text-white leading-tight">
+                  Come see {projectName} for yourself
+                </h2>
+                <p className="text-white/60 text-[13px] sm:text-[14px] leading-relaxed max-w-md">
+                  Book a private tour or get the full brochure sent straight to your inbox — no pressure, just details.
+                </p>
+                <div className="flex items-center gap-3 mt-2 flex-wrap justify-center">
+                  <button
+                    onClick={() => handleDownloadRequest("brochure", brochureUrl)}
+                    className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full bg-[#E4572E] text-white text-[11px] sm:text-[12px] font-semibold tracking-[0.1em] uppercase hover:bg-white hover:text-[#E4572E] transition-all duration-300 hover:-translate-y-0.5"
+                  >
+                    Download Brochure
+                  </button>
+                  <button
+                    onClick={() => handleDownloadRequest("floorplan", floorPlanUrl)}
+                    className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full border border-white/25 text-white text-[11px] sm:text-[12px] font-semibold tracking-[0.1em] uppercase hover:bg-white/10 transition-all duration-300"
+                  >
+                    Get Floor Plan
+                  </button>
+                </div>
               </div>
             </div>
           </Reveal>
@@ -1735,84 +1871,87 @@ export default function ProjectDetailPage() {
 
       {/* ── CUSTOMER LEAD CAPTURE MODAL (PREMIUM GLASSMORPHISM DESIGN) ── */}
       {showLeadModal && (
-        <div className="fixed inset-0 z-[9500] flex items-center justify-center px-4 py-6 overflow-y-auto backdrop-blur-md bg-black/60 animate-[scrollTopReveal_0.25s_ease_both]">
-          <div className="relative w-full max-w-xl bg-white/90 backdrop-blur-xl border border-white/40 rounded-3xl p-6 sm:p-8 shadow-2xl max-h-[90vh] overflow-y-auto no-scrollbar">
+        <div className="fixed inset-0 z-[9500] flex items-center justify-center px-4 py-6 overflow-y-auto backdrop-blur-md bg-[#0d1220]/70 animate-[scrollTopReveal_0.25s_ease_both]">
+          <div className="relative w-full max-w-xl pd-glass rounded-[32px] p-6 sm:p-9 shadow-2xl max-h-[90vh] overflow-y-auto no-scrollbar">
             
             {/* Close trigger button */}
             <button 
               onClick={handleModalClose}
               disabled={savingLead}
-              className="absolute top-6 right-6 w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-[#E4572E] text-gray-500 hover:text-white transition-all duration-200"
+              className="absolute top-6 right-6 w-9 h-9 flex items-center justify-center rounded-full bg-[#1F2A44]/5 hover:bg-[#E4572E] text-[#6B7280] hover:text-white transition-all duration-200"
             >
               ✕
             </button>
 
             {/* Updated Header Block to match image_7ad7e6.jpg */}
-            <div className="mb-6 text-left pr-8">
-              <h3 className="text-xl font-semibold text-gray-800 tracking-tight">
+            <div className="mb-7 text-left pr-8">
+              <span className="inline-flex items-center bg-[#FFE9E2] text-[#E4572E] rounded-full px-3.5 py-1 text-[10px] tracking-widest font-semibold uppercase mb-3">
+                One Step Away
+              </span>
+              <h3 className="pd-display text-2xl font-semibold text-[#1F2A44] tracking-tight">
                 Download Brochure
               </h3>
-              <p className="text-sm text-gray-500 mt-1.5 leading-relaxed">
-                Share your details and we'll start your download for <span className="font-medium text-gray-700">{projectName}</span>.
+              <p className="text-sm text-[#6B7280] mt-1.5 leading-relaxed">
+                Share your details and we'll start your download for <span className="font-semibold text-[#1F2A44]">{projectName}</span>.
               </p>
             </div>
 
             <form onSubmit={handleLeadSubmit} className="space-y-4">
               <div>
-                <label className="block text-[10px] uppercase tracking-wider text-gray-400 font-medium mb-1">Full Name *</label>
+                <label className="block text-[10px] uppercase tracking-wider text-[#A0A8B5] font-semibold mb-1.5">Full Name *</label>
                 <input 
                   type="text" 
                   required
                   placeholder="Enter your full name"
                   value={leadForm.fullName}
                   onChange={(e) => setLeadForm({...leadForm, fullName: e.target.value})}
-                  className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-[#1F2A44] focus:outline-none focus:border-[#E4572E] focus:bg-white transition-all"
+                  className="w-full px-4 py-3 bg-white border border-[#E3E6EA] rounded-2xl text-sm text-[#1F2A44] focus:outline-none focus:border-[#E4572E] focus:ring-4 focus:ring-[#E4572E]/10 transition-all"
                 />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[10px] uppercase tracking-wider text-gray-400 font-medium mb-1">Email Address *</label>
+                  <label className="block text-[10px] uppercase tracking-wider text-[#A0A8B5] font-semibold mb-1.5">Email Address *</label>
                   <input 
                     type="email" 
                     required
                     placeholder="name@example.com"
                     value={leadForm.email}
                     onChange={(e) => setLeadForm({...leadForm, email: e.target.value})}
-                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-[#1F2A44] focus:outline-none focus:border-[#E4572E] focus:bg-white transition-all"
+                    className="w-full px-4 py-3 bg-white border border-[#E3E6EA] rounded-2xl text-sm text-[#1F2A44] focus:outline-none focus:border-[#E4572E] focus:ring-4 focus:ring-[#E4572E]/10 transition-all"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] uppercase tracking-wider text-gray-400 font-medium mb-1">Phone Number *</label>
+                  <label className="block text-[10px] uppercase tracking-wider text-[#A0A8B5] font-semibold mb-1.5">Phone Number *</label>
                   <input 
                     type="tel" 
                     required
                     placeholder="Your contact number"
                     value={leadForm.phone}
                     onChange={(e) => setLeadForm({...leadForm, phone: e.target.value})}
-                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-[#1F2A44] focus:outline-none focus:border-[#E4572E] focus:bg-white transition-all"
+                    className="w-full px-4 py-3 bg-white border border-[#E3E6EA] rounded-2xl text-sm text-[#1F2A44] focus:outline-none focus:border-[#E4572E] focus:ring-4 focus:ring-[#E4572E]/10 transition-all"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-[10px] uppercase tracking-wider text-gray-400 font-medium mb-1">Date of Birth *</label>
+                <label className="block text-[10px] uppercase tracking-wider text-[#A0A8B5] font-semibold mb-1.5">Date of Birth *</label>
                 <input 
                   type="date" 
                   required
                   value={leadForm.dateOfBirth}
                   onChange={(e) => setLeadForm({...leadForm, dateOfBirth: e.target.value})}
-                  className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-[#1F2A44] focus:outline-none focus:border-[#E4572E] focus:bg-white transition-all"
+                  className="w-full px-4 py-3 bg-white border border-[#E3E6EA] rounded-2xl text-sm text-[#1F2A44] focus:outline-none focus:border-[#E4572E] focus:ring-4 focus:ring-[#E4572E]/10 transition-all"
                 />
               </div>
 
               <div>
-                <label className="block text-[10px] uppercase tracking-wider text-gray-400 font-medium mb-1">Message *</label>
+                <label className="block text-[10px] uppercase tracking-wider text-[#A0A8B5] font-semibold mb-1.5">Message *</label>
                 <textarea 
                   rows="3"
                   value={leadForm.message}
                   onChange={(e) => setLeadForm({...leadForm, message: e.target.value})}
-                  className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-[#1F2A44] focus:outline-none focus:border-[#E4572E] focus:bg-white transition-all resize-none"
+                  className="w-full px-4 py-3 bg-white border border-[#E3E6EA] rounded-2xl text-sm text-[#1F2A44] focus:outline-none focus:border-[#E4572E] focus:ring-4 focus:ring-[#E4572E]/10 transition-all resize-none"
                 />
               </div>
 
@@ -1820,7 +1959,7 @@ export default function ProjectDetailPage() {
                 <button
                   type="submit"
                   disabled={savingLead}
-                  className="w-full py-3 bg-[#E4572E] hover:bg-[#c73b22] text-white font-semibold text-sm tracking-widest uppercase rounded-xl transition-all shadow-md flex items-center justify-center gap-2 disabled:bg-gray-400 disabled:cursor-not-allowed cursor-pointer"
+                  className="w-full py-4 bg-[#E4572E] hover:bg-[#1F2A44] text-white font-semibold text-sm tracking-widest uppercase rounded-2xl transition-all shadow-lg shadow-[#E4572E]/20 flex items-center justify-center gap-2 disabled:bg-gray-400 disabled:cursor-not-allowed disabled:shadow-none cursor-pointer"
                 >
                   {savingLead ? (
                     <>
@@ -1837,6 +1976,8 @@ export default function ProjectDetailPage() {
           </div>
         </div>
       )}
+
+      </div>
 
       <Footer />
     </>
