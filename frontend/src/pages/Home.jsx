@@ -636,7 +636,7 @@ export default function Home() {
       </section>
 
       {/* ── ABOUT STRIP ── */}
-      <section className="relative bg-[#FDFAF6] py-15 sm:py-20 px-4 sm:px-8 lg:px-16 xl:px-24 overflow-hidden">
+      <section className="relative bg-[#FDFAF6] py-15 sm:py-20 px-4 sm:px-6 md:px-10 lg:px-16 xl:px-20 2xl:px-24 overflow-hidden">
         <div
           className="blob-bg absolute -top-40 -right-40 w-[500px] h-[500px] pointer-events-none"
           style={{
@@ -765,7 +765,7 @@ export default function Home() {
       </section>
 
       {/* ── STATS ── */}
-      <section className="w-full bg-[#FDFAF6] py-10 px-4 sm:px-8 lg:px-16 xl:px-24">
+      <section className="w-full bg-[#FDFAF6] py-10 px-4 sm:px-6 md:px-10 lg:px-16 xl:px-20 2xl:px-24">
         <div className="w-full">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {STATS.map((item, i) => (
@@ -800,7 +800,7 @@ export default function Home() {
       </section>
 
       {/* ── FEATURED PROJECTS (Firebase) ── */}
-      <section className="bg-[#FDFAF6] py-15 sm:py-20 px-4 sm:px-8 lg:px-16 xl:px-24 overflow-hidden">
+      <section className="bg-[#FDFAF6] py-15 sm:py-20 px-4 sm:px-6 md:px-10 lg:px-16 xl:px-20 2xl:px-24 overflow-hidden">
         <div className="w-full">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-5 mb-6">
             <div>
@@ -835,10 +835,7 @@ export default function Home() {
           </div>
 
           {projectsLoading ? (
-            <div
-              className="rounded-[18px] overflow-hidden shimmer"
-              style={{ height: 460 }}
-            />
+            <div className="rounded-[18px] overflow-hidden bg-gray-200 animate-pulse h-[460px] sm:h-[500px] lg:h-[560px]" />
           ) : (
             <FadeInScale delay={0}>
               <div className="relative rounded-[18px] overflow-hidden h-[460px] sm:h-[500px] lg:h-[560px] bg-black perspective-container">
@@ -1021,7 +1018,7 @@ export default function Home() {
 
       {/* ── PROCESS ── */}
       <section
-        className="relative py-15 sm:py-20 px-4 sm:px-8 lg:px-16 xl:px-24 overflow-hidden"
+        className="relative py-15 sm:py-20 px-4 sm:px-6 md:px-10 lg:px-16 xl:px-20 2xl:px-24 overflow-hidden"
         style={{
           background:
             "linear-gradient(120deg, #fdf7f5 0%, #f5f5f5 60%, #f5f5f5 100%)",
@@ -1112,7 +1109,7 @@ export default function Home() {
       </section>
 
       {/* ── BLOGS / ARTICLES (Firebase) ── */}
-      <section className="bg-[#FDFAF6] py-15 sm:py-20 px-4 sm:px-8 lg:px-16 xl:px-24">
+      <section className="bg-[#FDFAF6] py-15 sm:py-20 px-4 sm:px-6 md:px-10 lg:px-16 xl:px-20 2xl:px-24">
         <div className="w-full">
           <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-8">
             <FadeUp delay={0}>
@@ -1135,13 +1132,10 @@ export default function Home() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-7">
               {[1, 2, 3].map((n) => (
                 <div key={n}>
-                  <div
-                    className="rounded-2xl shimmer mb-4"
-                    style={{ height: 220 }}
-                  />
-                  <div className="shimmer rounded-full h-4 w-24 mb-2" />
-                  <div className="shimmer rounded h-5 w-full mb-1" />
-                  <div className="shimmer rounded h-4 w-3/4" />
+                  <div className="rounded-2xl bg-gray-200 animate-pulse mb-4 h-[220px] sm:h-[250px]" />
+                  <div className="bg-gray-200 animate-pulse rounded-full h-4 w-24 mb-2" />
+                  <div className="bg-gray-200 animate-pulse rounded h-5 w-full mb-1" />
+                  <div className="bg-gray-200 animate-pulse rounded h-4 w-3/4" />
                 </div>
               ))}
             </div>
@@ -1210,7 +1204,7 @@ export default function Home() {
       </section>
 
       {/* ── CTA BANNER ── */}
-      <section className="bg-[#FDFAF6] px-4 sm:px-8 lg:px-16 xl:px-24 py-5">
+      <section className="bg-[#FDFAF6] px-4 sm:px-6 md:px-10 lg:px-16 xl:px-20 2xl:px-24 py-5">
         <FadeInScale delay={0}>
           <div
             className="relative w-full rounded-[24px] sm:rounded-[28px] overflow-hidden"

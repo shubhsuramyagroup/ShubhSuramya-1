@@ -516,12 +516,13 @@ const processSteps = [
 // ── Loading Skeleton ──────────────────────────────────────────────
 function ProjectSkeleton() {
   return (
-    <div
-      style={{
-        height: "560px", borderRadius: "20px", background: "#e5e7eb",
-        animation: "skeletonPulse 1.5s ease-in-out infinite",
-      }}
-    />
+    <div className="relative h-[560px] rounded-[20px] bg-gray-200 animate-pulse overflow-hidden">
+      <div className="absolute bottom-0 left-0 right-0 p-8 flex flex-col gap-3">
+        <div className="h-4 w-28 rounded-full bg-gray-300" />
+        <div className="h-8 w-2/3 rounded-xl bg-gray-300" />
+        <div className="h-4 w-1/3 rounded-full bg-gray-300" />
+      </div>
+    </div>
   );
 }
 
@@ -658,14 +659,14 @@ export default function Project() {
       </section>
 
       {/* Stats Bar */}
-      <section className="bg-gray-950 py-10 sm:py-10 px-4 sm:px-8 lg:px-16 xl:px-24">
+      <section className="bg-gray-950 py-10 sm:py-10 px-4 sm:px-6 md:px-10 lg:px-16 xl:px-20 2xl:px-24">
         <div ref={statsRef} className="w-full grid grid-cols-2 sm:grid-cols-4 gap-10">
           {stats.map((s, i) => <StatCard key={i} stat={s} index={i} />)}
         </div>
       </section>
 
       {/* Projects Section */}
-      <section className="bg-[#F8F7F4] py-15 sm:py-20 px-4 sm:px-8 lg:px-16 xl:px-24 overflow-hidden">
+      <section className="bg-[#F8F7F4] py-15 sm:py-20 px-4 sm:px-6 md:px-10 lg:px-16 xl:px-20 2xl:px-24 overflow-hidden">
         <div className="w-full">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-14 gap-6">
             <Reveal direction="left">
@@ -715,12 +716,9 @@ export default function Project() {
 
           {/* Loading / Error / Empty / Cards */}
           {projectsLoading ? (
-            <>
-              <p className="text-xs text-gray-400 uppercase tracking-widest mb-8">Loading projects…</p>
-              <div className="flex flex-col gap-6">
-                {[1, 2, 3].map((n) => <ProjectSkeleton key={n} />)}
-              </div>
-            </>
+            <div className="flex flex-col gap-6">
+              {[1, 2, 3].map((n) => <ProjectSkeleton key={n} />)}
+            </div>
           ) : projectsError ? (
             <div className="text-center py-24">
               <p className="text-lg text-red-500 mb-2">{projectsError}</p>
@@ -749,7 +747,7 @@ export default function Project() {
       </section>
 
       {/* Process Section */}
-      <section className="bg-white py-15 sm:py-20 px-4 sm:px-8 lg:px-16 xl:px-24">
+      <section className="bg-white py-15 sm:py-20 px-4 sm:px-6 md:px-10 lg:px-16 xl:px-20 2xl:px-24">
         <div className="w-full">
           <Reveal direction="up">
             <div className="text-center mb-16">

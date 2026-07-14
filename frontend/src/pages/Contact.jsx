@@ -733,8 +733,8 @@ export default function Contact() {
       </section>
 
       {/* ── FORM + OFFICE SECTION ── */}
-      <section className="bg-[#F8F7F4] py-12 sm:py-20 px-4 sm:px-6 lg:px-8 xl:px-12">
-        <div className="max-w-screen-xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-stretch">
+      <section className="bg-[#F8F7F4] py-12 sm:py-20 px-4 sm:px-6 md:px-10 lg:px-16 xl:px-20 2xl:px-24">
+        <div className="w-full grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-stretch">
           {/* Left — Contact form */}
           <div className="h-full">
             <ContactForm onSuccess={() => setShowToast(true)} />
@@ -796,8 +796,8 @@ export default function Contact() {
       </section>
 
       {/* ── MAP SECTION ── */}
-      <section className="bg-white py-12 sm:py-20 px-4 sm:px-6 lg:px-8 xl:px-12">
-        <div className="max-w-screen-xl mx-auto">
+      <section className="bg-white py-12 sm:py-20 px-4 sm:px-6 md:px-10 lg:px-16 xl:px-20 2xl:px-24">
+        <div className="w-full">
           <div className="text-center mb-10 sm:mb-12">
             <span className="text-[#E34A2F] text-xs font-bold tracking-[0.3em] uppercase mb-3 block">
               Find Us

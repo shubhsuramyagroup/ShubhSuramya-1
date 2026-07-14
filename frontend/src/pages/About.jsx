@@ -560,7 +560,7 @@ function TestimonialsSection() {
   }, [autoPlay]);
 
   return (
-    <section className="bg-[#F8F7F4] py-14 sm:py-24 px-4 sm:px-6 overflow-x-hidden overflow-y-visible relative">
+    <section className="bg-[#F8F7F4] py-14 sm:py-24 px-4 sm:px-6 md:px-10 lg:px-16 xl:px-20 2xl:px-24 overflow-x-hidden overflow-y-visible relative">
       <div className="w-full">
         <div ref={headRef} className="text-center mb-10 sm:mb-16" style={{ opacity: headInView ? 1 : 0, transform: headInView ? "translateY(0)" : "translateY(28px)", transition: "opacity 0.9s ease, transform 0.9s ease" }}>
           <div className="flex items-center justify-center gap-3 mb-4">
@@ -725,7 +725,7 @@ export default function About() {
       </section>
 
       {/* WHO WE ARE */}
-      <section className="bg-[#F8F7F4] py-15 sm:py-20 px-4 sm:px-8 lg:px-16 xl:px-24 overflow-hidden">
+      <section className="bg-[#F8F7F4] py-15 sm:py-20 px-4 sm:px-6 md:px-10 lg:px-16 xl:px-20 2xl:px-24 overflow-hidden">
         <div className="w-full">
           <div className="flex flex-col lg:flex-row gap-10 lg:gap-16 items-center">
             <Reveal direction="left" className="flex-1 w-full">
@@ -766,7 +766,7 @@ export default function About() {
       </section>
 
       {/* PLATFORM FEATURES */}
-      <section className="bg-[#F5F3EF] py-15 sm:py-20 px-4 sm:px-8 lg:px-16 xl:px-24">
+      <section className="bg-[#F5F3EF] py-15 sm:py-20 px-4 sm:px-6 md:px-10 lg:px-16 xl:px-20 2xl:px-24">
         <div className="w-full text-center mb-8 sm:mb-14">
           <span className="inline-block text-[10px] tracking-[0.28em] uppercase font-semibold text-[#C04A24] mb-4">Platform Features</span>
           <h2 className="text-stone-800 tracking-tight leading-[1.12] mb-4 sm:mb-5" style={{ fontSize: "clamp(26px, 5vw, 52px)" }}>
@@ -789,7 +789,7 @@ export default function About() {
       {/* STATS */}
       <section ref={sectionRef} className="relative overflow-hidden bg-[#F8F7F4]">
         <div className="absolute -top-10 right-0 w-[280px] sm:w-[420px] h-[280px] sm:h-[420px] pointer-events-none" style={{ background: "radial-gradient(circle, rgba(228,87,46,0.08) 0%, transparent 72%)" }} />
-        <div className="relative w-full px-4 sm:px-8 lg:px-20 py-14 sm:py-24 lg:py-32">
+        <div className="relative w-full px-4 sm:px-6 md:px-10 lg:px-16 xl:px-20 2xl:px-24 py-14 sm:py-24 lg:py-32">
           <div className="border-l border-[#E5E7EB] pl-4 sm:pl-8 lg:pl-16">
             <div className="w-full mb-5 sm:mb-8 transition-all duration-1000" style={{ opacity: inView ? 1 : 0, transform: inView ? "translateY(0px)" : "translateY(40px)" }}>
               <h2 className="font-semibold tracking-tight leading-[1.08] text-[#1F2A44]" style={{ fontSize: "clamp(24px, 4.5vw, 64px)" }}>
@@ -816,7 +816,7 @@ export default function About() {
       </section>
 
       {/* TIMELINE */}
-      <section className="bg-[#F8F7F4] py-15 sm:py-20 px-4 sm:px-8 lg:px-16 xl:px-24 overflow-hidden">
+      <section className="bg-[#F8F7F4] py-15 sm:py-20 px-4 sm:px-6 md:px-10 lg:px-16 xl:px-20 2xl:px-24 overflow-hidden">
         <div className="w-full">
           <div className="flex flex-col lg:flex-row gap-10 lg:gap-16">
             <Reveal direction="left" className="lg:w-72 flex-shrink-0">
@@ -834,7 +834,7 @@ export default function About() {
       </section>
 
       {/* TEAM */}
-      <section className="bg-white py-15 sm:py-20 px-4 sm:px-8 lg:px-16 xl:px-24">
+      <section className="bg-white py-15 sm:py-20 px-4 sm:px-6 md:px-10 lg:px-16 xl:px-20 2xl:px-24">
         <div className="w-full">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 sm:mb-14 gap-5">
             <Reveal direction="left">
@@ -859,7 +859,7 @@ export default function About() {
       <TestimonialsSection />
 
       {/* PROCESS */}
-      <section className="bg-[#F8F7F4] py-15 sm:py-20 px-4 sm:px-8 lg:px-16 xl:px-24 overflow-hidden">
+      <section className="bg-[#F8F7F4] py-15 sm:py-20 px-4 sm:px-6 md:px-10 lg:px-16 xl:px-20 2xl:px-24 overflow-hidden">
         <div className="w-full">
           <Reveal direction="up">
             <div className="text-center mb-10 sm:mb-16">
@@ -891,7 +891,7 @@ export default function About() {
       </section>
 
       {/* ── PROJECTS — Firebase fetched ── */}
-      <section className="relative overflow-hidden bg-[#F8F7F4] py-15 sm:py-20 px-4 sm:px-8 lg:px-16 xl:px-24">
+      <section className="relative overflow-hidden bg-[#F8F7F4] py-15 sm:py-20 px-4 sm:px-6 md:px-10 lg:px-16 xl:px-20 2xl:px-24">
         <div className="absolute -top-10 right-0 w-[400px] h-[400px] pointer-events-none" style={{ background: "radial-gradient(circle, rgba(228,87,46,0.05) 0%, transparent 65%)" }} />
         <div className="absolute bottom-5 left-0 w-[300px] h-[300px] pointer-events-none" style={{ background: "radial-gradient(circle, rgba(31,42,68,0.04) 0%, transparent 65%)" }} />
         <div className="relative w-full">
@@ -909,7 +909,7 @@ export default function About() {
           {projectsLoading ? (
             <div className="flex flex-col gap-4 sm:gap-5">
               {[1, 2, 3].map((n) => (
-                <div key={n} className="rounded-[20px] overflow-hidden bg-white border border-[#E7E5E4]" style={{ height: "200px", animation: "pulse 1.5s ease-in-out infinite", background: "linear-gradient(90deg, #f0efed 25%, #e8e6e3 50%, #f0efed 75%)", backgroundSize: "200% 100%" }} />
+                <div key={n} className="rounded-[20px] overflow-hidden bg-gray-200 animate-pulse border border-[#E7E5E4] h-[200px]" />
               ))}
             </div>
           ) : recentProjects.length === 0 ? (

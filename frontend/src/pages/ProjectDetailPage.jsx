@@ -484,14 +484,70 @@ function iconBgForType(iconType) {
 // ─── Loading skeleton ────────────────────────────────────────────────────────
 function LoadingSkeleton() {
   return (
-    <div className="min-h-screen bg-[#1F2A44] flex flex-col items-center justify-center gap-6">
-      <div className="relative w-14 h-14">
-        <div className="absolute inset-0 rounded-full border-2 border-white/10" />
-        <div className="absolute inset-0 rounded-full border-2 border-[#E4572E] border-t-transparent animate-spin" />
+    <div className="min-h-screen bg-[#FDFAF6] animate-pulse">
+      {/* Navbar placeholder */}
+      <div className="px-4 sm:px-6 md:px-10 lg:px-16 xl:px-20 2xl:px-24 pt-5">
+        <div className="w-full h-[72px] sm:h-[78px] rounded-2xl bg-gray-200" />
       </div>
-      <p className="text-white/40 text-[11px] tracking-[0.32em] uppercase font-light">
-        Loading Project
-      </p>
+
+      {/* Hero */}
+      <div className="px-4 sm:px-6 md:px-10 lg:px-16 xl:px-20 2xl:px-24 pt-14 sm:pt-20">
+        <div className="grid grid-cols-1 lg:grid-cols-[1.05fr_1fr] gap-10 lg:gap-16 items-center">
+          {/* Left content */}
+          <div className="flex flex-col gap-5">
+            <div className="h-3 w-40 rounded-full bg-gray-200" />
+            <div className="flex flex-wrap gap-2.5">
+              <div className="h-7 w-24 rounded-full bg-gray-200" />
+              <div className="h-7 w-28 rounded-full bg-gray-200" />
+              <div className="h-7 w-16 rounded-full bg-gray-200" />
+            </div>
+            <div className="h-12 sm:h-16 w-4/5 rounded-2xl bg-gray-300" />
+            <div className="h-12 sm:h-16 w-3/5 rounded-2xl bg-gray-300" />
+            <div className="space-y-2.5 mt-2 max-w-lg">
+              <div className="h-3.5 w-full rounded-full bg-gray-200" />
+              <div className="h-3.5 w-4/5 rounded-full bg-gray-200" />
+            </div>
+            <div className="flex flex-wrap gap-2.5 mt-2">
+              <div className="h-6 w-20 rounded-full bg-gray-200" />
+              <div className="h-6 w-20 rounded-full bg-gray-200" />
+              <div className="h-6 w-20 rounded-full bg-gray-200" />
+            </div>
+            <div className="h-14 w-full sm:w-56 rounded-full bg-gray-300 mt-4" />
+          </div>
+          {/* Right media */}
+          <div className="h-[420px] sm:h-[520px] lg:h-[600px] rounded-[32px] bg-gray-300" />
+        </div>
+      </div>
+
+      {/* Stats row */}
+      <div className="px-4 sm:px-6 md:px-10 lg:px-16 xl:px-20 2xl:px-24 py-14 sm:py-20">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+          {[0, 1, 2, 3].map((n) => (
+            <div key={n} className="h-[190px] rounded-[26px] bg-gray-200" />
+          ))}
+        </div>
+      </div>
+
+      {/* Content split */}
+      <div className="px-4 sm:px-6 md:px-10 lg:px-16 xl:px-20 2xl:px-24 pb-16 sm:pb-24">
+        <div className="grid grid-cols-1 md:grid-cols-[1.1fr_1fr] gap-10 lg:gap-16 items-center">
+          <div className="h-[340px] sm:h-[440px] md:h-[540px] rounded-[32px] bg-gray-300" />
+          <div className="flex flex-col gap-4">
+            <div className="h-3 w-40 rounded-full bg-gray-200" />
+            <div className="h-8 w-3/4 rounded-2xl bg-gray-300" />
+            <div className="space-y-2.5 mt-2">
+              <div className="h-3.5 w-full rounded-full bg-gray-200" />
+              <div className="h-3.5 w-11/12 rounded-full bg-gray-200" />
+              <div className="h-3.5 w-4/5 rounded-full bg-gray-200" />
+            </div>
+            <div className="grid grid-cols-3 gap-3 mt-4">
+              <div className="h-24 rounded-2xl bg-gray-200" />
+              <div className="h-24 rounded-2xl bg-gray-200" />
+              <div className="h-24 rounded-2xl bg-gray-200" />
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -1006,7 +1062,7 @@ export default function ProjectDetailPage() {
       )}
 
       {/* ── HERO ── */}
-      <section className="relative w-full min-h-[92vh] lg:min-h-screen overflow-hidden bg-[#FDFAF6] flex items-center pt-28 pb-16 sm:pt-32 sm:pb-20 px-4 sm:px-6 lg:px-8 xl:px-12">
+      <section className="relative w-full min-h-[92vh] lg:min-h-screen overflow-hidden bg-[#FDFAF6] flex items-center pt-28 pb-16 sm:pt-32 sm:pb-20 px-4 sm:px-6 md:px-10 lg:px-16 xl:px-20 2xl:px-24">
         {/* decorative background */}
         <div className="absolute inset-0 pd-arch-grid opacity-70 pointer-events-none" />
         <div
@@ -1016,12 +1072,12 @@ export default function ProjectDetailPage() {
         <div className="absolute bottom-[-120px] -left-32 w-[460px] h-[460px] pd-blob bg-[#E4572E]/10 pointer-events-none" />
         <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-[#FDFAF6] pointer-events-none" />
 
-        <div className="relative z-10 w-full max-w-[1400px] mx-auto grid grid-cols-1 lg:grid-cols-[1.05fr_1fr] gap-10 lg:gap-16 items-center">
+        <div className="relative z-10 w-full w-full grid grid-cols-1 lg:grid-cols-[1.05fr_1fr] gap-10 lg:gap-16 items-center">
           {/* ── Left: content ── */}
           <div className="flex flex-col">
             {/* Breadcrumb */}
             <nav
-              className="flex items-center gap-2 sm:gap-2.5 text-[10px] sm:text-[11px] font-medium tracking-[0.16em] uppercase mb-6"
+              className="flex flex-wrap items-center gap-x-2 gap-y-1 sm:gap-x-2.5 text-[10px] sm:text-[11px] font-medium tracking-[0.16em] uppercase mb-6"
               style={{
                 opacity: pageLoaded ? 1 : 0,
                 transform: pageLoaded ? "translateY(0)" : "translateY(20px)",
@@ -1121,7 +1177,7 @@ export default function ProjectDetailPage() {
             >
               <button
                 onClick={() => handleDownloadRequest("brochure", brochureUrl)}
-                className="pd-btn group inline-flex items-center gap-2.5 px-7 py-4 rounded-full bg-[#E4572E] text-white text-[12px] font-semibold tracking-[0.12em] uppercase shadow-lg shadow-[#E4572E]/25 cursor-pointer"
+                className="pd-btn group inline-flex w-full sm:w-auto justify-center items-center gap-2.5 px-7 py-4 rounded-full bg-[#E4572E] text-white text-[12px] font-semibold tracking-[0.12em] uppercase shadow-lg shadow-[#E4572E]/25 cursor-pointer"
               >
                 Download Brochure
                 <span className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center group-hover:translate-x-0.5 transition-transform">
@@ -1253,7 +1309,7 @@ export default function ProjectDetailPage() {
       </section>
 
       {/* ── STATS BAND ── */}
-      <section className="w-full bg-[#1F2A44] relative overflow-hidden pd-section-pad px-3 sm:px-4 lg:px-8 xl:px-12">
+      <section className="w-full bg-[#1F2A44] relative overflow-hidden py-10 sm:py-14 md:py-16 lg:py-20 xl:py-24 2xl:py-28 px-4 sm:px-6 md:px-10 lg:px-16 xl:px-20 2xl:px-24">
         <div
           className="absolute inset-0 opacity-[0.06]"
           style={{
@@ -1263,7 +1319,7 @@ export default function ProjectDetailPage() {
           }}
         />
         <div className="absolute -top-24 left-1/4 w-80 h-80 pd-blob bg-[#E4572E]/20 pointer-events-none" />
-        <div className="max-w-[1400px] mx-auto relative">
+        <div className="w-full relative">
           <Reveal direction="up">
             <div className="text-center mb-10 sm:mb-14">
               <span className="pd-eyebrow justify-center text-[11px] tracking-[0.22em] uppercase text-[#E4572E] font-semibold mb-4">
@@ -1343,13 +1399,13 @@ export default function ProjectDetailPage() {
       </section>
 
       {/* ── ABOUT ── */}
-      <section className="w-full pd-section-pad px-3 sm:px-4 lg:px-8 xl:px-12 bg-[#FDFAF6] relative overflow-hidden">
+      <section className="w-full py-10 sm:py-14 md:py-16 lg:py-20 xl:py-24 2xl:py-28 px-4 sm:px-6 md:px-10 lg:px-16 xl:px-20 2xl:px-24 bg-[#FDFAF6] relative overflow-hidden">
         <div
           className="absolute top-1/3 -left-32 w-96 h-96 rounded-full opacity-40 pointer-events-none"
           style={{ background: "radial-gradient(circle, #FFE9E2 0%, transparent 70%)" }}
         />
         <div className="absolute -bottom-16 right-0 w-80 h-80 pd-blob bg-[#E4572E]/5 pointer-events-none" />
-        <div className="max-w-[1400px] mx-auto grid grid-cols-1 md:grid-cols-[1.1fr_1fr] gap-10 sm:gap-14 lg:gap-16 items-center relative">
+        <div className="w-full grid grid-cols-1 md:grid-cols-[1.1fr_1fr] gap-10 sm:gap-14 lg:gap-16 items-center relative">
           {/* Image */}
           <Reveal direction="left" delay={100}>
             <div className="relative">
@@ -1396,7 +1452,7 @@ export default function ProjectDetailPage() {
             </Reveal>
 
             <Reveal direction="up" delay={350}>
-              <div className="grid grid-cols-3 gap-3 sm:gap-4">
+              <div className="grid grid-cols-3 gap-2.5 sm:gap-4">
                 {[
                   {
                     label: "Location",
@@ -1431,7 +1487,7 @@ export default function ProjectDetailPage() {
                 ].map((item) => (
                   <div
                     key={item.label}
-                    className="pd-card p-4 sm:p-5 min-w-0 flex flex-col gap-2.5"
+                    className="pd-card p-3 sm:p-5 min-w-0 flex flex-col gap-2.5"
                   >
                     <span className="w-9 h-9 rounded-xl bg-[#FFE9E2] flex items-center justify-center flex-shrink-0">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E4572E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -1470,7 +1526,7 @@ export default function ProjectDetailPage() {
                 {brochureUrl && brochureUrl !== "#" ? (
                   <button
                     onClick={() => handleDownloadRequest("brochure", brochureUrl)}
-                    className="group inline-flex items-center gap-2.5 px-5 py-3 rounded-2xl bg-[#E4572E] hover:bg-white transition-all duration-300 cursor-pointer flex-shrink-0"
+                    className="group inline-flex w-full sm:w-auto justify-center items-center gap-2.5 px-5 py-3 rounded-2xl bg-[#E4572E] hover:bg-white transition-all duration-300 cursor-pointer flex-shrink-0"
                   >
                     <span className="text-[11px] tracking-[0.16em] uppercase font-semibold text-white group-hover:text-[#E4572E] transition-colors duration-300">
                       Download Brochure
@@ -1496,7 +1552,7 @@ export default function ProjectDetailPage() {
                     onClick={() =>
                       alert("Brochure coming soon. Please contact us.")
                     }
-                    className="group inline-flex items-center gap-2.5 px-5 py-3 rounded-2xl bg-white/10 hover:bg-[#E4572E] transition-all duration-300 cursor-pointer flex-shrink-0"
+                    className="group inline-flex w-full sm:w-auto justify-center items-center gap-2.5 px-5 py-3 rounded-2xl bg-white/10 hover:bg-[#E4572E] transition-all duration-300 cursor-pointer flex-shrink-0"
                   >
                     <span className="text-[11px] tracking-[0.16em] uppercase font-semibold text-white transition-colors duration-300">
                       Request Brochure
@@ -1511,7 +1567,7 @@ export default function ProjectDetailPage() {
 
       {/* ── AMENITIES ── */}
       {amenities.length > 0 && (
-        <section className="w-full pd-section-pad px-3 sm:px-4 lg:px-8 xl:px-12 bg-white text-center overflow-hidden">
+        <section className="w-full py-10 sm:py-14 md:py-16 lg:py-20 xl:py-24 2xl:py-28 px-4 sm:px-6 md:px-10 lg:px-16 xl:px-20 2xl:px-24 bg-white text-center overflow-hidden">
           <Reveal direction="up">
             <span className="pd-eyebrow justify-center text-[11px] tracking-[0.22em] uppercase text-[#E4572E] font-semibold mb-4">
               <span className="w-6 h-px bg-[#E4572E]/60" />
@@ -1524,7 +1580,7 @@ export default function ProjectDetailPage() {
           </Reveal>
 
           {/* Desktop — asymmetric masonry grid */}
-          <div className="hidden md:block w-full max-w-[1400px] mx-auto">
+          <div className="hidden md:block w-full w-full">
             <div className="pd-masonry">
               {amenities.map(({ label, img }, i) => {
                 const span =
@@ -1588,8 +1644,8 @@ export default function ProjectDetailPage() {
 
       {/* ── FLOOR PREVIEWS ── */}
       {floors.length > 0 && floor && (
-        <section id="pd-floor-plan" className="w-full pd-section-pad px-3 sm:px-4 lg:px-8 xl:px-12 bg-[#FDFAF6]">
-          <div className="max-w-[1400px] mx-auto">
+        <section id="pd-floor-plan" className="w-full py-10 sm:py-14 md:py-16 lg:py-20 xl:py-24 2xl:py-28 px-4 sm:px-6 md:px-10 lg:px-16 xl:px-20 2xl:px-24 bg-[#FDFAF6]">
+          <div className="w-full">
           {/* Top bar */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8 sm:mb-12">
             <Reveal direction="left">
@@ -1606,7 +1662,7 @@ export default function ProjectDetailPage() {
             <Reveal direction="right" delay={200}>
               <button
                 onClick={() => handleDownloadRequest("floorplan", floorPlanUrl)}
-                className="pd-btn inline-flex items-center gap-3 rounded-full px-5 sm:px-6 py-3.5 text-[11px] sm:text-[12px] tracking-wide font-semibold uppercase text-white bg-[#1F2A44] hover:bg-[#E4572E] shadow-lg shadow-[#1F2A44]/15 w-fit cursor-pointer"
+                className="pd-btn inline-flex w-full sm:w-fit justify-center items-center gap-3 rounded-full px-5 sm:px-6 py-3.5 text-[11px] sm:text-[12px] tracking-wide font-semibold uppercase text-white bg-[#1F2A44] hover:bg-[#E4572E] shadow-lg shadow-[#1F2A44]/15 cursor-pointer"
               >
                 Download Floor Plan
                 <span className="w-7 sm:w-8 h-7 sm:h-8 rounded-full bg-white/15 flex items-center justify-center">
@@ -1708,8 +1764,8 @@ export default function ProjectDetailPage() {
 
       {/* ── IMAGE GALLERY ── */}
       {gallery.length > 0 && (
-        <section className="w-full pd-section-pad px-3 sm:px-4 lg:px-8 xl:px-12 bg-white overflow-hidden">
-          <div className="max-w-[1400px] mx-auto">
+        <section className="w-full py-10 sm:py-14 md:py-16 lg:py-20 xl:py-24 2xl:py-28 px-4 sm:px-6 md:px-10 lg:px-16 xl:px-20 2xl:px-24 bg-white overflow-hidden">
+          <div className="w-full">
           <Reveal direction="up">
             <div className="text-center mb-8 sm:mb-12">
               <span className="pd-eyebrow justify-center text-[11px] tracking-[0.22em] uppercase text-[#E4572E] font-semibold mb-4">
@@ -1725,7 +1781,7 @@ export default function ProjectDetailPage() {
 
           {/* Desktop */}
           <Reveal direction="up" delay={200}>
-            <div className="hidden sm:flex gap-3 h-[400px] md:h-[520px] items-stretch overflow-hidden w-full">
+            <div className="hidden md:flex gap-3 h-[440px] md:h-[520px] items-stretch overflow-hidden w-full">
               {gallery.map((img, idx) => (
                 <div
                   key={img.id}
@@ -1790,7 +1846,7 @@ export default function ProjectDetailPage() {
           </Reveal>
 
           {/* Mobile */}
-          <div className="sm:hidden grid grid-cols-2 gap-2.5">
+          <div className="md:hidden grid grid-cols-2 gap-2.5">
             {gallery.map((img, i) => (
               <Reveal key={img.id} delay={i * 80} direction="scale" className="h-full">
                 <div className="relative overflow-hidden rounded-2xl cursor-pointer w-full aspect-square">
@@ -1808,8 +1864,8 @@ export default function ProjectDetailPage() {
       )}
 
       {/* ── LOCATION ── */}
-      <section className="bg-[#FDFAF6] pd-section-pad px-3 sm:px-4 lg:px-8 xl:px-12 overflow-hidden">
-        <div className="max-w-[1400px] mx-auto">
+      <section className="bg-[#FDFAF6] py-10 sm:py-14 md:py-16 lg:py-20 xl:py-24 2xl:py-28 px-4 sm:px-6 md:px-10 lg:px-16 xl:px-20 2xl:px-24 overflow-hidden">
+        <div className="w-full">
         {/* Top row */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8 mb-8 sm:mb-10 items-end">
           <Reveal direction="left">
@@ -1921,8 +1977,8 @@ export default function ProjectDetailPage() {
       </section>
 
       {/* ── DOWNLOAD + FOOTER CTA ── */}
-      <section id="pd-contact" className="w-full pd-section-pad px-3 sm:px-4 lg:px-8 xl:px-12 bg-[#FDFAF6]">
-        <div className="max-w-[1400px] mx-auto">
+      <section id="pd-contact" className="w-full py-10 sm:py-14 md:py-16 lg:py-20 xl:py-24 2xl:py-28 px-4 sm:px-6 md:px-10 lg:px-16 xl:px-20 2xl:px-24 bg-[#FDFAF6]">
+        <div className="w-full">
           <Reveal direction="up">
             <div className="text-center mb-10 sm:mb-14">
               <span className="pd-eyebrow justify-center text-[11px] tracking-[0.22em] uppercase text-[#E4572E] font-semibold mb-4">
