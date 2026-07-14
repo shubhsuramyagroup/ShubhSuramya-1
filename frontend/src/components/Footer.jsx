@@ -5,27 +5,15 @@ import logo1 from "../../public/logo1.png";
 
 export default function Footer() {
   return (
-    <footer
-      className="relative overflow-hidden"
-      style={{
-        background:
-          "linear-gradient(to bottom, #FDFAF6 0%, #e3eaf6 35%, #b7c8e6 70%, #7c99d0 100%)",
-      }}
-    >
-      {/* overlay */}
+    <footer className="w-full px-2 sm:px-4 lg:px-8 py-8 sm:py-12 bg-[#FDFAF6]">
       <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          background:
-            "radial-gradient(circle at 50% 80%, rgba(0,0,0,0.08), transparent 60%)",
-        }}
-      />
-
-      <div className="relative z-10 w-full py-15 sm:py-20 px-2 sm:px-4 lg:px-8 xl:px-12">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 mb-16">
+        className="relative mx-auto w-full max-w-[1400px] rounded-[32px] py-16 px-8 lg:px-14 border shadow-sm"
+        style={{ backgroundColor: "#FFFFFF", borderColor: "rgba(0,0,0,0.06)" }}
+      >
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-10">
           {/* 1. BRAND */}
           <div className="flex flex-col gap-5">
-            <Link to="/" className="flex items-center pt-2 gap-2">
+            <Link to="/" className="flex items-center gap-2">
               {/* FIRST LOGO */}
               <div className="flex items-center justify-center">
                 <img
@@ -45,114 +33,165 @@ export default function Footer() {
               </div>
             </Link>
 
-            <p className="text-[#1E2A5A]/60 text-sm leading-relaxed max-w-xs">
+            <p
+              className="text-sm max-w-xs"
+              style={{ color: "#6B7280", lineHeight: 1.8 }}
+            >
               Accurate property information, vetted listings, and smart tools —
               built to simplify your search and support every decision you make.
             </p>
 
-            <div className="flex items-center gap-3 mt-2">
+            <p className="text-sm" style={{ color: "#4B5563" }}>
+              shubhsuramyagroup@gmail.com
+            </p>
+
+            <div className="flex items-center gap-3 mt-1">
               {[TbBrandX, TbBrandLinkedin, TbBrandFacebook].map((Icon, i) => (
                 <a
                   key={i}
                   href="#"
-                  className="w-9 h-9 rounded-full border flex items-center justify-center text-[#1E2A5A]/60 hover:text-[#E34A2F] hover:border-[#E34A2F] transition"
+                  className="w-11 h-11 rounded-full flex items-center justify-center transition-colors duration-300"
+                  style={{ backgroundColor: "#F3F4F6", color: "#374151" }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = "#E34A2F";
+                    e.currentTarget.style.color = "#FFFFFF";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = "#F3F4F6";
+                    e.currentTarget.style.color = "#374151";
+                  }}
                 >
-                  <Icon size={16} />
+                  <Icon size={18} />
                 </a>
               ))}
             </div>
           </div>
 
           {/* 2. QUICK LINKS */}
-          <div className="flex flex-col gap-3">
-  <h4 className="text-[#1E2A5A] font-semibold mb-2">Quick Links</h4>
+          <div className="flex flex-col gap-4">
+            <h4
+              className="font-semibold"
+              style={{ color: "#111827", fontSize: "22px" }}
+            >
+              Quick Links
+            </h4>
 
-  <Link
-    to="/"
-    className="text-[#1E2A5A]/60 hover:text-[#E34A2F] text-sm transition"
-  >
-    Home
-  </Link>
+            <div className="flex flex-col gap-3">
+              <Link
+                to="/"
+                className="text-sm transition-colors duration-300"
+                style={{ color: "#4B5563" }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = "#E34A2F")}
+                onMouseLeave={(e) => (e.currentTarget.style.color = "#4B5563")}
+              >
+                Home
+              </Link>
 
-  <Link
-    to="/projects"
-    className="text-[#1E2A5A]/60 hover:text-[#E34A2F] text-sm transition"
-  >
-    Projects
-  </Link>
+              <Link
+                to="/projects"
+                className="text-sm transition-colors duration-300"
+                style={{ color: "#4B5563" }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = "#E34A2F")}
+                onMouseLeave={(e) => (e.currentTarget.style.color = "#4B5563")}
+              >
+                Projects
+              </Link>
 
-  <Link
-    to="/about"
-    className="text-[#1E2A5A]/60 hover:text-[#E34A2F] text-sm transition"
-  >
-    About
-  </Link>
+              <Link
+                to="/about"
+                className="text-sm transition-colors duration-300"
+                style={{ color: "#4B5563" }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = "#E34A2F")}
+                onMouseLeave={(e) => (e.currentTarget.style.color = "#4B5563")}
+              >
+                About
+              </Link>
 
-  <Link
-    to="/contact"
-    className="text-[#1E2A5A]/60 hover:text-[#E34A2F] text-sm transition"
-  >
-    Contact
-  </Link>
-
-</div>
-
-          {/* 3. CONTACT */}
-          <div className="flex flex-col gap-3">
-            <h4 className="text-[#1E2A5A] font-semibold mb-2">Contact Us</h4>
-
-            <p className="text-[#1E2A5A]/60 text-sm">shubhsuramyagroup@gmail.com</p>
-
-            <p className="text-[#1E2A5A]/60 text-sm">(+91) 96872 58222 </p>
+              <Link
+                to="/contact"
+                className="text-sm transition-colors duration-300"
+                style={{ color: "#4B5563" }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = "#E34A2F")}
+                onMouseLeave={(e) => (e.currentTarget.style.color = "#4B5563")}
+              >
+                Contact
+              </Link>
+            </div>
           </div>
 
-          {/* 4. ADDRESS */}
-          <div className="flex flex-col gap-3">
-            <h4 className="text-[#1E2A5A] font-semibold mb-2">Our Address</h4>
+          {/* 3. CONTACT */}
+          <div className="flex flex-col gap-4">
+            <h4
+              className="font-semibold"
+              style={{ color: "#111827", fontSize: "22px" }}
+            >
+              Contact Us
+            </h4>
 
-            <p className="text-[#1E2A5A]/60 text-sm leading-relaxed">
+            <div className="flex flex-col gap-3">
+              <p className="text-sm" style={{ color: "#4B5563" }}>
+                shubhsuramyagroup@gmail.com
+              </p>
+
+              <p className="text-sm" style={{ color: "#4B5563" }}>
+                (+91) 96872 58222
+              </p>
+            </div>
+          </div>
+
+          {/* 4. ADDRESS + NEWSLETTER */}
+          <div className="flex flex-col gap-4">
+            <h4
+              className="font-semibold"
+              style={{ color: "#111827", fontSize: "22px" }}
+            >
+              Our Address
+            </h4>
+
+            <p
+              className="text-sm"
+              style={{ color: "#4B5563", lineHeight: 1.8 }}
+            >
               Shubh Suramya Corporate House opp suramaya dreams
-Suramya Road, Near Eklingji Road, Sanand-382110
+              <br />
+              Suramya Road, Near Eklingji Road, Sanand-382110
             </p>
           </div>
         </div>
 
+        {/* DIVIDER */}
+        <div
+          className="mt-14 mb-6 w-full"
+          style={{ borderTop: "1px solid rgba(0,0,0,0.08)" }}
+        />
+
         {/* BOTTOM */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-6 border-t border-[#1E2A5A]/10">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
           <a
             href="#"
-            className="text-[#1E2A5A]/40 hover:text-[#E34A2F] text-xs transition"
+            className="text-xs transition-colors duration-300"
+            style={{ color: "#6B7280" }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = "#E34A2F")}
+            onMouseLeave={(e) => (e.currentTarget.style.color = "#6B7280")}
           >
             Terms and Conditions
           </a>
 
-          <p className="text-[#1E2A5A]/40 text-xs">
+          <p className="text-xs order-first sm:order-none" style={{ color: "#6B7280" }}>
             © {new Date().getFullYear()} Shubh Suramya. All Rights Reserved.
           </p>
 
           <a
             href="#"
-            className="text-[#1E2A5A]/40 hover:text-[#E34A2F] text-xs transition"
+            className="text-xs transition-colors duration-300"
+            style={{ color: "#6B7280" }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = "#E34A2F")}
+            onMouseLeave={(e) => (e.currentTarget.style.color = "#6B7280")}
           >
             Privacy Policy
           </a>
         </div>
       </div>
-
-      {/* WATERMARK */}
-      <div className="absolute bottom-0 left-0 right-0 flex justify-center pointer-events-none overflow-hidden -pb-4 z-50">
-        <span
-          className="font-semibold text-[#1E2A5A] opacity-[0.1] whitespace-nowrap"
-          style={{
-            fontSize: "clamp(20px, 12vw, 210px)",
-            lineHeight: 1,
-            letterSpacing: "-0.02em",
-          }}
-        >
-          Shubh Suramya
-        </span>
-      </div>
     </footer>
   );
 }
-
