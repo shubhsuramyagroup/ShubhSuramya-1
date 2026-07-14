@@ -3,6 +3,13 @@ import heroimg from "../../public/about_img.jpg";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import { Link } from "react-router-dom";
+import Seo from "../components/Seo";
+import {
+  organizationSchema,
+  localBusinessSchema,
+  breadcrumbSchema,
+  keywords as buildKeywords,
+} from "../seo/siteConfig";
 import { collection, getDocs, orderBy, limit, query } from "firebase/firestore";
 import { db } from "../firebase"; // adjust path if needed
 
@@ -653,6 +660,21 @@ export default function About() {
 
   return (
     <>
+      <Seo
+        title="About Shubh Suramya | Real Estate Developer in Ahmedabad"
+        description="Discover Shubh Suramya's story — years of crafting luxury residential and commercial real estate in Ahmedabad, Gujarat with modern architecture and trust."
+        keywords={buildKeywords(["About Shubh Suramya", "Real Estate Company Ahmedabad"])}
+        canonicalPath="/about"
+        jsonLd={[
+          organizationSchema(),
+          localBusinessSchema(),
+          breadcrumbSchema([
+            { name: "Home", path: "/" },
+            { name: "About", path: "/about" },
+          ]),
+        ]}
+      />
+
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=Manrope:wght@400;500;600;700;800;900&display=swap');
         *, *::before, *::after { box-sizing: border-box; }

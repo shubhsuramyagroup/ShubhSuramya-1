@@ -5,6 +5,7 @@ import About from "./pages/About";
 import Project from "./pages/Project";
 import Contact from "./pages/Contact";
 import ProjectDetailPage from "./pages/ProjectDetailPage";
+import NotFound from "./pages/NotFound";
 import ScrollToTop from "./components/ScrollToTop";
 
 import AdminLogin from "./admin/pages/AdminLogin";
@@ -80,6 +81,9 @@ function App() {
             </FlatSaleProtectedRoute>
           }
         />
+
+        {/* Catch-all 404 — additive; does not affect any existing route */}
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>
   );

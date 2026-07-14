@@ -15,6 +15,13 @@ import {
 import { LuMapPin, LuBedDouble, LuBath, LuRuler } from "react-icons/lu";
 import { collection, getDocs, orderBy, limit, query } from "firebase/firestore";
 import { db } from "../firebase"; // adjust path if needed
+import Seo from "../components/Seo";
+import {
+  organizationSchema,
+  localBusinessSchema,
+  websiteSchema,
+  keywords as buildKeywords,
+} from "../seo/siteConfig";
 
 // ─── Firebase fetchers ────────────────────────────────────────────
 
@@ -441,6 +448,14 @@ export default function Home() {
 
   return (
     <>
+      <Seo
+        title="Shubh Suramya | Luxury Real Estate Developer in Ahmedabad"
+        description="Shubh Suramya builds luxury residential & commercial projects in Ahmedabad, Gujarat — premium villas and modern apartments crafted with modern architecture."
+        keywords={buildKeywords()}
+        canonicalPath="/"
+        jsonLd={[organizationSchema(), localBusinessSchema(), websiteSchema()]}
+      />
+
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=Manrope:wght@400;500;600;700;800;900&display=swap');
         *, *::before, *::after { box-sizing: border-box; }

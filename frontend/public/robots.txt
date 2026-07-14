@@ -1,0 +1,37 @@
+# robots.txt — Shubh Suramya
+# Public marketing pages are fully crawlable. Admin / vendor / sales
+# areas are private app routes and are excluded from indexing.
+
+User-agent: *
+Allow: /
+
+# Private application areas (no SEO value, gated behind auth)
+Disallow: /admin
+Disallow: /vendor
+Disallow: /vendors
+Disallow: /sale
+Disallow: /sales
+
+# Explicitly welcome major AI + search crawlers
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: GPTBot
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+Sitemap: https://www.shubhsuramya.com/sitemap.xml

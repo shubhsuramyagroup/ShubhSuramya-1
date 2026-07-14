@@ -2,6 +2,13 @@
 
 @import "tailwindcss";
 
+/* Extra small breakpoint (activates the intended xs: responsive variants
+   already used in the pages — e.g. 2-column amenities and brochure
+   thumbnails in the 480–640px range). Tailwind v4 theme config only. */
+@theme {
+  --breakpoint-xs: 480px;
+}
+
 body {
   font-family: 'Montserrat';
 }

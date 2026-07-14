@@ -1,0 +1,28 @@
+{
+  "name": "Shubh Suramya — Luxury Real Estate in Ahmedabad",
+  "short_name": "Shubh Suramya",
+  "description": "Luxury residential & commercial real estate developer in Ahmedabad, Gujarat.",
+  "start_url": "/?utm_source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "lang": "en-IN",
+  "dir": "ltr",
+  "background_color": "#FDFAF6",
+  "theme_color": "#1F2A44",
+  "categories": ["business", "lifestyle", "shopping"],
+  "icons": [
+    {
+      "src": "/logo.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any"
+    },
+    {
+      "src": "/logo.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ]
+}

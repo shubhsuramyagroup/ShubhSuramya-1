@@ -1,6 +1,13 @@
 import { useEffect, useState, useRef } from "react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import Seo from "../components/Seo";
+import {
+  contactPageSchema,
+  localBusinessSchema,
+  breadcrumbSchema,
+  keywords as buildKeywords,
+} from "../seo/siteConfig";
 import { addContact } from "../services/contactService";
 import { PhoneInput } from "react-international-phone";
 import "react-international-phone/style.css";
@@ -430,6 +437,21 @@ export default function Contact() {
 
   return (
     <>
+      <Seo
+        title="Contact Shubh Suramya | Real Estate in Ahmedabad, Gujarat"
+        description="Contact Shubh Suramya for luxury residential & commercial properties in Ahmedabad, Gujarat. Call +91 96872 58222 or visit our Sanand corporate office."
+        keywords={buildKeywords(["Contact Shubh Suramya", "Real Estate Office Ahmedabad"])}
+        canonicalPath="/contact"
+        jsonLd={[
+          contactPageSchema(),
+          localBusinessSchema(),
+          breadcrumbSchema([
+            { name: "Home", path: "/" },
+            { name: "Contact", path: "/contact" },
+          ]),
+        ]}
+      />
+
       <Navbar />
 
       <style>{`

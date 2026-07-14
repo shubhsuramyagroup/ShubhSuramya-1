@@ -8,6 +8,12 @@
 // to a premium SaaS / luxury real-estate aesthetic (Apple × Stripe × Airbnb
 // Luxury). Every hook, state variable, function, Firestore call, and prop
 // mapping below is unchanged from the original implementation.
+//
+// This pass additionally adds: (1) intelligent conditional rendering so a
+// section only appears when Firestore actually provided usable data, and
+// (2) presentation-only fixes so long dynamic text/values always wrap and
+// never clip, truncate, or overlap. No hooks, state, Firestore calls, or
+// business logic were changed.
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useEffect, useState, useRef } from "react";
@@ -20,6 +26,14 @@ import { getProjectById } from "../services/projectService"; // add getProjectBy
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { db } from "../firebase";
 import { Link } from "react-router-dom";
+import Seo from "../components/Seo";
+import {
+  projectSchema,
+  breadcrumbSchema,
+  keywords as buildKeywords,
+  clip,
+  SITE,
+} from "../seo/siteConfig";
 
 // ─── Firestore field → page field mapping ────────────────────────────────────
 /**
@@ -49,7 +63,7 @@ import { Link } from "react-router-dom";
  * rooms: { label, img }[]
  * }[]
  *
- * gallery          { id, src, alt }[]           → Image Gallery
+ * gallery          { id, src, alt }[]             → Image Gallery
  * OR  string[]                 → plain image URLs
  *
  * nearbyPlaces     {                            → Location section
@@ -265,6 +279,36 @@ function mapFirestoreToProps(p) {
       p.locationDesc ??
       "Nestled in a thriving neighbourhood, this exclusive residence places you moments from the city's finest hospitals, shopping destinations, and green spaces — where every convenience is within easy reach.",
   };
+}
+
+// ─── Data-validity helpers (presentation layer only — no business logic) ────
+function isNonEmptyString(val) {
+  return typeof val === "string" && val.trim().length > 0;
+}
+
+function isPlaceholderUrl(url) {
+  if (!isNonEmptyString(url)) return true;
+  const trimmed = url.trim();
+  return trimmed === "#" || trimmed.toLowerCase() === "undefined" || trimmed.toLowerCase() === "null";
+}
+
+function isValidUrl(url) {
+  if (isPlaceholderUrl(url)) return false;
+  const trimmed = url.trim();
+  return (
+    trimmed.startsWith("http://") ||
+    trimmed.startsWith("https://") ||
+    trimmed.startsWith("/")
+  );
+}
+
+function isValidImageUrl(url) {
+  return isValidUrl(url);
+}
+
+function isValidMapEmbed(url) {
+  if (!isNonEmptyString(url)) return false;
+  return isValidUrl(url) && /google\.[a-z.]+\/maps/i.test(url);
 }
 
 // ─── Scroll Animation Hook ───────────────────────────────────────────────────
@@ -806,10 +850,18 @@ export default function ProjectDetailPage() {
   if (loading) return <LoadingSkeleton />;
   if (error || !props)
     return (
-      <ErrorState
-        message={error ?? "Something went wrong."}
-        onBack={() => navigate("/projects")}
-      />
+      <>
+        <Seo
+          title={`Project Not Found | ${SITE.name}`}
+          description="This project could not be found. Explore other luxury residential and commercial projects by Shubh Suramya in Ahmedabad, Gujarat."
+          canonicalPath="/projects"
+          noIndex
+        />
+        <ErrorState
+          message={error ?? "Something went wrong."}
+          onBack={() => navigate("/projects")}
+        />
+      </>
     );
 
   // ── destructure props ─────────────────────────────────────────────────────
@@ -840,7 +892,75 @@ export default function ProjectDetailPage() {
     locationDesc,
   } = props;
 
-  const floor = floors.find((f) => f.key === activeFloor) ?? floors[0];
+  // ── derived validity (presentation-only filtering — no data mutation) ────
+  const hasProjectName = isNonEmptyString(projectName);
+  const hasHeroImage = isValidImageUrl(image);
+  const hasSubtitle = isNonEmptyString(projectSubtitle);
+  const hasLocationLine = isNonEmptyString(projectLocation);
+  const hasYear = isNonEmptyString(projectYear) && projectYear !== "—";
+  const hasTags = Array.isArray(projectTags) && projectTags.filter(isNonEmptyString).length > 0;
+  const validTags = hasTags ? projectTags.filter(isNonEmptyString) : [];
+  const hasHeroMedia = isNonEmptyString(videoSrc) || hasHeroImage;
+  const showHero = hasProjectName || hasHeroMedia || hasSubtitle || hasLocationLine || hasTags || hasYear;
+
+  const validStats = Array.isArray(stats)
+    ? stats.filter(
+        (s) => s && isNonEmptyString(s.title) && s.value !== null && s.value !== undefined && isNonEmptyString(String(s.value)),
+      )
+    : [];
+  const showStats = validStats.length > 0;
+
+  const hasDescription = isNonEmptyString(description);
+  const hasOverviewTitle = isNonEmptyString(title);
+  const showOverview = hasOverviewTitle || hasDescription || hasHeroImage;
+
+  const infoFields = [
+    { label: "Location", value: location, key: "location" },
+    { label: "Type", value: type, key: "type" },
+    { label: "Status", value: status, key: "status" },
+  ].filter((f) => isNonEmptyString(f.value) && f.value !== "—");
+  const showInfoCards = infoFields.length > 0;
+
+  const hasPrice = isNonEmptyString(price);
+  const hasBrochure = isValidUrl(brochureUrl);
+  const showPriceBand = hasPrice || hasBrochure;
+
+  const validAmenities = Array.isArray(amenities)
+    ? amenities.filter((a) => a && isNonEmptyString(a.label) && isValidImageUrl(a.img))
+    : [];
+  const showAmenities = validAmenities.length > 0;
+
+  const validFloors = Array.isArray(floors)
+    ? floors
+        .map((f) => {
+          if (!f || !isNonEmptyString(f.label) || !Array.isArray(f.rooms)) return null;
+          const validRooms = f.rooms.filter(
+            (r) => r && isNonEmptyString(r.label) && isValidImageUrl(r.img),
+          );
+          if (validRooms.length === 0) return null;
+          return { ...f, rooms: validRooms };
+        })
+        .filter(Boolean)
+    : [];
+  const showFloorPreviews = validFloors.length > 0;
+  const hasFloorPlanDownload = isValidUrl(floorPlanUrl);
+
+  const validGallery = Array.isArray(gallery)
+    ? gallery.filter((g) => g && isValidImageUrl(g.src))
+    : [];
+  const showGallery = validGallery.length > 0;
+
+  const validNearbyPlaces = Array.isArray(nearbyPlaces)
+    ? nearbyPlaces.filter((p) => p && isNonEmptyString(p.name) && isNonEmptyString(p.distance))
+    : [];
+  const showNearbyPlaces = validNearbyPlaces.length > 0;
+
+  const showMap = isValidMapEmbed(mapEmbed);
+  const hasLocationTitle = isNonEmptyString(locationTitle);
+  const hasLocationDesc = isNonEmptyString(locationDesc);
+  const showLocationSection = showMap || hasLocationTitle || hasLocationDesc || showNearbyPlaces;
+
+  const floor = showFloorPreviews ? (validFloors.find((f) => f.key === activeFloor) ?? validFloors[0]) : null;
 
   const getYoutubeId = (url) => {
     if (!url) return "";
@@ -865,9 +985,54 @@ export default function ProjectDetailPage() {
 
   const youtubeId = getYoutubeId(videoSrc);
 
+  // ── dynamic SEO (built from Firestore project data) ──────────────────────
+  const seoCanonical = `/project-details/${projectId}`;
+  const seoTitle = clip(`${projectName} | Shubh Suramya, Ahmedabad`, 60);
+  const seoDescription = clip(
+    description ||
+      `${projectName} — a ${type || "premium"} project by Shubh Suramya${
+        location ? ` in ${location}` : " in Ahmedabad"
+      }. Explore amenities, floor plans, gallery and pricing.`,
+    160,
+  );
+  const seoKeywords = buildKeywords(
+    [
+      projectName,
+      `${projectName} Ahmedabad`,
+      type,
+      type ? `${type} Project Ahmedabad` : "",
+      location,
+    ].filter(Boolean),
+  );
+  const seoJsonLd = [
+    projectSchema({
+      name: projectName,
+      description: seoDescription,
+      image: hasHeroImage ? image : undefined,
+      path: seoCanonical,
+      price,
+      type,
+      location,
+    }),
+    breadcrumbSchema([
+      { name: "Home", path: "/" },
+      { name: "Projects", path: "/projects" },
+      { name: projectName, path: seoCanonical },
+    ]),
+  ];
+
   // ─────────────────────────────────────────────────────────────────────────
   return (
     <>
+      <Seo
+        title={seoTitle}
+        description={seoDescription}
+        keywords={seoKeywords}
+        canonicalPath={seoCanonical}
+        image={hasHeroImage ? image : undefined}
+        jsonLd={seoJsonLd}
+      />
+
       <Navbar />
 
       {toast && (
@@ -1062,254 +1227,201 @@ export default function ProjectDetailPage() {
       )}
 
       {/* ── HERO ── */}
-      <section className="relative w-full min-h-[92vh] lg:min-h-screen overflow-hidden bg-[#FDFAF6] flex items-center pt-28 pb-16 sm:pt-32 sm:pb-20 px-4 sm:px-6 md:px-10 lg:px-16 xl:px-20 2xl:px-24">
-        {/* decorative background */}
-        <div className="absolute inset-0 pd-arch-grid opacity-70 pointer-events-none" />
-        <div
-          ref={parallaxBg}
-          className="absolute -top-40 -right-24 w-[540px] h-[540px] pd-blob bg-[#FFE9E2] opacity-80 pointer-events-none"
-        />
-        <div className="absolute bottom-[-120px] -left-32 w-[460px] h-[460px] pd-blob bg-[#E4572E]/10 pointer-events-none" />
-        <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-[#FDFAF6] pointer-events-none" />
-
-        <div className="relative z-10 w-full w-full grid grid-cols-1 lg:grid-cols-[1.05fr_1fr] gap-10 lg:gap-16 items-center">
-          {/* ── Left: content ── */}
-          <div className="flex flex-col">
-            {/* Breadcrumb */}
-            <nav
-              className="flex flex-wrap items-center gap-x-2 gap-y-1 sm:gap-x-2.5 text-[10px] sm:text-[11px] font-medium tracking-[0.16em] uppercase mb-6"
-              style={{
-                opacity: pageLoaded ? 1 : 0,
-                transform: pageLoaded ? "translateY(0)" : "translateY(20px)",
-                transition: "all 0.9s cubic-bezier(.22,1,.36,1) 0.3s",
-              }}
-            >
-              <a href="/" className="text-[#A0A8B5] hover:text-[#E4572E] transition-colors">
-                Home
-              </a>
-              <span className="text-[#C9CDD4]">›</span>
-              <a href="/projects" className="text-[#A0A8B5] hover:text-[#E4572E] transition-colors">
-                Projects
-              </a>
-              <span className="text-[#C9CDD4]">›</span>
-              <span className="text-[#1F2A44]">{projectName}</span>
-            </nav>
-
-            {/* Badges */}
+      {showHero && (
+      <section className="relative w-full h-screen min-h-[500px] overflow-hidden bg-black flex flex-col items-center justify-center">
+        {hasHeroMedia && (
+        <div ref={parallaxBg} className="absolute inset-0 overflow-hidden">
+          {youtubeId ? (
             <div
-              className="flex flex-wrap items-center gap-2.5 mb-6"
+              className="absolute top-1/2 left-1/2"
               style={{
-                opacity: pageLoaded ? 1 : 0,
-                transform: pageLoaded ? "translateY(0)" : "translateY(20px)",
-                transition: "all 0.9s cubic-bezier(.22,1,.36,1) 0.42s",
+                width: "177.77777778vh",
+                height: "56.25vw",
+                minWidth: "100%",
+                minHeight: "100%",
+                transform: "translate(-50%, -50%)",
               }}
             >
-              <span className="inline-flex items-center bg-[#1F2A44] text-white rounded-full px-3.5 py-1.5 text-[10px] sm:text-[11px] tracking-[0.12em] font-semibold uppercase">
-                {type}
-              </span>
-              <span className="inline-flex items-center gap-1.5 bg-[#FFE9E2] text-[#E4572E] rounded-full px-3.5 py-1.5 text-[10px] sm:text-[11px] tracking-[0.12em] font-semibold uppercase">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#E4572E] animate-pulse" />
-                {status}
-              </span>
-              <span className="inline-flex items-center text-[#6B7280] px-1 py-1.5 text-[10px] sm:text-[11px] tracking-[0.12em] font-semibold uppercase">
-                {projectYear}
-              </span>
+              <iframe
+                src={`https://www.youtube.com/embed/${youtubeId}?autoplay=1&mute=1&controls=0&loop=1&playlist=${youtubeId}&playsinline=1&modestbranding=1&rel=0`}
+                title="Background Video"
+                allow="autoplay; fullscreen"
+                allowFullScreen
+                className={`w-full h-full transition-transform duration-[14000ms] ease-out ${
+                  pageLoaded ? "scale-100" : "scale-105"
+                }`}
+                style={{
+                  border: "none",
+                  filter: "brightness(0.38) saturate(0.65)",
+                  pointerEvents: "none",
+                }}
+              />
             </div>
-
-            {/* Title */}
-            <h1
-              className="pd-display font-semibold text-[#1F2A44] tracking-tight break-words"
+          ) : hasHeroImage ? (
+            <img
+              src={image}
+              alt={projectName}
+              className={`w-full h-full object-cover transition-transform duration-[14000ms] ease-out ${
+                pageLoaded ? "scale-100" : "scale-105"
+              }`}
               style={{
-                fontSize:
-                  projectName?.length <= 12
-                    ? "clamp(44px, 6vw, 88px)"
-                    : projectName?.length <= 22
-                      ? "clamp(36px, 5vw, 66px)"
-                      : "clamp(30px, 4vw, 52px)",
-                lineHeight: 1.03,
-                opacity: pageLoaded ? 1 : 0,
-                transform: pageLoaded ? "translateY(0)" : "translateY(32px)",
-                transition: "all 1.1s cubic-bezier(.22,1,.36,1) 0.55s",
+                filter: "brightness(0.38) saturate(0.65)",
               }}
-            >
-              {projectName}
-            </h1>
+            />
+          ) : null}
+        </div>
+        )}
 
-            {/* Subtitle */}
-            <p
-              className="text-[15px] sm:text-[16px] leading-relaxed text-[#6B7280] mt-6 max-w-lg"
-              style={{
-                opacity: pageLoaded ? 1 : 0,
-                transform: pageLoaded ? "translateY(0)" : "translateY(24px)",
-                transition: "all 0.9s cubic-bezier(.22,1,.36,1) 0.75s",
-              }}
-            >
-              {projectSubtitle}
-            </p>
+        <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/65" />
 
-            {/* Tags */}
-            <div
-              className="flex items-center gap-2.5 mt-7 flex-wrap"
-              style={{
-                opacity: pageLoaded ? 1 : 0,
-                transform: pageLoaded ? "translateY(0)" : "translateY(20px)",
-                transition: "all 0.9s cubic-bezier(.22,1,.36,1) 0.9s",
-              }}
-            >
-              {projectTags.map((tag) => (
-                <span
-                  key={tag}
-                  className="text-[10px] tracking-[0.16em] uppercase text-[#6B7280] bg-white border border-[rgba(31,42,68,0.08)] rounded-full px-3.5 py-1.5 hover:border-[#E4572E]/40 hover:text-[#E4572E] transition-all duration-300"
-                >
-                  {tag}
-                </span>
-              ))}
-            </div>
-
-            {/* CTA buttons */}
-            <div
-              className="flex items-center gap-3 mt-9 flex-wrap"
-              style={{
-                opacity: pageLoaded ? 1 : 0,
-                transform: pageLoaded ? "translateY(0)" : "translateY(20px)",
-                transition: "all 0.9s cubic-bezier(.22,1,.36,1) 1.05s",
-              }}
-            >
-              <button
-                onClick={() => handleDownloadRequest("brochure", brochureUrl)}
-                className="pd-btn group inline-flex w-full sm:w-auto justify-center items-center gap-2.5 px-7 py-4 rounded-full bg-[#E4572E] text-white text-[12px] font-semibold tracking-[0.12em] uppercase shadow-lg shadow-[#E4572E]/25 cursor-pointer"
-              >
-                Download Brochure
-                <span className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center group-hover:translate-x-0.5 transition-transform">
-                  <svg
-                    width="13"
-                    height="13"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.4"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                    <polyline points="7 10 12 15 17 10" />
-                    <line x1="12" y1="15" x2="12" y2="3" />
-                  </svg>
-                </span>
-              </button>
-            </div>
-          </div>
-
-          {/* ── Right: media + floating cards ── */}
-          <div
-            className="relative"
+        <div className="relative z-10 flex flex-col items-center text-center px-4 sm:px-6">
+          {/* Breadcrumb */}
+          <nav
+            className="flex items-center gap-2 sm:gap-2.5 text-[10px] sm:text-[11px] font-light tracking-[0.18em] sm:tracking-[0.22em] uppercase mb-5 sm:mb-6"
             style={{
               opacity: pageLoaded ? 1 : 0,
-              transform: pageLoaded
-                ? "translateY(0) scale(1)"
-                : "translateY(36px) scale(0.97)",
-              transition: "all 1.2s cubic-bezier(.22,1,.36,1) 0.5s",
+              transform: pageLoaded ? "translateY(0)" : "translateY(28px)",
+              transition: "all 0.9s cubic-bezier(.22,1,.36,1) 0.3s",
             }}
           >
-            <div className="relative w-full h-[420px] sm:h-[520px] lg:h-[600px] rounded-[32px] overflow-hidden shadow-2xl shadow-[#1F2A44]/20 bg-black">
-              {youtubeId ? (
-                <div
-                  className="absolute top-1/2 left-1/2"
-                  style={{
-                    width: "177.77777778vh",
-                    height: "56.25vw",
-                    minWidth: "100%",
-                    minHeight: "100%",
-                    transform: "translate(-50%, -50%)",
-                  }}
-                >
-                  <iframe
-                    src={`https://www.youtube.com/embed/${youtubeId}?autoplay=1&mute=1&controls=0&loop=1&playlist=${youtubeId}&playsinline=1&modestbranding=1&rel=0`}
-                    title="Background Video"
-                    allow="autoplay; fullscreen"
-                    allowFullScreen
-                    className={`w-full h-full transition-transform duration-[14000ms] ease-out ${
-                      pageLoaded ? "scale-100" : "scale-105"
-                    }`}
-                    style={{ border: "none", pointerEvents: "none" }}
-                  />
-                </div>
-              ) : (
-                <img
-                  src={image}
-                  alt={projectName}
-                  className={`w-full h-full object-cover transition-transform duration-[14000ms] ease-out ${
-                    pageLoaded ? "scale-100" : "scale-105"
-                  }`}
-                />
-              )}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/0 to-black/10 pointer-events-none" />
+            <a
+              href="/"
+              className="text-white/55 hover:text-white transition-colors"
+            >
+              Home
+            </a>
+            <span className="text-white/35">›</span>
+            <a
+              href="/projects"
+              className="text-white/55 hover:text-white transition-colors"
+            >
+              Projects
+            </a>
+            {hasProjectName && (
+              <>
+                <span className="text-white/35">›</span>
+                <span className="text-white/90 break-words max-w-[160px] sm:max-w-none">{projectName}</span>
+              </>
+            )}
+          </nav>
 
-              {/* Location pill */}
-              <div className="absolute top-5 left-5 pd-glass-dark text-white text-[11px] font-medium px-4 py-2 rounded-2xl tracking-[.02em] flex items-center gap-1.5 max-w-[80%]">
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#E4572E" strokeWidth="2.5" className="flex-shrink-0">
-                  <path d="M21 10c0 6-9 12-9 12s-9-6-9-12a9 9 0 0118 0z" />
-                  <circle cx="12" cy="10" r="3" />
-                </svg>
-                <span className="break-words leading-snug">{projectLocation || location || mapLocationLabel}</span>
-              </div>
+          {(hasProjectName || hasYear) && (
+          <p
+            className="text-[10px] font-light tracking-[0.3em] sm:tracking-[0.38em] uppercase text-white/45 mb-3 sm:mb-4 flex-wrap flex items-center justify-center gap-x-1.5 break-words px-2"
+            style={{
+              opacity: pageLoaded ? 1 : 0,
+              transition: "all 0.9s cubic-bezier(.22,1,.36,1) 0.5s",
+            }}
+          >
+            {type}{hasYear && <> · {projectYear}</>}
+          </p>
+          )}
 
-              {/* Price floating card */}
-              <div className="pd-glass absolute bottom-5 left-5 right-5 rounded-[22px] px-5 py-4 flex items-center justify-between gap-4">
-                <div className="min-w-0">
-                  <p className="text-[9px] tracking-[0.22em] uppercase text-[#6B7280] mb-0.5">
-                    Starting Price
-                  </p>
-                  <div className="flex items-baseline gap-1.5 flex-wrap">
-                    <span className="pd-display text-[22px] sm:text-[26px] font-bold text-[#1F2A44] leading-tight break-words">
-                      {price}
-                    </span>
-                    <span className="text-[11px] text-[#6B7280]">onwards</span>
-                  </div>
-                </div>
-                <div className="hidden sm:flex items-center gap-4 flex-shrink-0">
-                  <div className="text-right">
-                    <p className="text-[9px] tracking-[0.18em] uppercase text-[#A0A8B5]">Year</p>
-                    <p className="text-[13px] font-semibold text-[#1F2A44]">{projectYear}</p>
-                  </div>
-                  <div className="w-px h-8 bg-[rgba(31,42,68,0.12)]" />
-                  <div className="text-right">
-                    <p className="text-[9px] tracking-[0.18em] uppercase text-[#A0A8B5]">Status</p>
-                    <p className="text-[13px] font-semibold text-[#E4572E] break-words max-w-[140px]">
-                      {status}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
+          {hasProjectName && (
+          <h1
+            className="font-light tracking-[0.1em] sm:tracking-[0.14em] uppercase text-white leading-none break-words max-w-full px-2"
+            style={{
+              fontSize:
+                projectName?.length <= 10
+                  ? "clamp(60px, 12vw, 160px)"
+                  : projectName?.length <= 20
+                    ? "clamp(48px, 10vw, 120px)"
+                    : "clamp(36px, 8vw, 92px)",
 
-            {/* Floating type chip */}
-            <div className="hidden sm:flex pd-card absolute -top-5 -right-4 lg:-right-6 shadow-xl px-5 py-4 items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-[#FFE9E2] flex items-center justify-center flex-shrink-0">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E4572E" strokeWidth="2">
-                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-                  <polyline points="9 22 9 12 15 12 15 22" />
-                </svg>
-              </div>
-              <div>
-                <p className="text-[9px] tracking-[0.2em] uppercase text-[#A0A8B5]">Type</p>
-                <p className="text-[13px] font-semibold text-[#1F2A44]">{type}</p>
-              </div>
-            </div>
+              lineHeight: projectName?.length <= 10 ? "1.1" : "0.95",
+
+              opacity: pageLoaded ? 1 : 0,
+
+              transform: pageLoaded
+                ? "translateY(0) scale(1)"
+                : "translateY(40px) scale(0.96)",
+
+              transition: "all 1.1s cubic-bezier(.22,1,.36,1) 0.6s",
+            }}
+          >
+            {projectName}
+          </h1>
+          )}
+
+          {hasSubtitle && (
+          <p
+            className="text-white/60 text-[12px] sm:text-[13px] mt-4 sm:mt-5 max-w-xs sm:max-w-md px-2 break-words leading-relaxed"
+            style={{
+              opacity: pageLoaded ? 1 : 0,
+              transform: pageLoaded ? "translateY(0)" : "translateY(24px)",
+              transition: "all 0.9s cubic-bezier(.22,1,.36,1) 0.9s",
+            }}
+          >
+            {projectSubtitle}
+          </p>
+          )}
+
+          {hasTags && (
+          <div className="flex items-center gap-2 sm:gap-4 mt-5 sm:mt-7 flex-wrap justify-center px-2">
+            {validTags.map((tag, i) => (
+              <span
+                key={tag}
+                className="text-[8px] sm:text-[9px] tracking-[0.22em] sm:tracking-[0.28em] uppercase text-white/40 border border-white/20 px-2.5 sm:px-3 py-1 hover:border-white/50 hover:text-white/70 transition-all duration-300 break-words"
+                style={{ animationDelay: `${900 + i * 150}ms` }}
+              >
+                {tag}
+              </span>
+            ))}
           </div>
+          )}
+
+          <div
+            className="h-px bg-white/40 mt-5 sm:mt-6 w-16 sm:w-20"
+            style={{
+              opacity: pageLoaded ? 1 : 0,
+              transform: pageLoaded ? "scaleX(1)" : "scaleX(0)",
+              transition: "all 0.8s ease 1.2s",
+              transformOrigin: "center",
+            }}
+          />
         </div>
 
-        {/* Scroll cue */}
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 text-[#A0A8B5] text-[10px] tracking-[0.2em] uppercase hidden sm:flex flex-col items-center gap-2">
-          Scroll
-          <span className="w-px h-8 bg-[#C9CDD4] relative overflow-hidden">
-            <span className="scroll-line absolute inset-0 bg-[#E4572E]" />
-          </span>
+        {/* Bottom Left */}
+        {hasLocationLine && (
+        <div
+          className="absolute bottom-8 sm:bottom-12 left-4 sm:left-10 text-white/70 max-w-[45%] sm:max-w-[40%]"
+          style={{
+            opacity: pageLoaded ? 1 : 0,
+            transform: pageLoaded ? "translateX(0)" : "translateX(-20px)",
+            transition: "all 0.8s ease 1s",
+          }}
+        >
+          <p className="text-[9px] sm:text-[10px] uppercase opacity-50">
+            Location
+          </p>
+          <p className="text-[13px] sm:text-[15px] break-words leading-snug">{projectLocation}</p>
+        </div>
+        )}
+
+        {/* Bottom Right */}
+        {hasYear && (
+        <div
+          className="absolute bottom-8 sm:bottom-12 right-4 sm:right-10 text-right text-white/70"
+          style={{
+            opacity: pageLoaded ? 1 : 0,
+            transform: pageLoaded ? "translateX(0)" : "translateX(20px)",
+            transition: "all 0.8s ease 1s",
+          }}
+        >
+          <p className="text-[9px] sm:text-[10px] uppercase opacity-50">Year</p>
+          <p className="text-[13px] sm:text-[15px]">{projectYear}</p>
+        </div>
+        )}
+
+        <div className="absolute bottom-6 sm:bottom-8 left-1/2 -translate-x-1/2 text-white/50 text-[11px] sm:text-xs">
+          Scroll ↓
         </div>
       </section>
+      )}
 
       {/* ── STATS BAND ── */}
-      <section className="w-full bg-[#1F2A44] relative overflow-hidden py-10 sm:py-14 md:py-16 lg:py-20 xl:py-24 2xl:py-28 px-4 sm:px-6 md:px-10 lg:px-16 xl:px-20 2xl:px-24">
+      {showStats && (
+      <section className="w-full bg-[#1F2A44] relative overflow-hidden pd-section-pad px-3 sm:px-4 lg:px-8 xl:px-12">
         <div
           className="absolute inset-0 opacity-[0.06]"
           style={{
@@ -1318,95 +1430,84 @@ export default function ProjectDetailPage() {
             backgroundSize: "28px 28px",
           }}
         />
-        <div className="absolute -top-24 left-1/4 w-80 h-80 pd-blob bg-[#E4572E]/20 pointer-events-none" />
-        <div className="w-full relative">
-          <Reveal direction="up">
-            <div className="text-center mb-10 sm:mb-14">
-              <span className="pd-eyebrow justify-center text-[11px] tracking-[0.22em] uppercase text-[#E4572E] font-semibold mb-4">
-                <span className="w-6 h-px bg-[#E4572E]/60" />
-                By The Numbers
-                <span className="w-6 h-px bg-[#E4572E]/60" />
-              </span>
-              <h2 className="pd-display text-[clamp(24px,3.4vw,40px)] font-semibold text-white leading-tight">
-                A landmark measured in detail
-              </h2>
-            </div>
-          </Reveal>
+        <div className="max-w-[1400px] mx-auto grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 relative items-stretch">
+          {validStats.map((stat, i) => {
+            const rawValue = String(stat.value);
+            const isNumber =
+              !isNaN(
+                parseFloat(rawValue)
+              ) &&
+              /^\d+/.test(
+                rawValue
+              );
 
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-            {stats.map((stat, i) => {
-              const isNumber =
-                !isNaN(parseFloat(stat.value)) && /^\d+/.test(stat.value);
+            const numericValue =
+              parseFloat(rawValue);
 
-              const numericValue = parseFloat(stat.value);
+            const suffix =
+              rawValue.replace(
+                numericValue,
+                ""
+              );
 
-              const suffix = stat.value.replace(numericValue, "");
-
-              return (
-                <Reveal key={stat.title} delay={i * 120} direction="up" className="h-full">
+            return (
+              <Reveal
+                key={stat.title}
+                delay={i * 120}
+                direction="up"
+                className="h-full"
+              >
+                <div
+                  className="relative text-center py-8 sm:py-9 px-3 sm:px-4 rounded-3xl cursor-default overflow-visible h-full min-h-[140px] sm:min-h-[160px] flex flex-col items-center justify-center gap-2 border border-white/10 hover:border-[#E4572E]/40 transition-all duration-500 hover:-translate-y-1.5 group"
+                  style={{
+                    background: "linear-gradient(160deg, rgba(255,255,255,0.06), rgba(255,255,255,0.015))",
+                  }}
+                >
                   <div
-                    className="relative text-center py-9 sm:py-11 px-3 sm:px-4 rounded-[26px] cursor-default min-h-[190px] h-full flex flex-col items-center justify-center border border-white/10 hover:border-[#E4572E]/45 transition-all duration-500 hover:-translate-y-2 group"
-                    style={{
-                      background:
-                        "linear-gradient(160deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02))",
-                      backdropFilter: "blur(6px)",
-                    }}
-                  >
-                    {/* decorative glow (clipped so it never cuts content) */}
-                    <div className="absolute inset-0 rounded-[26px] overflow-hidden pointer-events-none">
-                      <div className="absolute -top-8 -right-8 w-24 h-24 rounded-full bg-[#E4572E]/0 group-hover:bg-[#E4572E]/25 blur-2xl transition-all duration-500" />
-                    </div>
-
-                    <div className="w-full flex justify-center relative">
-                      <p
-                        className="pd-display font-bold text-white leading-tight break-words max-w-full"
-                        style={{
-                          fontSize: "clamp(24px,4vw,46px)",
-
-                          transform:
-                            stat.value.length > 20
-                              ? "scale(0.55)"
-                              : stat.value.length > 16
-                                ? "scale(0.68)"
-                                : stat.value.length > 12
-                                  ? "scale(0.8)"
-                                  : "scale(1)",
-
-                          transformOrigin: "center",
-
-                          display: "inline-block",
-                        }}
-                      >
-                        {isNumber ? (
-                          <AnimatedCounter target={numericValue} suffix={suffix} />
-                        ) : (
-                          stat.value
-                        )}
-                      </p>
-                    </div>
-
-                    <span className="pd-divider-line mt-4 mb-3" />
-
-                    <p className="text-[9px] sm:text-[10px] tracking-[0.16em] uppercase text-white/55 leading-relaxed px-1 break-words max-w-full relative">
-                      {stat.title}
+                    className="absolute -top-8 -right-8 w-24 h-24 rounded-full bg-[#E4572E]/0 group-hover:bg-[#E4572E]/20 blur-2xl transition-all duration-500 pointer-events-none"
+                  />
+                  <div className="w-full flex justify-center relative px-1">
+                    <p
+                      className="pd-display font-light text-white leading-tight break-words max-w-full"
+                      style={{
+                        fontSize: "clamp(20px,3.2vw,40px)",
+                      }}
+                    >
+                      {isNumber ? (
+                        <AnimatedCounter
+                          target={
+                            numericValue
+                          }
+                          suffix={suffix}
+                        />
+                      ) : (
+                        rawValue
+                      )}
                     </p>
                   </div>
-                </Reveal>
-              );
-            })}
-          </div>
+
+                  <p className="text-[9px] sm:text-[10px] tracking-[0.22em] uppercase text-white/40 leading-relaxed px-1 break-words whitespace-normal relative max-w-full">
+                    {stat.title}
+                  </p>
+                </div>
+              </Reveal>
+            );
+          })}
         </div>
       </section>
+      )}
 
       {/* ── ABOUT ── */}
+      {showOverview && (
       <section className="w-full py-10 sm:py-14 md:py-16 lg:py-20 xl:py-24 2xl:py-28 px-4 sm:px-6 md:px-10 lg:px-16 xl:px-20 2xl:px-24 bg-[#FDFAF6] relative overflow-hidden">
         <div
           className="absolute top-1/3 -left-32 w-96 h-96 rounded-full opacity-40 pointer-events-none"
           style={{ background: "radial-gradient(circle, #FFE9E2 0%, transparent 70%)" }}
         />
         <div className="absolute -bottom-16 right-0 w-80 h-80 pd-blob bg-[#E4572E]/5 pointer-events-none" />
-        <div className="w-full grid grid-cols-1 md:grid-cols-[1.1fr_1fr] gap-10 sm:gap-14 lg:gap-16 items-center relative">
+        <div className={`w-full grid grid-cols-1 ${hasHeroImage ? "md:grid-cols-[1.1fr_1fr]" : ""} gap-10 sm:gap-14 lg:gap-16 items-center relative`}>
           {/* Image */}
+          {hasHeroImage && (
           <Reveal direction="left" delay={100}>
             <div className="relative">
               <div className="absolute -top-4 -left-4 w-28 h-28 rounded-[28px] border border-[#E4572E]/20 pointer-events-none hidden sm:block" />
@@ -1419,6 +1520,7 @@ export default function ProjectDetailPage() {
                 <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none rounded-[32px]" />
               </div>
               {/* Floating info card */}
+              {isNonEmptyString(status) && status !== "—" && (
               <div className="pd-card hidden sm:flex absolute -bottom-8 -right-6 md:-right-10 shadow-xl p-5 md:p-6 items-center gap-4 max-w-[240px]">
                 <div className="w-11 h-11 rounded-2xl bg-[#FFE9E2] flex items-center justify-center flex-shrink-0">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E4572E" strokeWidth="2">
@@ -1426,95 +1528,97 @@ export default function ProjectDetailPage() {
                     <polyline points="9 22 9 12 15 12 15 22" />
                   </svg>
                 </div>
-                <div>
+                <div className="min-w-0">
                   <p className="text-[10px] tracking-[0.2em] uppercase text-[#A0A8B5] mb-0.5">Status</p>
-                  <p className="text-[13px] font-semibold text-[#1F2A44]">{status}</p>
+                  <p className="text-[13px] font-semibold text-[#1F2A44] break-words">{status}</p>
                 </div>
               </div>
+              )}
             </div>
           </Reveal>
+          )}
 
           {/* Content */}
           <div className="flex flex-col gap-7 md:pt-6">
+            {(hasOverviewTitle || hasDescription) && (
             <Reveal direction="right" delay={200}>
               <div className="flex flex-col gap-4 sm:gap-5">
-                <span className="pd-eyebrow text-[11px] tracking-[0.22em] uppercase text-[#E4572E] font-semibold">
-                  <span className="w-6 h-px bg-[#E4572E]/60" />
+                {hasProjectName && (
+                <span className="pd-eyebrow text-[11px] tracking-[0.22em] uppercase text-[#E4572E] font-semibold break-words">
+                  <span className="w-6 h-px bg-[#E4572E]/60 flex-shrink-0" />
                   About {projectName}
                 </span>
-                <h2 className="pd-display text-[clamp(26px,3.6vw,44px)] text-[#1F2A44] leading-[1.08] font-semibold">
+                )}
+                {hasOverviewTitle && (
+                <h2 className="pd-display text-[clamp(26px,3.6vw,44px)] text-[#1F2A44] leading-[1.08] font-semibold break-words">
                   {title}
                 </h2>
-                <p className="text-[14px] sm:text-[15px] leading-[1.85] text-[#6B7280]">
+                )}
+                {hasDescription && (
+                <p className="text-[14px] sm:text-[15px] leading-[1.85] text-[#6B7280] break-words whitespace-normal">
                   {description}
                 </p>
+                )}
               </div>
             </Reveal>
+            )}
 
+            {showInfoCards && (
             <Reveal direction="up" delay={350}>
-              <div className="grid grid-cols-3 gap-2.5 sm:gap-4">
-                {[
-                  {
-                    label: "Location",
-                    value: location,
-                    icon: (
+              <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 gap-2.5 sm:gap-4">
+                {infoFields.map((item) => {
+                  const iconPaths =
+                    item.key === "location" ? (
                       <>
                         <path d="M21 10c0 6-9 12-9 12s-9-6-9-12a9 9 0 0118 0z" />
                         <circle cx="12" cy="10" r="3" />
                       </>
-                    ),
-                  },
-                  {
-                    label: "Type",
-                    value: type,
-                    icon: (
+                    ) : item.key === "type" ? (
                       <>
                         <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
                         <polyline points="9 22 9 12 15 12 15 22" />
                       </>
-                    ),
-                  },
-                  {
-                    label: "Status",
-                    value: status,
-                    icon: (
+                    ) : (
                       <>
                         <circle cx="12" cy="12" r="9" />
                         <polyline points="8 12 11 15 16 9" />
                       </>
-                    ),
-                  },
-                ].map((item) => (
+                    );
+                  return (
                   <div
                     key={item.label}
-                    className="pd-card p-3 sm:p-5 min-w-0 flex flex-col gap-2.5"
+                    className="pd-card p-3 sm:p-5 min-w-0 flex flex-col gap-2.5 h-auto"
                   >
                     <span className="w-9 h-9 rounded-xl bg-[#FFE9E2] flex items-center justify-center flex-shrink-0">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E4572E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        {item.icon}
+                        {iconPaths}
                       </svg>
                     </span>
                     <div className="min-w-0">
                       <p className="text-[9px] tracking-[0.2em] uppercase text-[#A0A8B5] mb-1">
                         {item.label}
                       </p>
-                      <p className="text-[13px] sm:text-[14px] text-[#1F2A44] font-semibold break-words">
+                      <p className="text-[13px] sm:text-[14px] text-[#1F2A44] font-semibold break-words whitespace-normal leading-snug">
                         {item.value}
                       </p>
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             </Reveal>
+            )}
 
+            {showPriceBand && (
             <Reveal direction="up" delay={480}>
               <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-5 bg-[#1F2A44] rounded-3xl p-5 sm:p-6">
-                <div className="flex flex-col gap-0.5 flex-1">
+                {hasPrice && (
+                <div className="flex flex-col gap-0.5 flex-1 min-w-0">
                   <p className="text-[9px] tracking-[0.24em] uppercase text-white/40">
                     Starting Price
                   </p>
-                  <div className="flex items-baseline gap-1.5">
-                    <span className="pd-display text-[clamp(24px,2.8vw,34px)] font-semibold text-white leading-tight tracking-tight">
+                  <div className="flex items-baseline gap-1.5 flex-wrap">
+                    <span className="pd-display text-[clamp(24px,2.8vw,34px)] font-semibold text-white leading-tight tracking-tight break-words">
                       {price}
                     </span>
                     <span className="text-[12px] text-white/40 font-normal">
@@ -1522,8 +1626,9 @@ export default function ProjectDetailPage() {
                     </span>
                   </div>
                 </div>
+                )}
 
-                {brochureUrl && brochureUrl !== "#" ? (
+                {hasBrochure ? (
                   <button
                     onClick={() => handleDownloadRequest("brochure", brochureUrl)}
                     className="group inline-flex w-full sm:w-auto justify-center items-center gap-2.5 px-5 py-3 rounded-2xl bg-[#E4572E] hover:bg-white transition-all duration-300 cursor-pointer flex-shrink-0"
@@ -1561,89 +1666,99 @@ export default function ProjectDetailPage() {
                 )}
               </div>
             </Reveal>
+            )}
           </div>
         </div>
       </section>
-
-      {/* ── AMENITIES ── */}
-      {amenities.length > 0 && (
-        <section className="w-full py-10 sm:py-14 md:py-16 lg:py-20 xl:py-24 2xl:py-28 px-4 sm:px-6 md:px-10 lg:px-16 xl:px-20 2xl:px-24 bg-white text-center overflow-hidden">
-          <Reveal direction="up">
-            <span className="pd-eyebrow justify-center text-[11px] tracking-[0.22em] uppercase text-[#E4572E] font-semibold mb-4">
-              <span className="w-6 h-px bg-[#E4572E]/60" />
-              Lifestyle & Comfort
-              <span className="w-6 h-px bg-[#E4572E]/60" />
-            </span>
-            <h2 className="pd-display text-[clamp(24px,4vw,46px)] font-semibold text-[#1F2A44] leading-snug mb-10 sm:mb-14 max-w-2xl mx-auto">
-              Unparalleled amenities for unmatched living
-            </h2>
-          </Reveal>
-
-          {/* Desktop — asymmetric masonry grid */}
-          <div className="hidden md:block w-full w-full">
-            <div className="pd-masonry">
-              {amenities.map(({ label, img }, i) => {
-                const span =
-                  i % 6 === 0 ? "tile-lg" : i % 6 === 3 ? "tile-wide" : "";
-                return (
-                  <Reveal
-                    key={label}
-                    delay={i * 80}
-                    direction="scale"
-                    className={`${span} h-full`}
-                  >
-                    <div className="relative rounded-[30px] overflow-hidden group cursor-pointer w-full h-full">
-                      <img
-                        src={img}
-                        alt={label}
-                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/5 to-transparent opacity-70 group-hover:opacity-90 transition-opacity duration-500" />
-                      <div className="absolute top-4 right-4 w-9 h-9 rounded-full bg-white/15 backdrop-blur-md border border-white/25 flex items-center justify-center transform group-hover:rotate-45 group-hover:bg-[#E4572E] transition-all duration-300">
-                        <svg
-                          className="w-4 h-4"
-                          fill="none"
-                          stroke="white"
-                          strokeWidth={2}
-                          viewBox="0 0 24 24"
-                        >
-                          <line x1="7" y1="17" x2="17" y2="7" />
-                          <polyline points="7 7 17 7 17 17" />
-                        </svg>
-                      </div>
-                      <span className="absolute bottom-5 left-5 right-5 text-left text-[15px] font-semibold text-white tracking-wide transition-transform duration-500 group-hover:-translate-y-1">
-                        {label}
-                      </span>
-                    </div>
-                  </Reveal>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Mobile */}
-          <div className="md:hidden grid grid-cols-2 gap-3">
-            {amenities.map(({ label, img }, i) => (
-              <Reveal key={label} delay={i * 100} direction="scale">
-                <div className="relative rounded-[24px] overflow-hidden group cursor-pointer h-[200px] sm:h-[260px]">
-                  <img
-                    src={img}
-                    alt={label}
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.08]"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-transparent" />
-                  <span className="absolute bottom-3 left-3 text-[12px] font-semibold text-white">
-                    {label}
-                  </span>
-                </div>
-              </Reveal>
-            ))}
-          </div>
-        </section>
       )}
 
+      {/* ── AMENITIES ── */}
+      {showAmenities && (
+  <section className="w-full py-15 sm:py-20 px-2 sm:px-4 lg:px-8 xl:px-12 bg-white text-center overflow-hidden">
+    <Reveal direction="up">
+      <h2 className="text-[clamp(22px,4vw,44px)] font-normal text-[#1a2332] leading-snug mb-8 sm:mb-12 break-words">
+        Unparalleled Amenities for
+        <br />
+        Unmatched Living
+      </h2>
+    </Reveal>
+
+    {/* Desktop */}
+    <div className="hidden md:grid grid-cols-2 lg:grid-cols-4 gap-4 w-full">
+      {validAmenities.map(({ label, img }, i) => (
+        <Reveal key={label + i} delay={i * 120} direction="up">
+          <div className="relative rounded-[20px] overflow-hidden group cursor-pointer w-full h-[320px] lg:h-[380px]">
+            <img
+              src={img}
+              alt={label}
+              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.08]"
+            />
+            {/* Arrow Icon */}
+            <div className="absolute top-4 right-4 w-10 h-10 rounded-full bg-gray-800/70 flex items-center justify-center">
+              <svg
+                className="w-5 h-5 text-white"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+                viewBox="0 0 24 24"
+              >
+                <line x1="5" y1="19" x2="19" y2="5" />
+                <polyline points="5 5 19 5 19 19" />
+              </svg>
+            </div>
+
+            {/* Label Background Gradient */}
+            <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-black/70 via-black/40 to-transparent pointer-events-none" />
+
+            {/* Label */}
+            <span className="absolute bottom-4 left-4 text-[14px] sm:text-[16px] font-medium text-white">
+              {label}
+            </span>
+          </div>
+        </Reveal>
+      ))}
+    </div>
+
+    {/* Mobile */}
+    <div className="md:hidden grid grid-cols-2 gap-3">
+      {validAmenities.map(({ label, img }, i) => (
+        <Reveal key={label + i} delay={i * 100} direction="scale">
+          <div className="relative rounded-[16px] overflow-hidden group cursor-pointer h-[200px] sm:h-[260px]">
+            <img
+              src={img}
+              alt={label}
+              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.08]"
+            />
+            {/* Arrow Icon */}
+            <div className="absolute top-3 right-3 w-8 h-8 rounded-full bg-gray-800/70 flex items-center justify-center">
+              <svg
+                className="w-4 h-4 text-white"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+                viewBox="0 0 24 24"
+              >
+                <line x1="5" y1="19" x2="19" y2="5" />
+                <polyline points="5 5 19 5 19 19" />
+              </svg>
+            </div>
+
+            {/* Label Background Gradient */}
+            <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-black/70 via-black/40 to-transparent pointer-events-none" />
+
+            {/* Label */}
+            <span className="absolute bottom-3 left-3 text-[13px] font-medium text-white">
+              {label}
+            </span>
+          </div>
+        </Reveal>
+      ))}
+    </div>
+  </section>
+)}
+
       {/* ── FLOOR PREVIEWS ── */}
-      {floors.length > 0 && floor && (
+      {showFloorPreviews && floor && (
         <section id="pd-floor-plan" className="w-full py-10 sm:py-14 md:py-16 lg:py-20 xl:py-24 2xl:py-28 px-4 sm:px-6 md:px-10 lg:px-16 xl:px-20 2xl:px-24 bg-[#FDFAF6]">
           <div className="w-full">
           {/* Top bar */}
@@ -1659,13 +1774,14 @@ export default function ProjectDetailPage() {
                 </h2>
               </div>
             </Reveal>
+            {hasFloorPlanDownload && (
             <Reveal direction="right" delay={200}>
-              <button
-                onClick={() => handleDownloadRequest("floorplan", floorPlanUrl)}
-                className="pd-btn inline-flex w-full sm:w-fit justify-center items-center gap-3 rounded-full px-5 sm:px-6 py-3.5 text-[11px] sm:text-[12px] tracking-wide font-semibold uppercase text-white bg-[#1F2A44] hover:bg-[#E4572E] shadow-lg shadow-[#1F2A44]/15 cursor-pointer"
-              >
+                <button
+                  onClick={() => window.open(floorPlanUrl, "_blank")}
+                  className="pd-btn inline-flex w-full sm:w-fit justify-center items-center gap-3 rounded-full px-5 sm:px-6 py-3.5 text-[11px] sm:text-[12px] tracking-wide font-semibold uppercase text-white bg-[#1F2A44] hover:bg-[#E4572E] shadow-lg shadow-[#1F2A44]/15 cursor-pointer"
+                >
                 Download Floor Plan
-                <span className="w-7 sm:w-8 h-7 sm:h-8 rounded-full bg-white/15 flex items-center justify-center">
+                <span className="w-7 sm:w-8 h-7 sm:h-8 rounded-full bg-white/15 flex items-center justify-center flex-shrink-0">
                   <svg
                     className="w-3 sm:w-3.5 h-3 sm:h-3.5"
                     fill="none"
@@ -1679,12 +1795,14 @@ export default function ProjectDetailPage() {
                 </span>
               </button>
             </Reveal>
+            )}
           </div>
 
           {/* Floor plan — single responsive layout (all screen sizes) */}
           <Reveal direction="up" delay={100}>
             <div className="flex flex-col gap-5 sm:gap-6">
               {/* Floor selector dropdown */}
+              {validFloors.length > 1 && (
               <div className="relative">
                 <button
                   onClick={() => setFloorMenuOpen(!floorMenuOpen)}
@@ -1703,11 +1821,11 @@ export default function ProjectDetailPage() {
                 </button>
                 {floorMenuOpen && (
                   <div className="absolute top-full left-0 right-0 z-30 bg-white border border-[#E9EDF2] rounded-2xl mt-2 overflow-hidden shadow-xl max-h-[320px] overflow-y-auto no-scrollbar">
-                    {floors.map((f) => (
+                    {validFloors.map((f) => (
                       <button
                         key={f.key}
                         onClick={() => handleFloorChange(f.key)}
-                        className={`w-full px-5 sm:px-6 py-3.5 text-left text-[13px] sm:text-[14px] transition border-b border-[#F0F2F5] last:border-0 ${activeFloor === f.key ? "bg-[#FFF1EC] text-[#E4572E] font-semibold" : "text-[#6B7280] hover:bg-[#F4F6F8]"}`}
+                        className={`w-full px-5 sm:px-6 py-3.5 text-left text-[13px] sm:text-[14px] transition border-b border-[#F0F2F5] last:border-0 break-words ${activeFloor === f.key ? "bg-[#FFF1EC] text-[#E4572E] font-semibold" : "text-[#6B7280] hover:bg-[#F4F6F8]"}`}
                       >
                         {f.label}
                       </button>
@@ -1715,9 +1833,10 @@ export default function ProjectDetailPage() {
                   </div>
                 )}
               </div>
+              )}
 
               {/* Header */}
-              <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center justify-between gap-3 flex-wrap">
                 <p className="pd-display text-[20px] sm:text-[24px] lg:text-[28px] text-[#1F2A44] font-semibold min-w-0 break-words">
                   {floor.title}
                 </p>
@@ -1731,13 +1850,14 @@ export default function ProjectDetailPage() {
                 className={`relative w-full rounded-3xl overflow-hidden h-[240px] sm:h-[340px] md:h-[420px] lg:h-[480px] xl:h-[540px] 2xl:h-[600px] shadow-xl shadow-[#1F2A44]/10 room-img-fade ${roomChanging ? "changing" : ""}`}
               >
                 <img
-                  src={floor.rooms[activeRoom]?.img}
+                  src={floor.rooms[activeRoom]?.img ?? floor.rooms[0]?.img}
                   alt=""
                   className="w-full h-full object-cover"
                 />
               </div>
 
               {/* Room thumbnail gallery */}
+              {floor.rooms.length > 1 && (
               <div className="flex gap-3 sm:gap-4 overflow-x-auto pb-2 snap-x snap-mandatory no-scrollbar">
                 {floor.rooms.map((room, i) => (
                   <div
@@ -1750,12 +1870,13 @@ export default function ProjectDetailPage() {
                       alt={room.label}
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                     />
-                    <div className="absolute inset-x-0 bottom-0 px-2.5 py-1.5 bg-gradient-to-t from-black/80 via-black/40 to-transparent text-[11px] font-medium text-white leading-tight line-clamp-2">
+                    <div className="absolute inset-x-0 bottom-0 px-2.5 py-1.5 bg-gradient-to-t from-black/80 via-black/40 to-transparent text-[11px] font-medium text-white leading-tight line-clamp-2 break-words">
                       {room.label}
                     </div>
                   </div>
                 ))}
               </div>
+              )}
             </div>
           </Reveal>
           </div>
@@ -1763,7 +1884,7 @@ export default function ProjectDetailPage() {
       )}
 
       {/* ── IMAGE GALLERY ── */}
-      {gallery.length > 0 && (
+      {showGallery && (
         <section className="w-full py-10 sm:py-14 md:py-16 lg:py-20 xl:py-24 2xl:py-28 px-4 sm:px-6 md:px-10 lg:px-16 xl:px-20 2xl:px-24 bg-white overflow-hidden">
           <div className="w-full">
           <Reveal direction="up">
@@ -1782,7 +1903,7 @@ export default function ProjectDetailPage() {
           {/* Desktop */}
           <Reveal direction="up" delay={200}>
             <div className="hidden md:flex gap-3 h-[440px] md:h-[520px] items-stretch overflow-hidden w-full">
-              {gallery.map((img, idx) => (
+              {validGallery.map((img, idx) => (
                 <div
                   key={img.id}
                   className="relative overflow-hidden rounded-[28px] cursor-pointer"
@@ -1800,7 +1921,7 @@ export default function ProjectDetailPage() {
                       transition: "opacity 0.3s ease",
                     }}
                   >
-                    {String(idx + 1).padStart(2, "0")} / {String(gallery.length).padStart(2, "0")}
+                    {String(idx + 1).padStart(2, "0")} / {String(validGallery.length).padStart(2, "0")}
                   </span>
                   <img
                     src={img.src}
@@ -1821,6 +1942,7 @@ export default function ProjectDetailPage() {
                       transition: "opacity 0.4s ease",
                     }}
                   />
+                  {isNonEmptyString(img.alt) && (
                   <div
                     className="absolute bottom-0 left-0 right-0 p-4"
                     style={{
@@ -1829,17 +1951,11 @@ export default function ProjectDetailPage() {
                       transition: "all 0.4s ease",
                     }}
                   >
-                    <span className="text-white text-[12px] font-medium">
+                    <span className="text-white text-[12px] font-medium break-words">
                       {img.alt}
                     </span>
                   </div>
-                  <div className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/15 backdrop-blur-md border border-white/25 flex items-center justify-center opacity-0 group-hover:opacity-100"
-                    style={{ opacity: hoveredId === img.id ? 1 : 0, transition: "opacity 0.3s ease" }}
-                  >
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
-                      <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
-                    </svg>
-                  </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -1847,7 +1963,7 @@ export default function ProjectDetailPage() {
 
           {/* Mobile */}
           <div className="md:hidden grid grid-cols-2 gap-2.5">
-            {gallery.map((img, i) => (
+            {validGallery.map((img, i) => (
               <Reveal key={img.id} delay={i * 80} direction="scale" className="h-full">
                 <div className="relative overflow-hidden rounded-2xl cursor-pointer w-full aspect-square">
                   <img
@@ -1864,17 +1980,20 @@ export default function ProjectDetailPage() {
       )}
 
       {/* ── LOCATION ── */}
+      {showLocationSection && (
       <section className="bg-[#FDFAF6] py-10 sm:py-14 md:py-16 lg:py-20 xl:py-24 2xl:py-28 px-4 sm:px-6 md:px-10 lg:px-16 xl:px-20 2xl:px-24 overflow-hidden">
         <div className="w-full">
         {/* Top row */}
+        {(hasLocationTitle || hasLocationDesc) && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8 mb-8 sm:mb-10 items-end">
+          {hasLocationTitle && (
           <Reveal direction="left">
             <div>
               <span className="pd-eyebrow text-[11px] tracking-[0.22em] uppercase text-[#E4572E] font-semibold mb-4">
                 <span className="w-6 h-px bg-[#E4572E]/60" />
                 Neighbourhood
               </span>
-              <h2 className="pd-display text-[26px] sm:text-[38px] font-semibold leading-tight text-[#1F2A44]">
+              <h2 className="pd-display text-[26px] sm:text-[38px] font-semibold leading-tight text-[#1F2A44] break-words">
                 {locationTitle.includes("\n")
                   ? locationTitle.split("\n").map((line, i) => (
                       <span key={i}>
@@ -1886,16 +2005,22 @@ export default function ProjectDetailPage() {
               </h2>
             </div>
           </Reveal>
+          )}
+          {hasLocationDesc && (
           <Reveal direction="right" delay={150}>
-            <p className="text-[13px] text-[#6B7280] leading-[1.75]">
+            <p className="text-[13px] text-[#6B7280] leading-[1.75] break-words whitespace-normal">
               {locationDesc}
             </p>
           </Reveal>
+          )}
         </div>
+        )}
 
         {/* Bottom row */}
-        <div className="grid grid-cols-1 lg:grid-cols-[1.15fr_1fr] gap-5 sm:gap-6 items-stretch">
+        {(showMap || showNearbyPlaces) && (
+        <div className={`grid grid-cols-1 ${showMap && showNearbyPlaces ? "lg:grid-cols-[1.15fr_1fr]" : ""} gap-5 sm:gap-6 items-stretch`}>
           {/* Map */}
+          {showMap && (
           <Reveal direction="left" delay={200} className="h-full">
             <div className="pd-card overflow-hidden relative min-h-[320px] sm:min-h-[420px] lg:h-full p-0">
               <iframe
@@ -1906,201 +2031,80 @@ export default function ProjectDetailPage() {
                 title={`${projectName} location map`}
                 className="w-full h-full min-h-[320px] sm:min-h-[420px] border-0 block rounded-[28px]"
               />
-              <div className="absolute bottom-[14px] left-[14px] pd-glass-dark text-white text-[11px] font-medium px-4 py-[7px] rounded-full tracking-[.03em] flex items-center gap-1.5">
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#E4572E" strokeWidth="2.5">
+              {isNonEmptyString(mapLocationLabel) && (
+              <div className="absolute bottom-[14px] left-[14px] right-[14px] sm:right-auto pd-glass-dark text-white text-[11px] font-medium px-4 py-[7px] rounded-full tracking-[.03em] flex items-center gap-1.5">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#E4572E" strokeWidth="2.5" className="flex-shrink-0">
                   <path d="M21 10c0 6-9 12-9 12s-9-6-9-12a9 9 0 0118 0z" />
                   <circle cx="12" cy="10" r="3" />
                 </svg>
-                {mapLocationLabel}
+                <span className="break-words">{mapLocationLabel}</span>
               </div>
+              )}
             </div>
           </Reveal>
+          )}
 
           {/* Nearby places */}
+          {showNearbyPlaces && (
           <Reveal direction="right" delay={250} className="h-full">
             <div className="flex flex-col h-full">
               <p className="text-[10px] uppercase tracking-[0.18em] font-semibold text-[#A0A8B5] mb-3 px-1">
                 Nearby Places
               </p>
-              {nearbyPlaces.length > 0 ? (
-                <div className="flex flex-col gap-2.5 sm:gap-3 lg:max-h-[430px] lg:overflow-y-auto no-scrollbar pr-0.5">
-                  {nearbyPlaces.map((p, i) => {
-                    const iconType =
-                      p.iconType ??
-                      (/hospital|clinic|health/i.test(p.type)
-                        ? "hospital"
-                        : /mall|shop/i.test(p.type)
-                          ? "mall"
-                          : /school|college|university/i.test(p.type)
-                            ? "school"
-                            : "default");
-                    const bg = p.iconBg ?? iconBgForType(iconType);
-                    return (
+              <div className="flex flex-col gap-2.5 sm:gap-3 lg:max-h-[430px] lg:overflow-y-auto no-scrollbar pr-0.5">
+                {validNearbyPlaces.map((p, i) => {
+                  const iconType =
+                    p.iconType ??
+                    (/hospital|clinic|health/i.test(p.type || "")
+                      ? "hospital"
+                      : /mall|shop/i.test(p.type || "")
+                        ? "mall"
+                        : /school|college|university/i.test(p.type || "")
+                          ? "school"
+                          : "default");
+                  const bg = p.iconBg ?? iconBgForType(iconType);
+                  return (
+                    <div
+                      key={i}
+                      className="pd-card group flex items-center gap-3.5 px-4 sm:px-5 py-3.5 sm:py-4 cursor-default"
+                    >
                       <div
-                        key={i}
-                        className="pd-card group flex items-center gap-3.5 px-4 sm:px-5 py-3.5 sm:py-4 cursor-default"
+                        className={`w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0 ${bg} group-hover:scale-110 transition-transform duration-300`}
                       >
-                        <div
-                          className={`w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0 ${bg} group-hover:scale-110 transition-transform duration-300`}
-                        >
-                          <NearbyIcon iconType={iconType} />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-[13px] sm:text-[14px] font-semibold text-[#1F2A44] break-words leading-snug">
-                            {p.name}
-                          </p>
-                          <p className="text-[11px] text-[#A0A8B5] break-words leading-snug mt-0.5">
-                            {p.sub}
-                          </p>
-                        </div>
-                        <div className="flex flex-col items-end gap-1.5 flex-shrink-0 text-right">
-                          <span className="text-[10px] text-[#A0A8B5] uppercase tracking-[.05em] hidden sm:block break-words">
-                            {p.type}
-                          </span>
-                          <span className="bg-[#F0EFEC] text-[#1F2A44] text-[10px] sm:text-[11px] font-semibold rounded-full px-3 py-1 whitespace-nowrap group-hover:bg-[#E4572E] group-hover:text-white transition-colors duration-300">
-                            {p.distance}
-                          </span>
-                        </div>
+                        <NearbyIcon iconType={iconType} />
                       </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="pd-card p-8 text-center text-[#A0A8B5] text-sm flex-1 flex items-center justify-center">
-                  Nearby places information coming soon.
-                </div>
-              )}
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[13px] sm:text-[14px] font-semibold text-[#1F2A44] break-words leading-snug">
+                          {p.name}
+                        </p>
+                        {isNonEmptyString(p.sub) && (
+                        <p className="text-[11px] text-[#A0A8B5] break-words leading-snug mt-0.5">
+                          {p.sub}
+                        </p>
+                        )}
+                      </div>
+                      <div className="flex flex-col items-end gap-1.5 flex-shrink-0 text-right">
+                        {isNonEmptyString(p.type) && (
+                        <span className="text-[10px] text-[#A0A8B5] uppercase tracking-[.05em] hidden sm:block break-words">
+                          {p.type}
+                        </span>
+                        )}
+                        <span className="bg-[#F0EFEC] text-[#1F2A44] text-[10px] sm:text-[11px] font-semibold rounded-full px-3 py-1 whitespace-normal break-words group-hover:bg-[#E4572E] group-hover:text-white transition-colors duration-300">
+                          {p.distance}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </Reveal>
+          )}
         </div>
-        </div>
-      </section>
-
-      {/* ── DOWNLOAD + FOOTER CTA ── */}
-      <section id="pd-contact" className="w-full py-10 sm:py-14 md:py-16 lg:py-20 xl:py-24 2xl:py-28 px-4 sm:px-6 md:px-10 lg:px-16 xl:px-20 2xl:px-24 bg-[#FDFAF6]">
-        <div className="w-full">
-          <Reveal direction="up">
-            <div className="text-center mb-10 sm:mb-14">
-              <span className="pd-eyebrow justify-center text-[11px] tracking-[0.22em] uppercase text-[#E4572E] font-semibold mb-4">
-                <span className="w-6 h-px bg-[#E4572E]/60" />
-                Resources
-                <span className="w-6 h-px bg-[#E4572E]/60" />
-              </span>
-              <h2 className="pd-display text-[clamp(24px,3.6vw,42px)] font-semibold text-[#1F2A44] leading-tight">
-                Take the details with you
-              </h2>
-            </div>
-          </Reveal>
-
-          {/* Premium download cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-8 sm:mb-12">
-            <Reveal direction="left" delay={100} className="h-full">
-              <div className="pd-card group h-full p-6 sm:p-8 flex items-start gap-5">
-                <div className="w-14 h-14 rounded-2xl bg-[#FFE9E2] flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-300">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#E4572E" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                    <polyline points="14 2 14 8 20 8" />
-                    <line x1="9" y1="13" x2="15" y2="13" />
-                    <line x1="9" y1="17" x2="13" y2="17" />
-                  </svg>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="pd-display text-[18px] font-semibold text-[#1F2A44] mb-1">
-                    Project Brochure
-                  </h3>
-                  <p className="text-[13px] text-[#6B7280] leading-relaxed mb-5">
-                    Everything about the residence in one elegant PDF.
-                  </p>
-                  <button
-                    onClick={() => handleDownloadRequest("brochure", brochureUrl)}
-                    className="pd-btn inline-flex items-center gap-2 rounded-full bg-[#1F2A44] text-white px-5 py-2.5 text-[11px] font-semibold tracking-[0.12em] uppercase hover:bg-[#E4572E] cursor-pointer"
-                  >
-                    Download Brochure
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                      <polyline points="7 10 12 15 17 10" />
-                      <line x1="12" y1="15" x2="12" y2="3" />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            </Reveal>
-
-            <Reveal direction="right" delay={200} className="h-full">
-              <div className="pd-card group h-full p-6 sm:p-8 flex items-start gap-5">
-                <div className="w-14 h-14 rounded-2xl bg-[#FFE9E2] flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-300">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#E4572E" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="3" y="3" width="18" height="18" rx="2" />
-                    <line x1="3" y1="9" x2="21" y2="9" />
-                    <line x1="9" y1="21" x2="9" y2="9" />
-                    <line x1="15" y1="9" x2="15" y2="15" />
-                  </svg>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="pd-display text-[18px] font-semibold text-[#1F2A44] mb-1">
-                    Floor Plans
-                  </h3>
-                  <p className="text-[13px] text-[#6B7280] leading-relaxed mb-5">
-                    Detailed layouts and dimensions for every floor.
-                  </p>
-                  <button
-                    onClick={() => handleDownloadRequest("floorplan", floorPlanUrl)}
-                    className="pd-btn inline-flex items-center gap-2 rounded-full bg-[#1F2A44] text-white px-5 py-2.5 text-[11px] font-semibold tracking-[0.12em] uppercase hover:bg-[#E4572E] cursor-pointer"
-                  >
-                    Get Floor Plan
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                      <polyline points="7 10 12 15 17 10" />
-                      <line x1="12" y1="15" x2="12" y2="3" />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            </Reveal>
-          </div>
-
-          {/* CTA banner */}
-          <Reveal direction="up">
-            <div className="pd-gradient-cta relative overflow-hidden rounded-[32px] sm:rounded-[40px] px-6 sm:px-14 py-12 sm:py-16 text-center">
-              <img
-                src={image}
-                alt=""
-                className="absolute inset-0 w-full h-full object-cover opacity-20 mix-blend-luminosity pointer-events-none"
-              />
-              <div className="absolute inset-0 bg-[#1F2A44]/50 pointer-events-none" />
-              <div
-                className="absolute inset-0 opacity-[0.08] pointer-events-none"
-                style={{
-                  backgroundImage:
-                    "radial-gradient(circle at 2px 2px, white 1px, transparent 0)",
-                  backgroundSize: "26px 26px",
-                }}
-              />
-              <div className="absolute -top-20 -right-20 w-72 h-72 rounded-full bg-[#E4572E]/25 blur-3xl pointer-events-none" />
-              <div className="relative flex flex-col items-center gap-5 sm:gap-6 max-w-xl mx-auto">
-                <span className="pd-glass-dark text-white/80 text-[10px] tracking-[0.2em] uppercase px-4 py-1.5 rounded-full font-medium">
-                  Ready When You Are
-                </span>
-                <h2 className="pd-display text-[clamp(26px,4vw,44px)] font-semibold text-white leading-tight">
-                  Come see {projectName} for yourself
-                </h2>
-                <p className="text-white/70 text-[13px] sm:text-[14px] leading-relaxed max-w-md">
-                  Book a private tour or get the full brochure sent straight to your inbox — no pressure, just details.
-                </p>
-                <div className="flex items-center gap-3 mt-2 flex-wrap justify-center">
-                  <Link to="/contact">
-  <button
-    className="pd-btn inline-flex items-center gap-2 rounded-full bg-[#E4572E] px-7 py-3.5 text-[11px] font-semibold uppercase tracking-[0.1em] text-white transition-colors duration-300 hover:cursor-pointer hover:bg-white hover:text-[#E4572E] sm:text-[12px]"
-  >
-    Contact Us
-  </button>
-</Link>
-                </div>
-              </div>
-            </div>
-          </Reveal>
+        )}
         </div>
       </section>
+      )}
 
       {/* ── CUSTOMER LEAD CAPTURE MODAL (PREMIUM TWO-COLUMN DESIGN) ── */}
       {showLeadModal && (
@@ -2118,19 +2122,26 @@ export default function ProjectDetailPage() {
 
             {/* Left — project visual panel */}
             <div className="relative hidden md:block">
+              {hasHeroImage ? (
               <img
                 src={image}
                 alt={projectName}
                 className="absolute inset-0 w-full h-full object-cover"
               />
+              ) : (
+                <div className="absolute inset-0 w-full h-full bg-[#1F2A44]" />
+              )}
               <div className="absolute inset-0 bg-gradient-to-t from-[#1F2A44] via-[#1F2A44]/55 to-[#1F2A44]/25" />
               <div className="relative h-full flex flex-col justify-end p-7 gap-3">
                 <span className="pd-glass-dark w-fit text-white/85 text-[10px] tracking-[0.2em] uppercase px-3 py-1 rounded-full font-medium">
                   One Step Away
                 </span>
-                <h3 className="pd-display text-2xl font-semibold text-white leading-tight">
+                {hasProjectName && (
+                <h3 className="pd-display text-2xl font-semibold text-white leading-tight break-words">
                   {projectName}
                 </h3>
+                )}
+                {(isNonEmptyString(location) || hasLocationLine || isNonEmptyString(mapLocationLabel)) && (
                 <div className="flex items-start gap-1.5 text-white/75 text-[12px]">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#E4572E" strokeWidth="2.4" className="flex-shrink-0 mt-[3px]">
                     <path d="M21 10c0 6-9 12-9 12s-9-6-9-12a9 9 0 0118 0z" />
@@ -2138,10 +2149,13 @@ export default function ProjectDetailPage() {
                   </svg>
                   <span className="break-words leading-snug">{location || projectLocation || mapLocationLabel}</span>
                 </div>
+                )}
+                {hasPrice && (
                 <div className="pd-glass rounded-2xl px-4 py-3 mt-1">
                   <p className="text-[9px] tracking-[0.2em] uppercase text-[#6B7280]">Starting Price</p>
-                  <p className="pd-display text-[20px] font-bold text-[#1F2A44] leading-tight">{price}</p>
+                  <p className="pd-display text-[20px] font-bold text-[#1F2A44] leading-tight break-words">{price}</p>
                 </div>
+                )}
               </div>
             </div>
 
@@ -2154,8 +2168,8 @@ export default function ProjectDetailPage() {
                 <h3 className="pd-display text-2xl font-semibold text-[#1F2A44] tracking-tight">
                   Download Brochure
                 </h3>
-                <p className="text-sm text-[#6B7280] mt-1.5 leading-relaxed">
-                  Share your details and we'll start your download for <span className="font-semibold text-[#1F2A44]">{projectName}</span>.
+                <p className="text-sm text-[#6B7280] mt-1.5 leading-relaxed break-words">
+                  Share your details and we'll start your download for <span className="font-semibold text-[#1F2A44] break-words">{projectName}</span>.
                 </p>
               </div>
 

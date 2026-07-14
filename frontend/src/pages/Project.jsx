@@ -2,6 +2,13 @@ import { useEffect, useState, useRef } from "react";
 import heroimg from "../../public/hero_img.jpg";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import Seo from "../components/Seo";
+import {
+  collectionPageSchema,
+  breadcrumbSchema,
+  organizationSchema,
+  keywords as buildKeywords,
+} from "../seo/siteConfig";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { getProjects } from "../services/projectService"; // ← same service as Dashboard
@@ -590,6 +597,26 @@ export default function Project() {
 
   return (
     <>
+      <Seo
+        title="Our Projects | Luxury Homes & Commercial | Shubh Suramya"
+        description="Explore Shubh Suramya's luxury residential and commercial projects in Ahmedabad, Gujarat — premium villas, modern apartments and ongoing developments."
+        keywords={buildKeywords(["Shubh Suramya Projects", "New Projects Ahmedabad"])}
+        canonicalPath="/projects"
+        jsonLd={[
+          collectionPageSchema({
+            name: "Projects — Shubh Suramya",
+            description:
+              "Luxury residential and commercial real estate projects by Shubh Suramya in Ahmedabad, Gujarat.",
+            path: "/projects",
+          }),
+          organizationSchema(),
+          breadcrumbSchema([
+            { name: "Home", path: "/" },
+            { name: "Projects", path: "/projects" },
+          ]),
+        ]}
+      />
+
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=Manrope:wght@400;500;600;700;800;900&display=swap');
         *, *::before, *::after { box-sizing: border-box; }
